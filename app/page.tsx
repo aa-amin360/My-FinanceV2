@@ -20,12 +20,14 @@ export default function Home() {
 
   const [showModal, setShowModal] = useState(false);
 
-  // 🔥 NEW FORM MODEL
+  // 🧠 STEP FLOW
+  const [step, setStep] = useState<"ACTION" | "FORM">("ACTION");
+
+  // FORM STATE
   const [action, setAction] = useState("INCOME");
   const [amount, setAmount] = useState("");
   const [account, setAccount] = useState("Cash");
   const [note, setNote] = useState("");
-
   const [category, setCategory] = useState("");
   const [entity, setEntity] = useState("");
 
@@ -68,7 +70,7 @@ export default function Home() {
   });
 
   // =========================
-  // SUBMIT (ACTION → TYPE)
+  // SUBMIT
   // =========================
 
   const handleSubmit = async () => {
@@ -95,8 +97,9 @@ export default function Home() {
       body: JSON.stringify(body),
     });
 
-    // Reset
+    // RESET
     setShowModal(false);
+    setStep("ACTION");
     setAmount("");
     setNote("");
     setCategory("");
@@ -164,7 +167,13 @@ export default function Home() {
       })}
 
       {/* FLOAT BUTTON */}
-      <button style={fab} onClick={() => setShowModal(true)}>
+      <button
+        style={fab}
+        onClick={() => {
+          setShowModal(true);
+          setStep("ACTION");
+        }}
+      >
         +
       </button>
 
@@ -172,56 +181,64 @@ export default function Home() {
       {showModal && (
         <div style={modal}>
           <div style={modalContent}>
-            <h3>Add Transaction</h3>
+            
+            {/* STEP 1 */}
+            {step === "ACTION" && (
+              <>
+                <h3>Select Action</h3>
 
-            {/* ACTION */}
-            <select value={action} onChange={(e) => setAction(e.target.value)}>
-              <option value="INCOME">Income</option>
-              <option value="EXPENSE">Expense</option>
-              <option value="BORROW">Borrow</option>
-              <option value="GIVE">Give</option>
-            </select>
+                <button onClick={() => { setAction("INCOME"); setStep("FORM"); }}>Income</button>
+                <button onClick={() => { setAction("EXPENSE"); setStep("FORM"); }}>Expense</button>
+                <button onClick={() => { setAction("BORROW"); setStep("FORM"); }}>Borrow</button>
+                <button onClick={() => { setAction("GIVE"); setStep("FORM"); }}>Give</button>
 
-            {/* AMOUNT */}
-            <input
-              placeholder="Amount"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
-
-            {/* ACCOUNT */}
-            <select value={account} onChange={(e) => setAccount(e.target.value)}>
-              <option>Cash</option>
-              <option>Bank</option>
-            </select>
-
-            {/* CATEGORY */}
-            {(action === "INCOME" || action === "EXPENSE") && (
-              <input
-                placeholder="Category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              />
+                <button onClick={() => setShowModal(false)}>Cancel</button>
+              </>
             )}
 
-            {/* ENTITY */}
-            {(action === "BORROW" || action === "GIVE") && (
-              <input
-                placeholder="Person / Bank"
-                value={entity}
-                onChange={(e) => setEntity(e.target.value)}
-              />
+            {/* STEP 2 */}
+            {step === "FORM" && (
+              <>
+                <h3>{action}</h3>
+
+                <input
+                  placeholder="Amount"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
+
+                <select value={account} onChange={(e) => setAccount(e.target.value)}>
+                  <option>Cash</option>
+                  <option>Bank</option>
+                </select>
+
+                {(action === "INCOME" || action === "EXPENSE") && (
+                  <input
+                    placeholder="Category"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                  />
+                )}
+
+                {(action === "BORROW" || action === "GIVE") && (
+                  <input
+                    placeholder="Person / Bank"
+                    value={entity}
+                    onChange={(e) => setEntity(e.target.value)}
+                  />
+                )}
+
+                <input
+                  placeholder="Note"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                />
+
+                <button onClick={handleSubmit}>Save</button>
+
+                <button onClick={() => setStep("ACTION")}>← Back</button>
+              </>
             )}
-
-            {/* NOTE */}
-            <input
-              placeholder="Note"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
-
-            <button onClick={handleSubmit}>Save</button>
-            <button onClick={() => setShowModal(false)}>Cancel</button>
           </div>
         </div>
       )}
