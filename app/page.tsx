@@ -231,7 +231,7 @@ const transactionCard = { background: "#0f172a", padding: 15, borderRadius: 10, 
 const txTitle = { fontWeight: "bold" };
 const txDate = { opacity: 0.5 };
 
-const fab = {
+const fab: React.CSSProperties = {
   position: "fixed",
   bottom: 20,
   right: 20,
@@ -242,7 +242,7 @@ const fab = {
   fontSize: 30,
 };
 
-const modal = {
+const modal: React.CSSProperties = {
   position: "fixed",
   top: 0,
   left: 0,
@@ -254,7 +254,7 @@ const modal = {
   alignItems: "center",
 };
 
-const modalContent = {
+const modalContent: React.CSSProperties = {
   background: "#111827",
   padding: 20,
   borderRadius: 10,
