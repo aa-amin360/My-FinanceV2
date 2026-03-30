@@ -19,31 +19,21 @@ export default function Home() {
   const [balance, setBalance] = useState(0);
 
   useEffect(() => {
-    // Fetch transactions
     fetch("/api/transactions")
       .then((res) => res.json())
-      .then((data) => {
-        setTransactions(data.data || []);
-      });
+      .then((data) => setTransactions(data.data || []));
 
-    // Fetch debt
     fetch("/api/debts")
       .then((res) => res.json())
-      .then((data) => {
-        setDebt(Number(data.total || 0));
-      });
+      .then((data) => setDebt(Number(data.total || 0)));
 
     fetch("/api/receivables")
       .then((res) => res.json())
-      .then((data) => {
-        setReceivable(Number(data.total || 0));
-      });
+      .then((data) => setReceivable(Number(data.total || 0)));
 
     fetch("/api/balance")
       .then((res) => res.json())
-      .then((data) => {
-        setBalance(Number(data.total || 0));
-      });
+      .then((data) => setBalance(Number(data.total || 0)));
   }, []);
 
   // =========================
@@ -74,7 +64,7 @@ export default function Home() {
         <h1>{balance.toFixed(2)} Tk</h1>
       </div>
 
-      {/* SUMMARY GRID */}
+      {/* SUMMARY */}
       <div style={grid}>
         <Card title="Income" value={income} color="#22c55e" />
         <Card title="Expenses" value={expense} color="#ef4444" />
@@ -92,27 +82,40 @@ export default function Home() {
 
       {transactions.map((t) => {
         const amount = Number(t.amount);
-        const isIncome = t.type === "INCOME";
+
+        // =========================
+        // FLOW-BASED SIGN LOGIC
+        // =========================
+        const isPositive =
+          t.type === "INCOME" ||
+          t.type === "DEBT_TAKEN" ||
+          t.type === "RECEIVABLE_RECEIVED";
+
+        const sign = isPositive ? "+" : "-";
+        const color = isPositive ? "#22c55e" : "#ef4444";
+
+        // Flow text
+        const flow =
+          (t.from_account || "Outside") +
+          " → " +
+          (t.to_account || "Outside");
 
         return (
           <div key={t.id} style={transactionCard}>
             <div>
               <div style={txTitle}>
-                {t.note || t.type.replace("_", " ")}
+                {t.note || t.type.replaceAll("_", " ")}
               </div>
+
+              <div style={txFlow}>{flow}</div>
+
               <div style={txDate}>
                 {new Date(t.date).toDateString()}
               </div>
             </div>
 
-            <div
-              style={{
-                color: isIncome ? "#22c55e" : "#ef4444",
-                fontWeight: "bold",
-              }}
-            >
-              {isIncome ? "+" : "-"}
-              {amount.toFixed(2)} Tk
+            <div style={{ color, fontWeight: "bold" }}>
+              {sign} {amount.toFixed(2)} Tk
             </div>
           </div>
         );
@@ -212,7 +215,12 @@ const txTitle = {
   fontWeight: "bold",
 };
 
-const txDate = {
-  opacity: 0.6,
+const txFlow = {
+  opacity: 0.7,
   fontSize: 12,
+};
+
+const txDate = {
+  opacity: 0.5,
+  fontSize: 11,
 };
