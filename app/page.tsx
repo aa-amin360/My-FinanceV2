@@ -20,14 +20,17 @@ export default function Home() {
 
   const [showModal, setShowModal] = useState(false);
 
-  // Form state
-  const [type, setType] = useState("INCOME");
+  // 🔥 NEW FORM MODEL
+  const [action, setAction] = useState("INCOME");
   const [amount, setAmount] = useState("");
   const [account, setAccount] = useState("Cash");
   const [note, setNote] = useState("");
 
+  const [category, setCategory] = useState("");
+  const [entity, setEntity] = useState("");
+
   // =========================
-  // FETCH ALL DATA
+  // FETCH DATA
   // =========================
   const loadData = () => {
     fetch("/api/transactions")
@@ -65,10 +68,17 @@ export default function Home() {
   });
 
   // =========================
-  // SUBMIT
+  // SUBMIT (ACTION → TYPE)
   // =========================
 
   const handleSubmit = async () => {
+    let type = "";
+
+    if (action === "INCOME") type = "INCOME";
+    if (action === "EXPENSE") type = "EXPENSE";
+    if (action === "BORROW") type = "DEBT_TAKEN";
+    if (action === "GIVE") type = "RECEIVABLE_GIVEN";
+
     const body: any = {
       type,
       amount: Number(amount),
@@ -77,14 +87,21 @@ export default function Home() {
       note,
     };
 
+    if (category) body.category = category;
+    if (entity) body.entity = entity;
+
     await fetch("/api/transactions", {
       method: "POST",
       body: JSON.stringify(body),
     });
 
+    // Reset
     setShowModal(false);
     setAmount("");
     setNote("");
+    setCategory("");
+    setEntity("");
+
     loadData();
   };
 
@@ -157,26 +174,46 @@ export default function Home() {
           <div style={modalContent}>
             <h3>Add Transaction</h3>
 
-            <select value={type} onChange={(e) => setType(e.target.value)}>
+            {/* ACTION */}
+            <select value={action} onChange={(e) => setAction(e.target.value)}>
               <option value="INCOME">Income</option>
               <option value="EXPENSE">Expense</option>
-              <option value="DEBT_TAKEN">Borrow</option>
-              <option value="DEBT_REPAID">Repay</option>
-              <option value="RECEIVABLE_GIVEN">Give</option>
-              <option value="RECEIVABLE_RECEIVED">Receive</option>
+              <option value="BORROW">Borrow</option>
+              <option value="GIVE">Give</option>
             </select>
 
+            {/* AMOUNT */}
             <input
               placeholder="Amount"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
 
+            {/* ACCOUNT */}
             <select value={account} onChange={(e) => setAccount(e.target.value)}>
               <option>Cash</option>
               <option>Bank</option>
             </select>
 
+            {/* CATEGORY */}
+            {(action === "INCOME" || action === "EXPENSE") && (
+              <input
+                placeholder="Category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              />
+            )}
+
+            {/* ENTITY */}
+            {(action === "BORROW" || action === "GIVE") && (
+              <input
+                placeholder="Person / Bank"
+                value={entity}
+                onChange={(e) => setEntity(e.target.value)}
+              />
+            )}
+
+            {/* NOTE */}
             <input
               placeholder="Note"
               value={note}
