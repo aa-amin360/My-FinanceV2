@@ -15,6 +15,7 @@ type Transaction = {
 export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [debt, setDebt] = useState(0);
+  const [receivable, setReceivable] = useState(0);
 
   useEffect(() => {
     // Fetch transactions
@@ -29,6 +30,12 @@ export default function Home() {
       .then((res) => res.json())
       .then((data) => {
         setDebt(Number(data.total || 0));
+      });
+
+    fetch("/api/receivables")
+      .then((res) => res.json())
+      .then((data) => {
+        setReceivable(Number(data.total || 0));
       });
   }, []);
 
@@ -68,6 +75,8 @@ export default function Home() {
         <Card title="Expenses" value={expense} color="#ef4444" />
         <Card title="Savings" value={0} color="#3b82f6" />
         <Card title="Debt" value={debt} color="#60a5fa" />
+        <Card title="Receivable" value={receivable} color="#f59e0b" />
+        <ReportCard />
       </div>
 
       {/* TRANSACTIONS */}
@@ -128,6 +137,17 @@ function Card({
   );
 }
 
+function ReportCard() {
+  return (
+    <div style={card}>
+      <div style={{ color: "#a78bfa" }}>Monthly Report</div>
+      <div style={{ opacity: 0.5, marginTop: 5 }}>
+        Coming soon...
+      </div>
+    </div>
+  );
+}
+
 // =========================
 // STYLES
 // =========================
@@ -157,7 +177,7 @@ const label = {
 
 const grid = {
   display: "grid",
-  gridTemplateColumns: "1fr 1fr",
+  gridTemplateColumns: "repeat(2, 1fr)",
   gap: 10,
   marginTop: 20,
 };
