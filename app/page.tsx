@@ -18,7 +18,18 @@ export default function Home() {
   const [receivable, setReceivable] = useState(0);
   const [balance, setBalance] = useState(0);
 
-  useEffect(() => {
+  const [showModal, setShowModal] = useState(false);
+
+  // Form state
+  const [type, setType] = useState("INCOME");
+  const [amount, setAmount] = useState("");
+  const [account, setAccount] = useState("Cash");
+  const [note, setNote] = useState("");
+
+  // =========================
+  // FETCH ALL DATA
+  // =========================
+  const loadData = () => {
     fetch("/api/transactions")
       .then((res) => res.json())
       .then((data) => setTransactions(data.data || []));
@@ -34,6 +45,10 @@ export default function Home() {
     fetch("/api/balance")
       .then((res) => res.json())
       .then((data) => setBalance(Number(data.total || 0)));
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   // =========================
@@ -44,11 +59,34 @@ export default function Home() {
   let expense = 0;
 
   transactions.forEach((t) => {
-    const amount = Number(t.amount);
-
-    if (t.type === "INCOME") income += amount;
-    if (t.type === "EXPENSE") expense += amount;
+    const val = Number(t.amount);
+    if (t.type === "INCOME") income += val;
+    if (t.type === "EXPENSE") expense += val;
   });
+
+  // =========================
+  // SUBMIT
+  // =========================
+
+  const handleSubmit = async () => {
+    const body: any = {
+      type,
+      amount: Number(amount),
+      account,
+      date: new Date().toISOString(),
+      note,
+    };
+
+    await fetch("/api/transactions", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+
+    setShowModal(false);
+    setAmount("");
+    setNote("");
+    loadData();
+  };
 
   // =========================
   // UI
@@ -64,7 +102,7 @@ export default function Home() {
         <h1>{balance.toFixed(2)} Tk</h1>
       </div>
 
-      {/* SUMMARY */}
+      {/* CARDS */}
       <div style={grid}>
         <Card title="Income" value={income} color="#22c55e" />
         <Card title="Expenses" value={expense} color="#ef4444" />
@@ -77,15 +115,11 @@ export default function Home() {
       {/* TRANSACTIONS */}
       <div style={sectionHeader}>
         <h3>Recent Transactions</h3>
-        <span>{transactions.length} total</span>
       </div>
 
       {transactions.map((t) => {
         const amount = Number(t.amount);
 
-        // =========================
-        // FLOW-BASED SIGN LOGIC
-        // =========================
         const isPositive =
           t.type === "INCOME" ||
           t.type === "DEBT_TAKEN" ||
@@ -94,32 +128,66 @@ export default function Home() {
         const sign = isPositive ? "+" : "-";
         const color = isPositive ? "#22c55e" : "#ef4444";
 
-        // Flow text
-        const flow =
-          (t.from_account || "Outside") +
-          " → " +
-          (t.to_account || "Outside");
-
         return (
           <div key={t.id} style={transactionCard}>
             <div>
               <div style={txTitle}>
                 {t.note || t.type.replaceAll("_", " ")}
               </div>
-
-              <div style={txFlow}>{flow}</div>
-
               <div style={txDate}>
                 {new Date(t.date).toDateString()}
               </div>
             </div>
 
-            <div style={{ color, fontWeight: "bold" }}>
-              {sign} {amount.toFixed(2)} Tk
+            <div style={{ color }}>
+              {sign} {amount} Tk
             </div>
           </div>
         );
       })}
+
+      {/* FLOAT BUTTON */}
+      <button style={fab} onClick={() => setShowModal(true)}>
+        +
+      </button>
+
+      {/* MODAL */}
+      {showModal && (
+        <div style={modal}>
+          <div style={modalContent}>
+            <h3>Add Transaction</h3>
+
+            <select value={type} onChange={(e) => setType(e.target.value)}>
+              <option value="INCOME">Income</option>
+              <option value="EXPENSE">Expense</option>
+              <option value="DEBT_TAKEN">Borrow</option>
+              <option value="DEBT_REPAID">Repay</option>
+              <option value="RECEIVABLE_GIVEN">Give</option>
+              <option value="RECEIVABLE_RECEIVED">Receive</option>
+            </select>
+
+            <input
+              placeholder="Amount"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+
+            <select value={account} onChange={(e) => setAccount(e.target.value)}>
+              <option>Cash</option>
+              <option>Bank</option>
+            </select>
+
+            <input
+              placeholder="Note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+
+            <button onClick={handleSubmit}>Save</button>
+            <button onClick={() => setShowModal(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -128,15 +196,7 @@ export default function Home() {
 // COMPONENTS
 // =========================
 
-function Card({
-  title,
-  value,
-  color,
-}: {
-  title: string;
-  value: number;
-  color: string;
-}) {
+function Card({ title, value, color }: any) {
   return (
     <div style={card}>
       <div style={{ color }}>{title}</div>
@@ -149,9 +209,7 @@ function ReportCard() {
   return (
     <div style={card}>
       <div style={{ color: "#a78bfa" }}>Monthly Report</div>
-      <div style={{ opacity: 0.5, marginTop: 5 }}>
-        Coming soon...
-      </div>
+      <div style={{ opacity: 0.5 }}>Coming soon...</div>
     </div>
   );
 }
@@ -160,67 +218,47 @@ function ReportCard() {
 // STYLES
 // =========================
 
-const container = {
-  background: "#020617",
-  color: "white",
-  minHeight: "100vh",
+const container = { background: "#020617", color: "white", minHeight: "100vh", padding: 20 };
+const title = { color: "#22c55e" };
+const balanceCard = { background: "#0f172a", padding: 20, borderRadius: 12, marginTop: 20 };
+const label = { opacity: 0.6 };
+
+const grid = { display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10, marginTop: 20 };
+const card = { background: "#0f172a", padding: 15, borderRadius: 10 };
+
+const sectionHeader = { marginTop: 30 };
+const transactionCard = { background: "#0f172a", padding: 15, borderRadius: 10, marginTop: 10, display: "flex", justifyContent: "space-between" };
+const txTitle = { fontWeight: "bold" };
+const txDate = { opacity: 0.5 };
+
+const fab = {
+  position: "fixed",
+  bottom: 20,
+  right: 20,
+  width: 60,
+  height: 60,
+  borderRadius: "50%",
+  background: "#22c55e",
+  fontSize: 30,
+};
+
+const modal = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  background: "rgba(0,0,0,0.7)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+};
+
+const modalContent = {
+  background: "#111827",
   padding: 20,
-  fontFamily: "sans-serif",
-};
-
-const title = {
-  color: "#22c55e",
-};
-
-const balanceCard = {
-  background: "#0f172a",
-  padding: 20,
-  borderRadius: 12,
-  marginTop: 20,
-};
-
-const label = {
-  opacity: 0.6,
-};
-
-const grid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(2, 1fr)",
+  borderRadius: 10,
+  display: "flex",
+  flexDirection: "column",
   gap: 10,
-  marginTop: 20,
-};
-
-const card = {
-  background: "#0f172a",
-  padding: 15,
-  borderRadius: 10,
-};
-
-const sectionHeader = {
-  display: "flex",
-  justifyContent: "space-between",
-  marginTop: 30,
-};
-
-const transactionCard = {
-  background: "#0f172a",
-  padding: 15,
-  borderRadius: 10,
-  marginTop: 10,
-  display: "flex",
-  justifyContent: "space-between",
-};
-
-const txTitle = {
-  fontWeight: "bold",
-};
-
-const txFlow = {
-  opacity: 0.7,
-  fontSize: 12,
-};
-
-const txDate = {
-  opacity: 0.5,
-  fontSize: 11,
 };
