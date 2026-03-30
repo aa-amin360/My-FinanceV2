@@ -16,6 +16,7 @@ export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [debt, setDebt] = useState(0);
   const [receivable, setReceivable] = useState(0);
+  const [balance, setBalance] = useState(0);
 
   useEffect(() => {
     // Fetch transactions
@@ -37,6 +38,12 @@ export default function Home() {
       .then((data) => {
         setReceivable(Number(data.total || 0));
       });
+
+    fetch("/api/balance")
+      .then((res) => res.json())
+      .then((data) => {
+        setBalance(Number(data.total || 0));
+      });
   }, []);
 
   // =========================
@@ -52,8 +59,6 @@ export default function Home() {
     if (t.type === "INCOME") income += amount;
     if (t.type === "EXPENSE") expense += amount;
   });
-
-  const balance = income - expense;
 
   // =========================
   // UI
