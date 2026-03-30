@@ -14,14 +14,12 @@ type Transaction = {
 
 export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/transactions")
       .then((res) => res.json())
       .then((data) => {
         setTransactions(data.data || []);
-        setLoading(false);
       });
   }, []);
 
@@ -46,73 +44,41 @@ export default function Home() {
   // =========================
 
   return (
-    <div
-      style={{
-        background: "#0b1220",
-        color: "white",
-        minHeight: "100vh",
-        padding: 20,
-        fontFamily: "sans-serif",
-      }}
-    >
-      <h2 style={{ color: "#22c55e" }}>My Finance</h2>
+    <div style={container}>
+      <h2 style={title}>My Finance</h2>
 
       {/* BALANCE */}
-      <div
-        style={{
-          background: "#111827",
-          padding: 20,
-          borderRadius: 12,
-          marginTop: 20,
-        }}
-      >
-        <div style={{ opacity: 0.7 }}>Current Balance</div>
+      <div style={balanceCard}>
+        <div style={label}>Current Balance</div>
         <h1>{balance.toFixed(2)} Tk</h1>
       </div>
 
-      {/* SUMMARY */}
-      <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-        <div style={cardStyle}>
-          <div style={{ color: "#22c55e" }}>Income</div>
-          <div>{income.toFixed(2)} Tk</div>
-        </div>
-
-        <div style={cardStyle}>
-          <div style={{ color: "#ef4444" }}>Expense</div>
-          <div>{expense.toFixed(2)} Tk</div>
-        </div>
+      {/* SUMMARY GRID */}
+      <div style={grid}>
+        <Card title="Income" value={income} color="#22c55e" />
+        <Card title="Expenses" value={expense} color="#ef4444" />
+        <Card title="Savings" value={0} color="#3b82f6" />
+        <Card title="Debt" value={0} color="#60a5fa" />
       </div>
 
       {/* TRANSACTIONS */}
-      <h3 style={{ marginTop: 30 }}>Recent Transactions</h3>
-
-      {loading && <p>Loading...</p>}
+      <div style={sectionHeader}>
+        <h3>Recent Transactions</h3>
+        <span>{transactions.length} total</span>
+      </div>
 
       {transactions.map((t) => {
         const amount = Number(t.amount);
         const isIncome = t.type === "INCOME";
 
         return (
-          <div
-            key={t.id}
-            style={{
-              background: "#111827",
-              padding: 15,
-              borderRadius: 10,
-              marginTop: 10,
-              display: "flex",
-              justifyContent: "space-between",
-            }}
-          >
+          <div key={t.id} style={transactionCard}>
             <div>
-              <div style={{ fontWeight: "bold" }}>
-                {t.type.replace("_", " ")}
+              <div style={txTitle}>
+                {t.note || t.type.replace("_", " ")}
               </div>
-              <div style={{ opacity: 0.6, fontSize: 12 }}>
+              <div style={txDate}>
                 {new Date(t.date).toDateString()}
-              </div>
-              <div style={{ opacity: 0.6 }}>
-                {t.from_account} → {t.to_account}
               </div>
             </div>
 
@@ -122,7 +88,8 @@ export default function Home() {
                 fontWeight: "bold",
               }}
             >
-              {isIncome ? "+" : "-"} {amount.toFixed(2)}
+              {isIncome ? "+" : "-"}
+              {amount.toFixed(2)} Tk
             </div>
           </div>
         );
@@ -132,12 +99,86 @@ export default function Home() {
 }
 
 // =========================
-// STYLE
+// COMPONENTS
 // =========================
 
-const cardStyle = {
-  flex: 1,
-  background: "#111827",
+function Card({
+  title,
+  value,
+  color,
+}: {
+  title: string;
+  value: number;
+  color: string;
+}) {
+  return (
+    <div style={card}>
+      <div style={{ color }}>{title}</div>
+      <div>{value.toFixed(2)} Tk</div>
+    </div>
+  );
+}
+
+// =========================
+// STYLES
+// =========================
+
+const container = {
+  background: "#020617",
+  color: "white",
+  minHeight: "100vh",
+  padding: 20,
+  fontFamily: "sans-serif",
+};
+
+const title = {
+  color: "#22c55e",
+};
+
+const balanceCard = {
+  background: "#0f172a",
+  padding: 20,
+  borderRadius: 12,
+  marginTop: 20,
+};
+
+const label = {
+  opacity: 0.6,
+};
+
+const grid = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: 10,
+  marginTop: 20,
+};
+
+const card = {
+  background: "#0f172a",
   padding: 15,
   borderRadius: 10,
+};
+
+const sectionHeader = {
+  display: "flex",
+  justifyContent: "space-between",
+  marginTop: 30,
+};
+
+const transactionCard = {
+  background: "#0f172a",
+  padding: 15,
+  borderRadius: 10,
+  marginTop: 10,
+  display: "flex",
+  justifyContent: "space-between",
+};
+
+const txTitle = {
+  fontWeight: "bold",
+};
+
+const txDate = {
+  opacity: 0.6,
+  fontSize: 12,
 };
