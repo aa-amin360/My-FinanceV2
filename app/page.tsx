@@ -14,12 +14,21 @@ type Transaction = {
 
 export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [debt, setDebt] = useState(0);
 
   useEffect(() => {
+    // Fetch transactions
     fetch("/api/transactions")
       .then((res) => res.json())
       .then((data) => {
         setTransactions(data.data || []);
+      });
+
+    // Fetch debt
+    fetch("/api/debts")
+      .then((res) => res.json())
+      .then((data) => {
+        setDebt(Number(data.total || 0));
       });
   }, []);
 
@@ -58,7 +67,7 @@ export default function Home() {
         <Card title="Income" value={income} color="#22c55e" />
         <Card title="Expenses" value={expense} color="#ef4444" />
         <Card title="Savings" value={0} color="#3b82f6" />
-        <Card title="Debt" value={0} color="#60a5fa" />
+        <Card title="Debt" value={debt} color="#60a5fa" />
       </div>
 
       {/* TRANSACTIONS */}
