@@ -7,15 +7,27 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-// Helper: get account ID by name
+// =========================
+// HELPERS
+// =========================
+
+// Get account ID by name
 async function getAccountId(client: any, name: string) {
   const res = await client.query(
     `SELECT id FROM accounts WHERE name = $1 LIMIT 1`,
     [name]
   );
-  if (res.rows.length === 0) throw new Error(`Account not found: ${name}`);
+
+  if (res.rows.length === 0) {
+    throw new Error(`Account not found: ${name}`);
+  }
+
   return res.rows[0].id;
 }
+
+// =========================
+// POST → CREATE TRANSACTION
+// =========================
 
 export async function POST(req: Request) {
   const client = await pool.connect();
@@ -31,7 +43,7 @@ export async function POST(req: Request) {
       entity_id,
       date,
       note,
-      direction, // for savings
+      direction,
     } = body;
 
     // =========================
@@ -52,7 +64,7 @@ export async function POST(req: Request) {
     }
 
     // =========================
-    // GET ACCOUNT IDs
+    // ACCOUNT IDS
     // =========================
     const accountId = await getAccountId(client, account);
     const savingsId = await getAccountId(client, "Savings");
@@ -63,7 +75,7 @@ export async function POST(req: Request) {
     let to_account: string | null = null;
 
     // =========================
-    // FLOW MAPPING
+    // FLOW LOGIC
     // =========================
     switch (type) {
       case "INCOME":
@@ -112,7 +124,7 @@ export async function POST(req: Request) {
       case "DEBT_REPAID":
         if (!entity_id) {
           return NextResponse.json(
-            { error: "Entity required for debt repayment" },
+            { error: "Entity required for repayment" },
             { status: 400 }
           );
         }
@@ -170,7 +182,7 @@ export async function POST(req: Request) {
     );
 
     // =========================
-    // UPDATE DEBT
+    // DEBT TRACKING
     // =========================
     if (type === "DEBT_TAKEN") {
       await client.query(
@@ -194,7 +206,7 @@ export async function POST(req: Request) {
     }
 
     // =========================
-    // UPDATE RECEIVABLE
+    // RECEIVABLE TRACKING
     // =========================
     if (type === "RECEIVABLE_GIVEN") {
       await client.query(
@@ -217,9 +229,13 @@ export async function POST(req: Request) {
       );
     }
 
-    return NextResponse.json({ success: true, data: result.rows[0] });
+    return NextResponse.json({
+      success: true,
+      data: result.rows[0],
+    });
   } catch (err: any) {
     console.error(err);
+
     return NextResponse.json(
       { error: err.message || "Something went wrong" },
       { status: 500 }
@@ -229,3 +245,44 @@ export async function POST(req: Request) {
   }
 }
 
+// =========================
+// GET → TRANSACTION HISTORY
+// =========================
+
+export async function GET() {
+  const client = await pool.connect();
+
+  try {
+    const result = await client.query(`
+      SELECT 
+        t.id,
+        t.type,
+        t.amount,
+        t.date,
+        t.note,
+
+        fa.name AS from_account,
+        ta.name AS to_account
+
+      FROM transactions t
+      LEFT JOIN accounts fa ON t.from_account = fa.id
+      LEFT JOIN accounts ta ON t.to_account = ta.id
+
+      ORDER BY t.date DESC, t.created_at DESC
+    `);
+
+    return NextResponse.json({
+      success: true,
+      data: result.rows,
+    });
+  } catch (err: any) {
+    console.error(err);
+
+    return NextResponse.json(
+      { error: err.message || "Failed to fetch transactions" },
+      { status: 500 }
+    );
+  } finally {
+    client.release();
+  }
+}
