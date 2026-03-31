@@ -18,9 +18,9 @@ export async function GET() {
         LOWER(ta.name) AS to_account
       FROM transactions t
       LEFT JOIN accounts fa 
-        ON t.from_account_account_id = fa.id
+        ON t.from_account = fa.id
       LEFT JOIN accounts ta 
-        ON t.to_account_account_id = ta.id
+        ON t.to_account = ta.id
     `);
 
     let balance = 0;
@@ -31,12 +31,12 @@ export async function GET() {
       const from = row.from_account?.trim();
       const to = row.to_account?.trim();
 
-      // INCOMING (money enters your wallet)
+      // MONEY ENTERS CASH/BANK
       if (to === "cash" || to === "bank") {
         balance += amount;
       }
 
-      // OUTGOING (money leaves your wallet)
+      // MONEY LEAVES CASH/BANK
       if (from === "cash" || from === "bank") {
         balance -= amount;
       }
