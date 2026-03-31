@@ -26,7 +26,7 @@ async function getAccountId(client: any, name: string) {
 }
 
 // Get or create entity ID
-async function getEntityId(client: any, name: string) {
+async function getEntityId(client: any, name: string, type: string) {
   const res = await client.query(
     `SELECT id FROM entities WHERE name = $1 LIMIT 1`,
     [name]
@@ -37,8 +37,8 @@ async function getEntityId(client: any, name: string) {
   }
 
   const insert = await client.query(
-    `INSERT INTO entities (name) VALUES ($1) RETURNING id`,
-    [name]
+    `INSERT INTO entities (name, type) VALUES ($1, $2) RETURNING id`,
+    [name, type]
   );
 
   return insert.rows[0].id;
