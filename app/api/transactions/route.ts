@@ -25,7 +25,7 @@ async function getAccountId(client: any, name: string) {
   return res.rows[0].id;
 }
 
-// Get or create entity ID
+// Get or create entity ID (FIXED 🔥)
 async function getEntityId(client: any, name: string, type: string) {
   const res = await client.query(
     `SELECT id FROM entities WHERE name = $1 LIMIT 1`,
@@ -37,7 +37,9 @@ async function getEntityId(client: any, name: string, type: string) {
   }
 
   const insert = await client.query(
-    `INSERT INTO entities (name, type) VALUES ($1, $2) RETURNING id`,
+    `INSERT INTO entities (name, type)
+     VALUES ($1, $2)
+     RETURNING id`,
     [name, type]
   );
 
@@ -45,7 +47,7 @@ async function getEntityId(client: any, name: string, type: string) {
 }
 
 // =========================
-// POST
+// POST → CREATE TRANSACTION
 // =========================
 
 export async function POST(req: Request) {
@@ -59,7 +61,7 @@ export async function POST(req: Request) {
       amount,
       account,
       category_id,
-      entity, // 👈 coming from UI
+      entity,
       date,
       note,
       direction,
@@ -91,70 +93,74 @@ export async function POST(req: Request) {
     const receivableId = await getAccountId(client, "Receivable");
 
     // =========================
-    // ENTITY FIX 🔥
+    // ENTITY HANDLING
     // =========================
     let entity_id: string | null = null;
 
     if (entity) {
-      entity_id = await getEntityId(client, entity);
+      if (type === "DEBT_TAKEN" || type === "DEBT_REPAID") {
+        entity_id = await getEntityId(client, entity, "LIABILITY");
+      } else if (
+        type === "RECEIVABLE_GIVEN" ||
+        type === "RECEIVABLE_RECEIVED"
+      ) {
+        entity_id = await getEntityId(client, entity, "ASSET");
+      }
     }
 
     let from_account: string | null = null;
     let to_account: string | null = null;
 
     // =========================
-    // FLOW LOGIC
+    // FLOW LOGIC (CORE ENGINE)
     // =========================
-    if (type === "INCOME") {
-      to_account = accountId;
-    }
-
-    else if (type === "EXPENSE") {
-      from_account = accountId;
-    }
-
-    else if (type === "TRANSFER") {
-      if (!direction) throw new Error("Direction required");
-
-      if (direction === "TO_SAVINGS") {
-        from_account = accountId;
-        to_account = savingsId;
-      } else if (direction === "FROM_SAVINGS") {
-        from_account = savingsId;
+    switch (type) {
+      case "INCOME":
         to_account = accountId;
-      }
-    }
+        break;
 
-    else if (type === "DEBT_TAKEN") {
-      if (!entity_id) throw new Error("Entity required");
+      case "EXPENSE":
+        from_account = accountId;
+        break;
 
-      from_account = debtId;
-      to_account = accountId;
-    }
+      case "TRANSFER":
+        if (!direction) throw new Error("Direction required");
 
-    else if (type === "DEBT_REPAID") {
-      if (!entity_id) throw new Error("Entity required");
+        if (direction === "TO_SAVINGS") {
+          from_account = accountId;
+          to_account = savingsId;
+        } else if (direction === "FROM_SAVINGS") {
+          from_account = savingsId;
+          to_account = accountId;
+        }
+        break;
 
-      from_account = accountId;
-      to_account = debtId;
-    }
+      case "DEBT_TAKEN":
+        if (!entity_id) throw new Error("Entity required");
+        from_account = debtId;
+        to_account = accountId;
+        break;
 
-    else if (type === "RECEIVABLE_GIVEN") {
-      if (!entity_id) throw new Error("Entity required");
+      case "DEBT_REPAID":
+        if (!entity_id) throw new Error("Entity required");
+        from_account = accountId;
+        to_account = debtId;
+        break;
 
-      from_account = accountId;
-      to_account = receivableId;
-    }
+      case "RECEIVABLE_GIVEN":
+        if (!entity_id) throw new Error("Entity required");
+        from_account = accountId;
+        to_account = receivableId;
+        break;
 
-    else if (type === "RECEIVABLE_RECEIVED") {
-      if (!entity_id) throw new Error("Entity required");
+      case "RECEIVABLE_RECEIVED":
+        if (!entity_id) throw new Error("Entity required");
+        from_account = receivableId;
+        to_account = accountId;
+        break;
 
-      from_account = receivableId;
-      to_account = accountId;
-    }
-
-    else {
-      throw new Error("Invalid transaction type");
+      default:
+        throw new Error("Invalid transaction type");
     }
 
     // =========================
@@ -178,18 +184,29 @@ export async function POST(req: Request) {
     );
 
     // =========================
-    // DEBT UPDATE
+    // DEBT UPDATE (SAFE)
     // =========================
     if (type === "DEBT_TAKEN") {
-      await client.query(
-        `INSERT INTO debts (entity_id, total_amount, remaining_amount)
-         VALUES ($1, $2, $2)
-         ON CONFLICT (entity_id)
-         DO UPDATE SET
-           total_amount = debts.total_amount + $2,
-           remaining_amount = debts.remaining_amount + $2`,
-        [entity_id, amount]
+      const existing = await client.query(
+        `SELECT id FROM debts WHERE entity_id = $1 LIMIT 1`,
+        [entity_id]
       );
+
+      if (existing.rows.length > 0) {
+        await client.query(
+          `UPDATE debts
+           SET total_amount = total_amount + $1,
+               remaining_amount = remaining_amount + $1
+           WHERE entity_id = $2`,
+          [amount, entity_id]
+        );
+      } else {
+        await client.query(
+          `INSERT INTO debts (entity_id, total_amount, remaining_amount)
+           VALUES ($1, $2, $2)`,
+          [entity_id, amount]
+        );
+      }
     }
 
     if (type === "DEBT_REPAID") {
@@ -202,18 +219,29 @@ export async function POST(req: Request) {
     }
 
     // =========================
-    // RECEIVABLE UPDATE
+    // RECEIVABLE UPDATE (SAFE)
     // =========================
     if (type === "RECEIVABLE_GIVEN") {
-      await client.query(
-        `INSERT INTO receivables (entity_id, total_amount, remaining_amount)
-         VALUES ($1, $2, $2)
-         ON CONFLICT (entity_id)
-         DO UPDATE SET
-           total_amount = receivables.total_amount + $2,
-           remaining_amount = receivables.remaining_amount + $2`,
-        [entity_id, amount]
+      const existing = await client.query(
+        `SELECT id FROM receivables WHERE entity_id = $1 LIMIT 1`,
+        [entity_id]
       );
+
+      if (existing.rows.length > 0) {
+        await client.query(
+          `UPDATE receivables
+           SET total_amount = total_amount + $1,
+               remaining_amount = remaining_amount + $1
+           WHERE entity_id = $2`,
+          [amount, entity_id]
+        );
+      } else {
+        await client.query(
+          `INSERT INTO receivables (entity_id, total_amount, remaining_amount)
+           VALUES ($1, $2, $2)`,
+          [entity_id, amount]
+        );
+      }
     }
 
     if (type === "RECEIVABLE_RECEIVED") {
@@ -231,10 +259,10 @@ export async function POST(req: Request) {
     });
 
   } catch (err: any) {
-    console.error(err);
+    console.error("TRANSACTION ERROR:", err);
 
     return NextResponse.json(
-      { error: err.message || "Error" },
+      { error: err.message || "Server error" },
       { status: 500 }
     );
   } finally {
@@ -243,7 +271,7 @@ export async function POST(req: Request) {
 }
 
 // =========================
-// GET
+// GET → TRANSACTIONS
 // =========================
 
 export async function GET() {
