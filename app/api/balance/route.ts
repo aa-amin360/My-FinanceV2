@@ -17,8 +17,8 @@ export async function GET() {
         LOWER(fa.name) AS from_account,
         LOWER(ta.name) AS to_account
       FROM transactions t
-      LEFT JOIN accounts fa ON t.from_account_id = fa.id
-      LEFT JOIN accounts ta ON t.to_account_id = ta.id
+      LEFT JOIN accounts fa ON t.from_account_account_id = fa.id
+      LEFT JOIN accounts ta ON t.to_account_account_id = ta.id
     `);
 
     let balance = 0;
