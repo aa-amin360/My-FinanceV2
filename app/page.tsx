@@ -127,7 +127,9 @@ export default function Home() {
         <Card title="Income" value={income} color="#22c55e" />
         <Card title="Expenses" value={expense} color="#ef4444" />
         <Card title="Savings" value={0} color="#3b82f6" />
-        <Card title="Debt" value={debt} color="#60a5fa" />
+        <a href="/debts" style={{ textDecoration: "none" }}>
+          <Card title="Debt" value={debt} color="#60a5fa" />
+        </a>
         <Card title="Receivable" value={receivable} color="#f59e0b" />
         <ReportCard />
       </div>
