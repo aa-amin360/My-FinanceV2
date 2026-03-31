@@ -12,18 +12,22 @@ export async function GET() {
 
   try {
     const result = await client.query(`
-      SELECT 
-        SUM(remaining_amount) AS total_debt
+      SELECT COALESCE(SUM(remaining_amount), 0) AS total
       FROM debts
     `);
 
+    const total = Number(result.rows[0]?.total) || 0;
+
     return NextResponse.json({
       success: true,
-      total: Number(result.rows[0].total_debt || 0),
+      total,
     });
+
   } catch (err: any) {
+    console.error("DEBT ERROR:", err);
+
     return NextResponse.json(
-      { error: err.message },
+      { error: "Failed to fetch debt" },
       { status: 500 }
     );
   } finally {
