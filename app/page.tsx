@@ -130,7 +130,9 @@ export default function Home() {
         <a href="/debts" style={{ textDecoration: "none" }}>
           <Card title="Debt" value={debt} color="#60a5fa" />
         </a>
-        <Card title="Receivable" value={receivable} color="#f59e0b" />
+        <a href="/receivables" style={{ textDecoration: "none" }}>
+          <Card title="Receivable" value={receivable} color="#f59e0b" />
+        </a>
         <ReportCard />
       </div>
 
