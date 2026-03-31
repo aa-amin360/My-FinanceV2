@@ -30,9 +30,7 @@ async function getEntityId(client: any, name: string, type: string) {
     [name]
   );
 
-  if (res.rows.length > 0) {
-    return res.rows[0].id;
-  }
+  if (res.rows.length > 0) return res.rows[0].id;
 
   const insert = await client.query(
     `INSERT INTO entities (name, type)
@@ -45,13 +43,15 @@ async function getEntityId(client: any, name: string, type: string) {
 }
 
 // =========================
-// POST → CREATE TRANSACTION
+// POST
 // =========================
 
 export async function POST(req: Request) {
   const client = await pool.connect();
 
   try {
+    await client.query("BEGIN"); // 🔥 IMPORTANT
+
     const body = await req.json();
 
     const {
@@ -66,10 +66,7 @@ export async function POST(req: Request) {
     } = body;
 
     if (!type || !amount || !account || !date) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      throw new Error("Missing required fields");
     }
 
     const accountId = await getAccountId(client, account);
@@ -80,22 +77,15 @@ export async function POST(req: Request) {
     let entity_id: string | null = null;
 
     if (entity) {
-      if (type === "DEBT_TAKEN" || type === "DEBT_REPAID") {
+      if (type.includes("DEBT")) {
         entity_id = await getEntityId(client, entity, "LIABILITY");
-      } else if (
-        type === "RECEIVABLE_GIVEN" ||
-        type === "RECEIVABLE_RECEIVED"
-      ) {
+      } else if (type.includes("RECEIVABLE")) {
         entity_id = await getEntityId(client, entity, "ASSET");
       }
     }
 
     let from_account: string | null = null;
     let to_account: string | null = null;
-
-    // =========================
-    // FLOW LOGIC
-    // =========================
 
     switch (type) {
       case "INCOME":
@@ -107,43 +97,48 @@ export async function POST(req: Request) {
         break;
 
       case "TRANSFER":
+        if (!direction) throw new Error("Direction required");
+
         if (direction === "TO_SAVINGS") {
           from_account = accountId;
           to_account = savingsId;
-        } else if (direction === "FROM_SAVINGS") {
+        } else {
           from_account = savingsId;
           to_account = accountId;
         }
         break;
 
       case "DEBT_TAKEN":
+        if (!entity_id) throw new Error("Entity required");
         from_account = debtId;
         to_account = accountId;
         break;
 
       case "DEBT_REPAID":
+        if (!entity_id) throw new Error("Entity required");
         from_account = accountId;
         to_account = debtId;
         break;
 
       case "RECEIVABLE_GIVEN":
+        if (!entity_id) throw new Error("Entity required");
         from_account = accountId;
         to_account = receivableId;
         break;
 
       case "RECEIVABLE_RECEIVED":
+        if (!entity_id) throw new Error("Entity required");
         from_account = receivableId;
         to_account = accountId;
         break;
 
       default:
-        throw new Error("Invalid transaction type");
+        throw new Error("Invalid type");
     }
 
     // =========================
     // INSERT TRANSACTION
     // =========================
-
     const result = await client.query(
       `INSERT INTO transactions 
       (type, amount, from_account, to_account, category_id, entity_id, date, note)
@@ -162,62 +157,54 @@ export async function POST(req: Request) {
     );
 
     // =========================
-    // ✅ FIXED DEBT LOGIC
+    // DEBT
     // =========================
-
     if (type === "DEBT_TAKEN") {
       await client.query(
-        `
-        INSERT INTO debts (entity_id, total_amount, remaining_amount)
-        VALUES ($1, $2, $2)
-        ON CONFLICT (entity_id)
-        DO UPDATE SET
-          total_amount = debts.total_amount + $2,
-          remaining_amount = debts.remaining_amount + $2
-        `,
+        `INSERT INTO debts (entity_id, total_amount, remaining_amount)
+         VALUES ($1,$2,$2)
+         ON CONFLICT (entity_id)
+         DO UPDATE SET
+           total_amount = debts.total_amount + $2,
+           remaining_amount = debts.remaining_amount + $2`,
         [entity_id, amount]
       );
     }
 
     if (type === "DEBT_REPAID") {
       await client.query(
-        `
-        UPDATE debts
-        SET remaining_amount = remaining_amount - $1
-        WHERE entity_id = $2
-        `,
+        `UPDATE debts
+         SET remaining_amount = remaining_amount - $1
+         WHERE entity_id = $2`,
         [amount, entity_id]
       );
     }
 
     // =========================
-    // ✅ FIXED RECEIVABLE LOGIC
+    // RECEIVABLE
     // =========================
-
     if (type === "RECEIVABLE_GIVEN") {
       await client.query(
-        `
-        INSERT INTO receivables (entity_id, total_amount, remaining_amount)
-        VALUES ($1, $2, $2)
-        ON CONFLICT (entity_id)
-        DO UPDATE SET
-          total_amount = receivables.total_amount + $2,
-          remaining_amount = receivables.remaining_amount + $2
-        `,
+        `INSERT INTO receivables (entity_id, total_amount, remaining_amount)
+         VALUES ($1,$2,$2)
+         ON CONFLICT (entity_id)
+         DO UPDATE SET
+           total_amount = receivables.total_amount + $2,
+           remaining_amount = receivables.remaining_amount + $2`,
         [entity_id, amount]
       );
     }
 
     if (type === "RECEIVABLE_RECEIVED") {
       await client.query(
-        `
-        UPDATE receivables
-        SET remaining_amount = remaining_amount - $1
-        WHERE entity_id = $2
-        `,
+        `UPDATE receivables
+         SET remaining_amount = remaining_amount - $1
+         WHERE entity_id = $2`,
         [amount, entity_id]
       );
     }
+
+    await client.query("COMMIT"); // 🔥 IMPORTANT
 
     return NextResponse.json({
       success: true,
@@ -225,6 +212,8 @@ export async function POST(req: Request) {
     });
 
   } catch (err: any) {
+    await client.query("ROLLBACK"); // 🔥 IMPORTANT
+
     console.error("TRANSACTION ERROR:", err);
 
     return NextResponse.json(
@@ -237,7 +226,7 @@ export async function POST(req: Request) {
 }
 
 // =========================
-// GET → FETCH TRANSACTIONS
+// GET
 // =========================
 
 export async function GET() {
@@ -265,10 +254,7 @@ export async function GET() {
     });
 
   } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: err.message });
   } finally {
     client.release();
   }
