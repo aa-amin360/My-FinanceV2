@@ -17,8 +17,10 @@ export async function GET() {
         LOWER(fa.name) AS from_account,
         LOWER(ta.name) AS to_account
       FROM transactions t
-      LEFT JOIN accounts fa ON t.from_account_account_id = fa.id
-      LEFT JOIN accounts ta ON t.to_account_account_id = ta.id
+      LEFT JOIN accounts fa 
+        ON t.from_account_account_id = fa.id
+      LEFT JOIN accounts ta 
+        ON t.to_account_account_id = ta.id
     `);
 
     let balance = 0;
@@ -29,12 +31,12 @@ export async function GET() {
       const from = row.from_account?.trim();
       const to = row.to_account?.trim();
 
-      // INCOMING
+      // INCOMING (money enters your wallet)
       if (to === "cash" || to === "bank") {
         balance += amount;
       }
 
-      // OUTGOING
+      // OUTGOING (money leaves your wallet)
       if (from === "cash" || from === "bank") {
         balance -= amount;
       }
@@ -47,7 +49,10 @@ export async function GET() {
 
   } catch (err) {
     console.error(err);
-    return NextResponse.json({ error: "Balance error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Balance error" },
+      { status: 500 }
+    );
   } finally {
     client.release();
   }
