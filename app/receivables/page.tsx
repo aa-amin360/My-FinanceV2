@@ -94,3 +94,42 @@ export default function ReceivablePage() {
     </div>
   );
 }
+
+
+const container = {
+  background: "#020617",
+  color: "white",
+  minHeight: "100vh",
+  padding: 20,
+};
+
+const title = {
+  color: "#22c55e",
+};
+
+const card = {
+  background: "#0f172a",
+  padding: 15,
+  borderRadius: 10,
+  marginTop: 20,
+};
+
+const row = {
+  display: "flex",
+  justifyContent: "space-between",
+  marginTop: 5,
+};
+
+const tx = {
+  display: "flex",
+  justifyContent: "space-between",
+  marginTop: 10,
+  padding: 10,
+  background: "#020617",
+  borderRadius: 8,
+};
+
+const date = {
+  fontSize: 12,
+  opacity: 0.6,
+};
