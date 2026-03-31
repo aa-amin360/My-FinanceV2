@@ -241,6 +241,7 @@ export async function GET() {
         t.amount,
         t.date,
         t.note,
+        t.entity_id, -- ✅ ADD THIS
         fa.name AS from_account,
         ta.name AS to_account
       FROM transactions t
