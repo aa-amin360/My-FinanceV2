@@ -47,10 +47,10 @@ export async function GET() {
       total: balance,
     });
 
-  } catch (err) {
-    console.error(err);
+  } catch (err: any) {
+    console.error("BALANCE ERROR:", err);
     return NextResponse.json(
-      { error: "Balance error" },
+      { error: err.message },
       { status: 500 }
     );
   } finally {
