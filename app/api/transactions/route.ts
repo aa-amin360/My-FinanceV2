@@ -25,8 +25,27 @@ async function getAccountId(client: any, name: string) {
   return res.rows[0].id;
 }
 
+// Get or create entity ID
+async function getEntityId(client: any, name: string) {
+  const res = await client.query(
+    `SELECT id FROM entities WHERE name = $1 LIMIT 1`,
+    [name]
+  );
+
+  if (res.rows.length > 0) {
+    return res.rows[0].id;
+  }
+
+  const insert = await client.query(
+    `INSERT INTO entities (name) VALUES ($1) RETURNING id`,
+    [name]
+  );
+
+  return insert.rows[0].id;
+}
+
 // =========================
-// POST → CREATE TRANSACTION
+// POST
 // =========================
 
 export async function POST(req: Request) {
@@ -40,7 +59,7 @@ export async function POST(req: Request) {
       amount,
       account,
       category_id,
-      entity_id,
+      entity, // 👈 coming from UI
       date,
       note,
       direction,
@@ -56,7 +75,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (amount <= 0) {
+    if (Number(amount) <= 0) {
       return NextResponse.json(
         { error: "Amount must be positive" },
         { status: 400 }
@@ -71,94 +90,71 @@ export async function POST(req: Request) {
     const debtId = await getAccountId(client, "Debt");
     const receivableId = await getAccountId(client, "Receivable");
 
+    // =========================
+    // ENTITY FIX 🔥
+    // =========================
+    let entity_id: string | null = null;
+
+    if (entity) {
+      entity_id = await getEntityId(client, entity);
+    }
+
     let from_account: string | null = null;
     let to_account: string | null = null;
 
     // =========================
     // FLOW LOGIC
     // =========================
-    switch (type) {
-      case "INCOME":
-        from_account = null;
-        to_account = accountId;
-        break;
+    if (type === "INCOME") {
+      to_account = accountId;
+    }
 
-      case "EXPENSE":
+    else if (type === "EXPENSE") {
+      from_account = accountId;
+    }
+
+    else if (type === "TRANSFER") {
+      if (!direction) throw new Error("Direction required");
+
+      if (direction === "TO_SAVINGS") {
         from_account = accountId;
-        to_account = null;
-        break;
-
-      case "TRANSFER":
-        if (!direction) {
-          return NextResponse.json(
-            { error: "Direction required for transfer" },
-            { status: 400 }
-          );
-        }
-
-        if (direction === "TO_SAVINGS") {
-          from_account = accountId;
-          to_account = savingsId;
-        } else if (direction === "FROM_SAVINGS") {
-          from_account = savingsId;
-          to_account = accountId;
-        } else {
-          return NextResponse.json(
-            { error: "Invalid transfer direction" },
-            { status: 400 }
-          );
-        }
-        break;
-
-      case "DEBT_TAKEN":
-        if (!entity_id) {
-          return NextResponse.json(
-            { error: "Entity required for debt" },
-            { status: 400 }
-          );
-        }
-        from_account = debtId;
+        to_account = savingsId;
+      } else if (direction === "FROM_SAVINGS") {
+        from_account = savingsId;
         to_account = accountId;
-        break;
+      }
+    }
 
-      case "DEBT_REPAID":
-        if (!entity_id) {
-          return NextResponse.json(
-            { error: "Entity required for repayment" },
-            { status: 400 }
-          );
-        }
-        from_account = accountId;
-        to_account = debtId;
-        break;
+    else if (type === "DEBT_TAKEN") {
+      if (!entity_id) throw new Error("Entity required");
 
-      case "RECEIVABLE_GIVEN":
-        if (!entity_id) {
-          return NextResponse.json(
-            { error: "Entity required" },
-            { status: 400 }
-          );
-        }
-        from_account = accountId;
-        to_account = receivableId;
-        break;
+      from_account = debtId;
+      to_account = accountId;
+    }
 
-      case "RECEIVABLE_RECEIVED":
-        if (!entity_id) {
-          return NextResponse.json(
-            { error: "Entity required" },
-            { status: 400 }
-          );
-        }
-        from_account = receivableId;
-        to_account = accountId;
-        break;
+    else if (type === "DEBT_REPAID") {
+      if (!entity_id) throw new Error("Entity required");
 
-      default:
-        return NextResponse.json(
-          { error: "Invalid transaction type" },
-          { status: 400 }
-        );
+      from_account = accountId;
+      to_account = debtId;
+    }
+
+    else if (type === "RECEIVABLE_GIVEN") {
+      if (!entity_id) throw new Error("Entity required");
+
+      from_account = accountId;
+      to_account = receivableId;
+    }
+
+    else if (type === "RECEIVABLE_RECEIVED") {
+      if (!entity_id) throw new Error("Entity required");
+
+      from_account = receivableId;
+      to_account = accountId;
+    }
+
+    else {
+      throw new Error("Invalid transaction type");
     }
 
     // =========================
@@ -175,14 +171,14 @@ export async function POST(req: Request) {
         from_account,
         to_account,
         category_id || null,
-        entity_id || null,
+        entity_id,
         date,
         note || null,
       ]
     );
 
     // =========================
-    // DEBT TRACKING
+    // DEBT UPDATE
     // =========================
     if (type === "DEBT_TAKEN") {
       await client.query(
@@ -206,7 +202,7 @@ export async function POST(req: Request) {
     }
 
     // =========================
-    // RECEIVABLE TRACKING
+    // RECEIVABLE UPDATE
     // =========================
     if (type === "RECEIVABLE_GIVEN") {
       await client.query(
@@ -233,11 +229,12 @@ export async function POST(req: Request) {
       success: true,
       data: result.rows[0],
     });
+
   } catch (err: any) {
     console.error(err);
 
     return NextResponse.json(
-      { error: err.message || "Something went wrong" },
+      { error: err.message || "Error" },
       { status: 500 }
     );
   } finally {
@@ -246,7 +243,7 @@ export async function POST(req: Request) {
 }
 
 // =========================
-// GET → TRANSACTION HISTORY
+// GET
 // =========================
 
 export async function GET() {
@@ -260,14 +257,11 @@ export async function GET() {
         t.amount,
         t.date,
         t.note,
-
         fa.name AS from_account,
         ta.name AS to_account
-
       FROM transactions t
       LEFT JOIN accounts fa ON t.from_account = fa.id
       LEFT JOIN accounts ta ON t.to_account = ta.id
-
       ORDER BY t.date DESC, t.created_at DESC
     `);
 
@@ -275,11 +269,10 @@ export async function GET() {
       success: true,
       data: result.rows,
     });
-  } catch (err: any) {
-    console.error(err);
 
+  } catch (err: any) {
     return NextResponse.json(
-      { error: err.message || "Failed to fetch transactions" },
+      { error: err.message },
       { status: 500 }
     );
   } finally {
