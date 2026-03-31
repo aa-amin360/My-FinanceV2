@@ -38,7 +38,9 @@ export default function DebtPage() {
 
       {debts.map((d) => {
         const personTx = transactions.filter(
-          (t) => t.entity_id === d.entity_id
+          (t) =>
+            t.entity_id === d.entity_id &&
+            (t.type === "DEBT_TAKEN" || t.type === "DEBT_REPAID")
         );
 
         return (
