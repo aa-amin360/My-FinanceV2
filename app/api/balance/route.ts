@@ -13,36 +13,37 @@ export async function GET() {
   try {
     const result = await client.query(`
       SELECT 
-        a.name,
-        COALESCE(SUM(
-          CASE 
-            WHEN t.to_account = a.id THEN t.amount
-            WHEN t.from_account = a.id THEN -t.amount
-            ELSE 0
-          END
-        ), 0) AS balance
-      FROM accounts a
-      LEFT JOIN transactions t
-        ON t.from_account = a.id OR t.to_account = a.id
-      WHERE a.name IN ('Cash', 'Bank')
-      GROUP BY a.id
+        t.amount,
+        fa.name AS from_account,
+        ta.name AS to_account
+      FROM transactions t
+      LEFT JOIN accounts fa ON t.from_account_id = fa.id
+      LEFT JOIN accounts ta ON t.to_account_id = ta.id
     `);
 
-    const total = result.rows.reduce(
-      (sum, row) => sum + Number(row.balance),
-      0
-    );
+    let balance = 0;
+
+    for (const row of result.rows) {
+      const amount = Number(row.amount);
+
+      // Money coming INTO cash/bank
+      if (row.to_account === "Cash" || row.to_account === "Bank") {
+        balance += amount;
+      }
+
+      // Money going OUT of cash/bank
+      if (row.from_account === "Cash" || row.from_account === "Bank") {
+        balance -= amount;
+      }
+    }
 
     return NextResponse.json({
       success: true,
-      total,
-      breakdown: result.rows,
+      total: balance,
     });
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message },
-      { status: 500 }
-    );
+
+  } catch (err) {
+    return NextResponse.json({ error: "Balance error" }, { status: 500 });
   } finally {
     client.release();
   }
