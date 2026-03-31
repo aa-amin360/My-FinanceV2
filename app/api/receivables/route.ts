@@ -12,18 +12,22 @@ export async function GET() {
 
   try {
     const result = await client.query(`
-      SELECT 
-        SUM(remaining_amount) AS total_receivable
+      SELECT COALESCE(SUM(remaining_amount), 0) AS total
       FROM receivables
     `);
 
+    const total = Number(result.rows[0]?.total) || 0;
+
     return NextResponse.json({
       success: true,
-      total: Number(result.rows[0].total_receivable || 0),
+      total,
     });
+
   } catch (err: any) {
+    console.error("RECEIVABLE ERROR:", err);
+
     return NextResponse.json(
-      { error: err.message },
+      { error: "Failed to fetch receivable" },
       { status: 500 }
     );
   } finally {
