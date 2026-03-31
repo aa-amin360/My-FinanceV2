@@ -14,29 +14,37 @@ export async function GET() {
     const result = await client.query(`
       SELECT 
         t.amount,
-        LOWER(fa.name) AS from_account,
-        LOWER(ta.name) AS to_account
+        fa.name AS from_account,
+        ta.name AS to_account
       FROM transactions t
-      LEFT JOIN accounts fa 
-        ON t.from_account = fa.id
-      LEFT JOIN accounts ta 
-        ON t.to_account = ta.id
+      LEFT JOIN accounts fa ON t.from_account = fa.id
+      LEFT JOIN accounts ta ON t.to_account = ta.id
     `);
 
     let balance = 0;
 
     for (const row of result.rows) {
-      const amount = Number(row.amount);
+      const amount = Number(row.amount) || 0;
 
-      const from = row.from_account?.trim();
-      const to = row.to_account?.trim();
+      // normalize safely
+      const from = row.from_account
+        ? row.from_account.toLowerCase().trim()
+        : null;
 
-      // MONEY ENTERS CASH/BANK
+      const to = row.to_account
+        ? row.to_account.toLowerCase().trim()
+        : null;
+
+      // =========================
+      // CORE LOGIC
+      // =========================
+
+      // Money comes INTO wallet
       if (to === "cash" || to === "bank") {
         balance += amount;
       }
 
-      // MONEY LEAVES CASH/BANK
+      // Money goes OUT of wallet
       if (from === "cash" || from === "bank") {
         balance -= amount;
       }
@@ -49,8 +57,9 @@ export async function GET() {
 
   } catch (err: any) {
     console.error("BALANCE ERROR:", err);
+
     return NextResponse.json(
-      { error: err.message },
+      { error: "Balance calculation failed" },
       { status: 500 }
     );
   } finally {
