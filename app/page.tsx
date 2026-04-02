@@ -60,6 +60,33 @@ export default function Home() {
   let income = 0;
   let expense = 0;
 
+  const monthlyDataMap: Record<string, { income: number; expense: number }> = {};
+
+  transactions.forEach((t) => {
+    const date = new Date(t.date);
+    const month = date.toLocaleString("default", { month: "short" });
+  
+    if (!monthlyDataMap[month]) {
+      monthlyDataMap[month] = { income: 0, expense: 0 };
+    }
+  
+    const amount = Number(t.amount);
+  
+    if (t.type === "INCOME") {
+      monthlyDataMap[month].income += amount;
+    }
+  
+    if (t.type === "EXPENSE") {
+      monthlyDataMap[month].expense += amount;
+    }
+  });
+  
+  const chartData = Object.keys(monthlyDataMap).map((month) => ({
+    month,
+    income: monthlyDataMap[month].income,
+    expense: monthlyDataMap[month].expense,
+  }));
+
   transactions.forEach((t) => {
     const val = Number(t.amount);
     if (t.type === "INCOME") income += val;
