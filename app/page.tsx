@@ -64,35 +64,30 @@ export default function Home() {
   const monthlyDataMap: Record<string, { income: number; expense: number }> = {};
 
   transactions.forEach((t) => {
+    const amount = Number(t.amount);
     const date = new Date(t.date);
     const month = date.toLocaleString("default", { month: "short" });
-  
+
     if (!monthlyDataMap[month]) {
       monthlyDataMap[month] = { income: 0, expense: 0 };
     }
-  
-    const amount = Number(t.amount);
-  
+
     if (t.type === "INCOME") {
+      income += amount;
       monthlyDataMap[month].income += amount;
     }
-  
+
     if (t.type === "EXPENSE") {
+      expense += amount;
       monthlyDataMap[month].expense += amount;
     }
   });
-  
+
   const chartData = Object.keys(monthlyDataMap).map((month) => ({
     month,
     income: monthlyDataMap[month].income,
     expense: monthlyDataMap[month].expense,
   }));
-
-  transactions.forEach((t) => {
-    const val = Number(t.amount);
-    if (t.type === "INCOME") income += val;
-    if (t.type === "EXPENSE") expense += val;
-  });
 
   // =========================
   // SUBMIT
@@ -133,35 +128,24 @@ export default function Home() {
 
   return (
     <DashboardLayout>
-
       {/* BALANCE */}
       <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-2xl shadow-lg text-black">
-        
         <div className="flex justify-between items-center">
           <p className="text-sm opacity-80">Current Balance</p>
-          <span className="text-xl">💰</span>
+          <span>💰</span>
         </div>
-      
+
         <h1 className="text-3xl font-bold mt-3">
           {balance.toFixed(2)} Tk
         </h1>
-      
-        <p className="text-xs mt-2 opacity-70">
-          Updated in real-time
-        </p>
-      
       </div>
 
       {/* CARDS */}
       <div className="grid grid-cols-2 gap-4 mt-6">
         <Card title="Income" value={income} color="text-green-400" icon="📈" />
-        
         <Card title="Expenses" value={expense} color="text-red-400" icon="📉" />
-        
         <Card title="Savings" value={0} color="text-blue-400" icon="💾" />
-        
         <Card title="Debt" value={debt} color="text-cyan-400" icon="💳" />
-        
         <Card title="Receivable" value={receivable} color="text-yellow-400" icon="📥" />
         <ReportCard />
       </div>
@@ -172,59 +156,70 @@ export default function Home() {
       {/* TRANSACTIONS */}
       <h3 className="mt-8 mb-2">Recent Transactions</h3>
 
-      <div className="flex flex-col gap-2">
-        <div className="mt-6 bg-slate-900 rounded-2xl overflow-hidden">
-          
-          {/* HEADER */}
-          <div className="grid grid-cols-4 px-4 py-3 text-sm text-gray-400 border-b border-slate-800">
-            <div>Name</div>
-            <div>Date</div>
-            <div>Type</div>
-            <div className="text-right">Amount</div>
-          </div>
-        
-          {/* ROWS */}
-          {transactions.slice(0, 8).map((t) => {
-            const amount = Number(t.amount);
-        
-            const isPositive =
-              t.type === "INCOME" ||
-              t.type === "DEBT_TAKEN" ||
-              t.type === "RECEIVABLE_RECEIVED";
-        
-            return (
-              <div
-                key={t.id}
-                className="grid grid-cols-4 px-4 py-3 border-b border-slate-800 hover:bg-slate-800 transition"
-              >
-                {/* NAME */}
-                <div className="font-medium">
-                  {t.note || t.type.replace("_", " ")}
-                </div>
-        
-                {/* DATE */}
-                <div className="text-sm text-gray-400">
-                  {new Date(t.date).toDateString()}
-                </div>
-        
-                {/* TYPE */}
-                <div className="text-xs text-gray-400">
-                  {t.type}
-                </div>
-        
-                {/* AMOUNT */}
-                <div
-                  className={`text-right font-semibold ${
-                    isPositive ? "text-green-400" : "text-red-400"
+      <div className="mt-6 bg-slate-900 rounded-2xl overflow-hidden">
+        {/* HEADER */}
+        <div className="grid grid-cols-4 px-4 py-3 text-sm text-gray-400 border-b border-slate-800">
+          <div>Name</div>
+          <div>Date</div>
+          <div>Type</div>
+          <div className="text-right">Amount</div>
+        </div>
+
+        {/* ROWS */}
+        {transactions.slice(0, 8).map((t) => {
+          const amount = Number(t.amount);
+
+          const isPositive =
+            t.type === "INCOME" ||
+            t.type === "DEBT_TAKEN" ||
+            t.type === "RECEIVABLE_RECEIVED";
+
+          return (
+            <div
+              key={t.id}
+              className="grid grid-cols-4 px-4 py-3 border-b border-slate-800 hover:bg-slate-800/60 transition-all"
+            >
+              <div className="font-medium">
+                {t.note || t.type.replace("_", " ")}
+              </div>
+
+              <div className="text-sm text-gray-400">
+                {new Date(t.date).toDateString()}
+              </div>
+
+              <div>
+                <span
+                  className={`px-2 py-1 rounded-full text-xs ${
+                    t.type === "INCOME"
+                      ? "bg-green-500/20 text-green-400"
+                      : t.type === "EXPENSE"
+                      ? "bg-red-500/20 text-red-400"
+                      : t.type === "DEBT_TAKEN"
+                      ? "bg-blue-500/20 text-blue-400"
+                      : t.type === "DEBT_REPAID"
+                      ? "bg-cyan-500/20 text-cyan-400"
+                      : t.type === "RECEIVABLE_GIVEN"
+                      ? "bg-yellow-500/20 text-yellow-400"
+                      : t.type === "RECEIVABLE_RECEIVED"
+                      ? "bg-purple-500/20 text-purple-400"
+                      : "bg-gray-500/20 text-gray-400"
                   }`}
                 >
-                  {isPositive ? "+" : "-"}
-                  {amount.toFixed(2)} Tk
-                </div>
+                  {t.type.replace("_", " ")}
+                </span>
               </div>
-            );
-          })}
-        </div>
+
+              <div
+                className={`text-right font-semibold ${
+                  isPositive ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {isPositive ? "+" : "-"}
+                {amount.toFixed(2)} Tk
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* FAB */}
@@ -242,16 +237,13 @@ export default function Home() {
       {showModal && (
         <div className="fixed inset-0 bg-black/70 flex justify-center items-center">
           <div className="bg-slate-900 p-6 rounded-xl w-80 flex flex-col gap-3">
-
             {step === "ACTION" && (
               <>
                 <h3>Select Action</h3>
-
                 <button onClick={() => { setAction("INCOME"); setStep("FORM"); }}>Income</button>
                 <button onClick={() => { setAction("EXPENSE"); setStep("FORM"); }}>Expense</button>
                 <button onClick={() => { setAction("BORROW"); setStep("FORM"); }}>Borrow</button>
                 <button onClick={() => { setAction("GIVE"); setStep("FORM"); }}>Give</button>
-
                 <button onClick={() => setShowModal(false)}>Cancel</button>
               </>
             )}
@@ -261,7 +253,7 @@ export default function Home() {
                 <h3>{action}</h3>
 
                 <input placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
-                
+
                 <select value={account} onChange={(e) => setAccount(e.target.value)}>
                   <option>Cash</option>
                   <option>Bank</option>
@@ -284,7 +276,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
     </DashboardLayout>
   );
 }
@@ -293,35 +284,14 @@ export default function Home() {
 // COMPONENTS
 // =========================
 
-function Card({
-  title,
-  value,
-  color,
-  icon,
-}: {
-  title: string;
-  value: number;
-  color: string;
-  icon: string;
-}) {
+function Card({ title, value, color, icon }: any) {
   return (
     <div className="bg-slate-900 p-5 rounded-2xl shadow-md hover:shadow-lg transition-all">
-      
-      {/* TOP */}
-      <div className="flex justify-between items-center">
-        <p className={`text-sm ${color}`}>{title}</p>
-        <span className="text-lg">{icon}</span>
+      <div className="flex justify-between">
+        <p className={color}>{title}</p>
+        <span>{icon}</span>
       </div>
-
-      {/* VALUE */}
-      <h2 className="text-2xl font-bold mt-3">
-        {value.toFixed(2)} Tk
-      </h2>
-
-      {/* SUBTEXT */}
-      <p className="text-xs text-gray-400 mt-1">
-        Updated just now
-      </p>
+      <h2 className="text-2xl mt-3 font-bold">{value.toFixed(2)} Tk</h2>
     </div>
   );
 }
