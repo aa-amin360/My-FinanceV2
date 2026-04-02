@@ -107,9 +107,21 @@ export default function Home() {
     <DashboardLayout>
 
       {/* BALANCE */}
-      <div className="bg-slate-900 p-6 rounded-xl">
-        <p className="text-gray-400 text-sm">Current Balance</p>
-        <h1 className="text-3xl font-bold mt-2">{balance.toFixed(2)} Tk</h1>
+      <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-2xl shadow-lg text-black">
+        
+        <div className="flex justify-between items-center">
+          <p className="text-sm opacity-80">Current Balance</p>
+          <span className="text-xl">💰</span>
+        </div>
+      
+        <h1 className="text-3xl font-bold mt-3">
+          {balance.toFixed(2)} Tk
+        </h1>
+      
+        <p className="text-xs mt-2 opacity-70">
+          Updated in real-time
+        </p>
+      
       </div>
 
       {/* CARDS */}
