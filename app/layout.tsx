@@ -1,3 +1,5 @@
+import "./globals.css";
+
 export const metadata = {
   title: "Finance Engine",
   description: "Personal finance system",
