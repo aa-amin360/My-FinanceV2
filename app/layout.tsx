@@ -1,4 +1,5 @@
 import "./globals.css";
+import { ThemeProvider } from "../components/ThemeProvider";
 
 export const metadata = {
   title: "Finance Engine",
@@ -12,7 +13,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
