@@ -226,11 +226,35 @@ export default function Home() {
 // COMPONENTS
 // =========================
 
-function Card({ title, value, color }: any) {
+function Card({
+  title,
+  value,
+  color,
+  icon,
+}: {
+  title: string;
+  value: number;
+  color: string;
+  icon: string;
+}) {
   return (
-    <div className="bg-slate-900 p-4 rounded-xl">
-      <p className={color}>{title}</p>
-      <p className="text-lg font-bold">{value.toFixed(2)} Tk</p>
+    <div className="bg-slate-900 p-5 rounded-2xl shadow-md hover:shadow-lg transition-all">
+      
+      {/* TOP */}
+      <div className="flex justify-between items-center">
+        <p className={`text-sm ${color}`}>{title}</p>
+        <span className="text-lg">{icon}</span>
+      </div>
+
+      {/* VALUE */}
+      <h2 className="text-2xl font-bold mt-3">
+        {value.toFixed(2)} Tk
+      </h2>
+
+      {/* SUBTEXT */}
+      <p className="text-xs text-gray-400 mt-1">
+        Updated just now
+      </p>
     </div>
   );
 }
