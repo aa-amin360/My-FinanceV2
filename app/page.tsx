@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import DashboardLayout from "../components/layout/DashboardLayout";
+import CashflowChart from "../components/charts/CashflowChart";
 
 type Transaction = {
   id: string;
@@ -164,6 +165,9 @@ export default function Home() {
         <Card title="Receivable" value={receivable} color="text-yellow-400" icon="📥" />
         <ReportCard />
       </div>
+
+      {/* CHART */}
+      <CashflowChart data={chartData} />
 
       {/* TRANSACTIONS */}
       <h3 className="mt-8 mb-2">Recent Transactions</h3>
