@@ -173,38 +173,58 @@ export default function Home() {
       <h3 className="mt-8 mb-2">Recent Transactions</h3>
 
       <div className="flex flex-col gap-2">
-        {transactions.map((t) => {
-          const amount = Number(t.amount);
-
-          const isPositive =
-            t.type === "INCOME" ||
-            t.type === "DEBT_TAKEN" ||
-            t.type === "RECEIVABLE_RECEIVED";
-
-          return (
-            <div
-              key={t.id}
-              className="bg-slate-900 p-4 rounded-xl flex justify-between"
-            >
-              <div>
-                <div className="font-semibold">
-                  {t.note || t.type.replaceAll("_", " ")}
+        <div className="mt-6 bg-slate-900 rounded-2xl overflow-hidden">
+          
+          {/* HEADER */}
+          <div className="grid grid-cols-4 px-4 py-3 text-sm text-gray-400 border-b border-slate-800">
+            <div>Name</div>
+            <div>Date</div>
+            <div>Type</div>
+            <div className="text-right">Amount</div>
+          </div>
+        
+          {/* ROWS */}
+          {transactions.slice(0, 8).map((t) => {
+            const amount = Number(t.amount);
+        
+            const isPositive =
+              t.type === "INCOME" ||
+              t.type === "DEBT_TAKEN" ||
+              t.type === "RECEIVABLE_RECEIVED";
+        
+            return (
+              <div
+                key={t.id}
+                className="grid grid-cols-4 px-4 py-3 border-b border-slate-800 hover:bg-slate-800 transition"
+              >
+                {/* NAME */}
+                <div className="font-medium">
+                  {t.note || t.type.replace("_", " ")}
                 </div>
-                <div className="text-xs text-gray-400">
+        
+                {/* DATE */}
+                <div className="text-sm text-gray-400">
                   {new Date(t.date).toDateString()}
                 </div>
+        
+                {/* TYPE */}
+                <div className="text-xs text-gray-400">
+                  {t.type}
+                </div>
+        
+                {/* AMOUNT */}
+                <div
+                  className={`text-right font-semibold ${
+                    isPositive ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  {isPositive ? "+" : "-"}
+                  {amount.toFixed(2)} Tk
+                </div>
               </div>
-
-              <div
-                className={`font-bold ${
-                  isPositive ? "text-green-400" : "text-red-400"
-                }`}
-              >
-                {isPositive ? "+" : "-"} {amount} Tk
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       {/* FAB */}
