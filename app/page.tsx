@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 
 type Transaction = {
   id: string;
@@ -19,11 +20,8 @@ export default function Home() {
   const [balance, setBalance] = useState(0);
 
   const [showModal, setShowModal] = useState(false);
-
-  // 🧠 STEP FLOW
   const [step, setStep] = useState<"ACTION" | "FORM">("ACTION");
 
-  // FORM STATE
   const [action, setAction] = useState("INCOME");
   const [amount, setAmount] = useState("");
   const [account, setAccount] = useState("Cash");
@@ -32,7 +30,7 @@ export default function Home() {
   const [entity, setEntity] = useState("");
 
   // =========================
-  // FETCH DATA
+  // LOAD DATA
   // =========================
   const loadData = () => {
     fetch("/api/transactions")
@@ -59,7 +57,6 @@ export default function Home() {
   // =========================
   // CALCULATIONS
   // =========================
-
   let income = 0;
   let expense = 0;
 
@@ -72,7 +69,6 @@ export default function Home() {
   // =========================
   // SUBMIT
   // =========================
-
   const handleSubmit = async () => {
     let type = "";
 
@@ -97,7 +93,6 @@ export default function Home() {
       body: JSON.stringify(body),
     });
 
-    // RESET
     setShowModal(false);
     setStep("ACTION");
     setAmount("");
@@ -108,71 +103,66 @@ export default function Home() {
     loadData();
   };
 
-  // =========================
-  // UI
-  // =========================
-
   return (
-    <div style={container}>
-      <h2 style={title}>My Finance</h2>
+    <DashboardLayout>
 
       {/* BALANCE */}
-      <div style={balanceCard}>
-        <div style={label}>Current Balance</div>
-        <h1>{balance.toFixed(2)} Tk</h1>
+      <div className="bg-slate-900 p-6 rounded-xl">
+        <p className="text-gray-400 text-sm">Current Balance</p>
+        <h1 className="text-3xl font-bold mt-2">{balance.toFixed(2)} Tk</h1>
       </div>
 
       {/* CARDS */}
-      <div style={grid}>
-        <Card title="Income" value={income} color="#22c55e" />
-        <Card title="Expenses" value={expense} color="#ef4444" />
-        <Card title="Savings" value={0} color="#3b82f6" />
-        <a href="/debts" style={{ textDecoration: "none" }}>
-          <Card title="Debt" value={debt} color="#60a5fa" />
-        </a>
-        <a href="/receivables" style={{ textDecoration: "none" }}>
-          <Card title="Receivable" value={receivable} color="#f59e0b" />
-        </a>
+      <div className="grid grid-cols-2 gap-4 mt-6">
+        <Card title="Income" value={income} color="text-green-400" />
+        <Card title="Expenses" value={expense} color="text-red-400" />
+        <Card title="Savings" value={0} color="text-blue-400" />
+        <Card title="Debt" value={debt} color="text-cyan-400" />
+        <Card title="Receivable" value={receivable} color="text-yellow-400" />
         <ReportCard />
       </div>
 
       {/* TRANSACTIONS */}
-      <div style={sectionHeader}>
-        <h3>Recent Transactions</h3>
+      <h3 className="mt-8 mb-2">Recent Transactions</h3>
+
+      <div className="flex flex-col gap-2">
+        {transactions.map((t) => {
+          const amount = Number(t.amount);
+
+          const isPositive =
+            t.type === "INCOME" ||
+            t.type === "DEBT_TAKEN" ||
+            t.type === "RECEIVABLE_RECEIVED";
+
+          return (
+            <div
+              key={t.id}
+              className="bg-slate-900 p-4 rounded-xl flex justify-between"
+            >
+              <div>
+                <div className="font-semibold">
+                  {t.note || t.type.replaceAll("_", " ")}
+                </div>
+                <div className="text-xs text-gray-400">
+                  {new Date(t.date).toDateString()}
+                </div>
+              </div>
+
+              <div
+                className={`font-bold ${
+                  isPositive ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {isPositive ? "+" : "-"} {amount} Tk
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {transactions.map((t) => {
-        const amount = Number(t.amount);
-
-        const isPositive =
-          t.type === "INCOME" ||
-          t.type === "DEBT_TAKEN" ||
-          t.type === "RECEIVABLE_RECEIVED";
-
-        const sign = isPositive ? "+" : "-";
-        const color = isPositive ? "#22c55e" : "#ef4444";
-
-        return (
-          <div key={t.id} style={transactionCard}>
-            <div>
-              <div style={txTitle}>
-                {t.note || t.type.replaceAll("_", " ")}
-              </div>
-              <div style={txDate}>
-                {new Date(t.date).toDateString()}
-              </div>
-            </div>
-
-            <div style={{ color }}>
-              {sign} {amount} Tk
-            </div>
-          </div>
-        );
-      })}
-
-      {/* FLOAT BUTTON */}
+      {/* FAB */}
       <button
-        style={fab}
+        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-green-500 text-black text-2xl"
         onClick={() => {
           setShowModal(true);
           setStep("ACTION");
@@ -183,10 +173,9 @@ export default function Home() {
 
       {/* MODAL */}
       {showModal && (
-        <div style={modal}>
-          <div style={modalContent}>
-            
-            {/* STEP 1 */}
+        <div className="fixed inset-0 bg-black/70 flex justify-center items-center">
+          <div className="bg-slate-900 p-6 rounded-xl w-80 flex flex-col gap-3">
+
             {step === "ACTION" && (
               <>
                 <h3>Select Action</h3>
@@ -200,53 +189,36 @@ export default function Home() {
               </>
             )}
 
-            {/* STEP 2 */}
             {step === "FORM" && (
               <>
                 <h3>{action}</h3>
 
-                <input
-                  placeholder="Amount"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                />
-
+                <input placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
+                
                 <select value={account} onChange={(e) => setAccount(e.target.value)}>
                   <option>Cash</option>
                   <option>Bank</option>
                 </select>
 
                 {(action === "INCOME" || action === "EXPENSE") && (
-                  <input
-                    placeholder="Category"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                  />
+                  <input placeholder="Category" value={category} onChange={(e) => setCategory(e.target.value)} />
                 )}
 
                 {(action === "BORROW" || action === "GIVE") && (
-                  <input
-                    placeholder="Person / Bank"
-                    value={entity}
-                    onChange={(e) => setEntity(e.target.value)}
-                  />
+                  <input placeholder="Person / Bank" value={entity} onChange={(e) => setEntity(e.target.value)} />
                 )}
 
-                <input
-                  placeholder="Note"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                />
+                <input placeholder="Note" value={note} onChange={(e) => setNote(e.target.value)} />
 
                 <button onClick={handleSubmit}>Save</button>
-
                 <button onClick={() => setStep("ACTION")}>← Back</button>
               </>
             )}
           </div>
         </div>
       )}
-    </div>
+
+    </DashboardLayout>
   );
 }
 
@@ -256,67 +228,18 @@ export default function Home() {
 
 function Card({ title, value, color }: any) {
   return (
-    <div style={card}>
-      <div style={{ color }}>{title}</div>
-      <div>{value.toFixed(2)} Tk</div>
+    <div className="bg-slate-900 p-4 rounded-xl">
+      <p className={color}>{title}</p>
+      <p className="text-lg font-bold">{value.toFixed(2)} Tk</p>
     </div>
   );
 }
 
 function ReportCard() {
   return (
-    <div style={card}>
-      <div style={{ color: "#a78bfa" }}>Monthly Report</div>
-      <div style={{ opacity: 0.5 }}>Coming soon...</div>
+    <div className="bg-slate-900 p-4 rounded-xl">
+      <p className="text-purple-400">Monthly Report</p>
+      <p className="text-gray-400 text-sm">Coming soon...</p>
     </div>
   );
 }
-
-// =========================
-// STYLES
-// =========================
-
-const container = { background: "#020617", color: "white", minHeight: "100vh", padding: 20 };
-const title = { color: "#22c55e" };
-const balanceCard = { background: "#0f172a", padding: 20, borderRadius: 12, marginTop: 20 };
-const label = { opacity: 0.6 };
-
-const grid = { display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10, marginTop: 20 };
-const card = { background: "#0f172a", padding: 15, borderRadius: 10 };
-
-const sectionHeader = { marginTop: 30 };
-const transactionCard = { background: "#0f172a", padding: 15, borderRadius: 10, marginTop: 10, display: "flex", justifyContent: "space-between" };
-const txTitle = { fontWeight: "bold" };
-const txDate = { opacity: 0.5 };
-
-const fab: React.CSSProperties = {
-  position: "fixed",
-  bottom: 20,
-  right: 20,
-  width: 60,
-  height: 60,
-  borderRadius: "50%",
-  background: "#22c55e",
-  fontSize: 30,
-};
-
-const modal: React.CSSProperties = {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  background: "rgba(0,0,0,0.7)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-};
-
-const modalContent: React.CSSProperties = {
-  background: "#111827",
-  padding: 20,
-  borderRadius: 10,
-  display: "flex",
-  flexDirection: "column",
-  gap: 10,
-};
