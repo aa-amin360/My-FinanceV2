@@ -142,11 +142,11 @@ export default function Home() {
 
       {/* CARDS */}
       <div className="grid grid-cols-2 gap-4 mt-6">
-        <Card title="Income" value={income} color="text-green-400" icon="📈" />
-        <Card title="Expenses" value={expense} color="text-red-400" icon="📉" />
-        <Card title="Savings" value={0} color="text-blue-400" icon="💾" />
-        <Card title="Debt" value={debt} color="text-cyan-400" icon="💳" />
-        <Card title="Receivable" value={receivable} color="text-yellow-400" icon="📥" />
+        <Card title="Income" value={income} color="text-green-500" icon="📈" />
+        <Card title="Expenses" value={expense} color="text-red-500" icon="📉" />
+        <Card title="Savings" value={0} color="text-blue-500" icon="💾" />
+        <Card title="Debt" value={debt} color="text-cyan-500" icon="💳" />
+        <Card title="Receivable" value={receivable} color="text-yellow-500" icon="📥" />
         <ReportCard />
       </div>
 
@@ -156,9 +156,9 @@ export default function Home() {
       {/* TRANSACTIONS */}
       <h3 className="mt-8 mb-2">Recent Transactions</h3>
 
-      <div className="mt-6 bg-slate-900 rounded-2xl overflow-hidden">
+      <div className="mt-6 bg-gray-100 dark:bg-slate-900 rounded-2xl overflow-hidden">
         {/* HEADER */}
-        <div className="grid grid-cols-4 px-4 py-3 text-sm text-gray-400 border-b border-slate-800">
+        <div className="grid grid-cols-4 px-4 py-3 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-slate-800">
           <div>Name</div>
           <div>Date</div>
           <div>Type</div>
@@ -177,13 +177,13 @@ export default function Home() {
           return (
             <div
               key={t.id}
-              className="grid grid-cols-4 px-4 py-3 border-b border-slate-800 hover:bg-slate-800/60 transition-all"
+              className="grid grid-cols-4 px-4 py-3 border-b border-gray-200 dark:border-slate-800 hover:bg-gray-200 dark:hover:bg-slate-800 transition-all"
             >
               <div className="font-medium">
                 {t.note || t.type.replace("_", " ")}
               </div>
 
-              <div className="text-sm text-gray-400">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 {new Date(t.date).toDateString()}
               </div>
 
@@ -191,18 +191,18 @@ export default function Home() {
                 <span
                   className={`px-2 py-1 rounded-full text-xs ${
                     t.type === "INCOME"
-                      ? "bg-green-500/20 text-green-400"
+                      ? "bg-green-500/20 text-green-500"
                       : t.type === "EXPENSE"
-                      ? "bg-red-500/20 text-red-400"
+                      ? "bg-red-500/20 text-red-500"
                       : t.type === "DEBT_TAKEN"
-                      ? "bg-blue-500/20 text-blue-400"
+                      ? "bg-blue-500/20 text-blue-500"
                       : t.type === "DEBT_REPAID"
-                      ? "bg-cyan-500/20 text-cyan-400"
+                      ? "bg-cyan-500/20 text-cyan-500"
                       : t.type === "RECEIVABLE_GIVEN"
-                      ? "bg-yellow-500/20 text-yellow-400"
+                      ? "bg-yellow-500/20 text-yellow-500"
                       : t.type === "RECEIVABLE_RECEIVED"
-                      ? "bg-purple-500/20 text-purple-400"
-                      : "bg-gray-500/20 text-gray-400"
+                      ? "bg-purple-500/20 text-purple-500"
+                      : "bg-gray-500/20 text-gray-500"
                   }`}
                 >
                   {t.type.replace("_", " ")}
@@ -211,7 +211,7 @@ export default function Home() {
 
               <div
                 className={`text-right font-semibold ${
-                  isPositive ? "text-green-400" : "text-red-400"
+                  isPositive ? "text-green-500" : "text-red-500"
                 }`}
               >
                 {isPositive ? "+" : "-"}
@@ -224,7 +224,7 @@ export default function Home() {
 
       {/* FAB */}
       <button
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-green-500 text-black text-2xl"
+        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-green-500 text-black text-2xl shadow-lg"
         onClick={() => {
           setShowModal(true);
           setStep("ACTION");
@@ -236,7 +236,7 @@ export default function Home() {
       {/* MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/70 flex justify-center items-center">
-          <div className="bg-slate-900 p-6 rounded-xl w-80 flex flex-col gap-3">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl w-80 flex flex-col gap-3">
             {step === "ACTION" && (
               <>
                 <h3>Select Action</h3>
@@ -252,22 +252,22 @@ export default function Home() {
               <>
                 <h3>{action}</h3>
 
-                <input placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
+                <input className="p-2 rounded bg-gray-200 dark:bg-slate-800" placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
 
-                <select value={account} onChange={(e) => setAccount(e.target.value)}>
+                <select className="p-2 rounded bg-gray-200 dark:bg-slate-800" value={account} onChange={(e) => setAccount(e.target.value)}>
                   <option>Cash</option>
                   <option>Bank</option>
                 </select>
 
                 {(action === "INCOME" || action === "EXPENSE") && (
-                  <input placeholder="Category" value={category} onChange={(e) => setCategory(e.target.value)} />
+                  <input className="p-2 rounded bg-gray-200 dark:bg-slate-800" placeholder="Category" value={category} onChange={(e) => setCategory(e.target.value)} />
                 )}
 
                 {(action === "BORROW" || action === "GIVE") && (
-                  <input placeholder="Person / Bank" value={entity} onChange={(e) => setEntity(e.target.value)} />
+                  <input className="p-2 rounded bg-gray-200 dark:bg-slate-800" placeholder="Person / Bank" value={entity} onChange={(e) => setEntity(e.target.value)} />
                 )}
 
-                <input placeholder="Note" value={note} onChange={(e) => setNote(e.target.value)} />
+                <input className="p-2 rounded bg-gray-200 dark:bg-slate-800" placeholder="Note" value={note} onChange={(e) => setNote(e.target.value)} />
 
                 <button onClick={handleSubmit}>Save</button>
                 <button onClick={() => setStep("ACTION")}>← Back</button>
@@ -286,7 +286,7 @@ export default function Home() {
 
 function Card({ title, value, color, icon }: any) {
   return (
-    <div className="bg-slate-900 p-5 rounded-2xl shadow-md hover:shadow-lg transition-all">
+    <div className="bg-gray-100 dark:bg-slate-900 p-5 rounded-2xl shadow-md hover:shadow-lg transition-all">
       <div className="flex justify-between">
         <p className={color}>{title}</p>
         <span>{icon}</span>
@@ -298,9 +298,9 @@ function Card({ title, value, color, icon }: any) {
 
 function ReportCard() {
   return (
-    <div className="bg-slate-900 p-4 rounded-xl">
-      <p className="text-purple-400">Monthly Report</p>
-      <p className="text-gray-400 text-sm">Coming soon...</p>
+    <div className="bg-gray-100 dark:bg-slate-900 p-4 rounded-xl">
+      <p className="text-purple-500">Monthly Report</p>
+      <p className="text-gray-500 text-sm">Coming soon...</p>
     </div>
   );
 }
