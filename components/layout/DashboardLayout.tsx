@@ -1,17 +1,34 @@
 "use client";
 
+import { useTheme } from "../ThemeProvider";
+
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { toggleTheme } = useTheme();
+
   return (
-    <div className="flex min-h-screen bg-slate-950 text-white">
+    <div className="flex min-h-screen bg-white text-black dark:bg-slate-950 dark:text-white">
       
       {/* SIDEBAR */}
-      <aside className="w-64 bg-slate-900 p-5 hidden md:flex flex-col gap-6">
-        <h1 className="text-green-400 text-xl font-bold">My Finance</h1>
+      <aside className="w-64 bg-gray-100 dark:bg-slate-900 p-5 hidden md:flex flex-col gap-6">
+        
+        {/* HEADER */}
+        <div>
+          <h1 className="text-green-500 text-xl font-bold">My Finance</h1>
 
+          {/* THEME TOGGLE */}
+          <button
+            onClick={toggleTheme}
+            className="mt-4 px-3 py-2 rounded-lg text-sm bg-gray-200 dark:bg-slate-700"
+          >
+            🌗 Toggle
+          </button>
+        </div>
+
+        {/* NAV */}
         <nav className="flex flex-col gap-3 text-sm">
           <Item label="Dashboard" active />
           <Item label="Transactions" />
@@ -26,9 +43,12 @@ export default function DashboardLayout({
       <main className="flex-1 p-6">{children}</main>
 
       {/* RIGHT PANEL */}
-      <aside className="w-80 bg-slate-900 p-5 hidden lg:block">
-        <h3 className="text-sm text-gray-400 mb-4">Insights</h3>
-        <div className="bg-slate-800 p-4 rounded-xl">
+      <aside className="w-80 bg-gray-100 dark:bg-slate-900 p-5 hidden lg:block">
+        <h3 className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Insights
+        </h3>
+
+        <div className="bg-gray-200 dark:bg-slate-800 p-4 rounded-xl">
           Coming soon...
         </div>
       </aside>
@@ -36,13 +56,17 @@ export default function DashboardLayout({
   );
 }
 
+// =========================
+// SIDEBAR ITEM
+// =========================
+
 function Item({ label, active }: any) {
   return (
     <div
-      className={`px-3 py-2 rounded-lg cursor-pointer ${
+      className={`px-3 py-2 rounded-lg cursor-pointer transition ${
         active
           ? "bg-green-500 text-black font-semibold"
-          : "hover:bg-slate-800"
+          : "hover:bg-gray-200 dark:hover:bg-slate-800"
       }`}
     >
       {label}
