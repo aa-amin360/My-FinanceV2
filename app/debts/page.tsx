@@ -40,23 +40,22 @@ export default function DebtPage() {
   // =========================
   // REPAY FUNCTION
   // =========================
-  const handleRepay = async (entityId: string) => {
+  const handleRepay = async (entityName: string) => {
     const amount = prompt("Enter repay amount");
-
     if (!amount) return;
-
+  
     await fetch("/api/transactions", {
       method: "POST",
       body: JSON.stringify({
         type: "DEBT_REPAID",
         amount: Number(amount),
         account: "Cash",
-        entity: entityId,
+        entity: entityName,
         date: new Date().toISOString(),
         note: "Debt Repayment",
       }),
     });
-
+  
     loadData();
   };
 
@@ -81,7 +80,7 @@ export default function DebtPage() {
               <h3 className="text-lg font-semibold">{d.name}</h3>
 
               <button
-                onClick={() => handleRepay(d.entity_id)}
+                onClick={() => handleRepay(d.name)}
                 className="px-3 py-1 rounded bg-green-500 text-black text-sm"
               >
                 Repay
