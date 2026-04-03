@@ -1,6 +1,7 @@
 "use client";
 
 import { useTheme } from "../ThemeProvider";
+import Link from "next/link";
 
 export default function DashboardLayout({
   children,
@@ -30,12 +31,12 @@ export default function DashboardLayout({
 
         {/* NAV */}
         <nav className="flex flex-col gap-3 text-sm">
-          <Item label="Dashboard" active />
-          <Item label="Transactions" />
-          <Item label="Categories" />
-          <Item label="Savings" />
-          <Item label="Debt" />
-          <Item label="Reports" />
+          <Item label="Dashboard" href="/" active />
+          <Item label="Transactions" href="/transactions" />
+          <Item label="Categories" href="/categories" />
+          <Item label="Savings" href="/savings" />
+          <Item label="Debt" href="/debt" />
+          <Item label="Reports" href="/reports" />
         </nav>
       </aside>
 
@@ -60,16 +61,18 @@ export default function DashboardLayout({
 // SIDEBAR ITEM
 // =========================
 
-function Item({ label, active }: any) {
+function Item({ label, href, active }: any) {
   return (
-    <div
-      className={`px-3 py-2 rounded-lg cursor-pointer transition ${
-        active
-          ? "bg-green-500 text-black font-semibold"
-          : "hover:bg-gray-200 dark:hover:bg-slate-800"
-      }`}
-    >
-      {label}
-    </div>
+    <Link href={href}>
+      <div
+        className={`px-3 py-2 rounded-lg cursor-pointer transition ${
+          active
+            ? "bg-green-500 text-black font-semibold"
+            : "hover:bg-gray-200 dark:hover:bg-slate-800"
+        }`}
+      >
+        {label}
+      </div>
+    </Link>
   );
 }
