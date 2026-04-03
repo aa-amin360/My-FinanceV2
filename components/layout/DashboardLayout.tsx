@@ -35,7 +35,7 @@ export default function DashboardLayout({
           <Item label="Transactions" href="/transactions" />
           <Item label="Categories" href="/categories" />
           <Item label="Savings" href="/savings" />
-          <Item label="Debt" href="/debt" />
+          <Item label="Debt" href="/debts" />
           <Item label="Reports" href="/reports" />
         </nav>
       </aside>
