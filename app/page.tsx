@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import CashflowChart from "../components/charts/CashflowChart";
+import Link from "next/link";
 
 type Transaction = {
   id: string;
@@ -145,8 +146,16 @@ export default function Home() {
         <Card title="Income" value={income} color="text-green-500" icon="📈" />
         <Card title="Expenses" value={expense} color="text-red-500" icon="📉" />
         <Card title="Savings" value={0} color="text-blue-500" icon="💾" />
-        <Card title="Debt" value={debt} color="text-cyan-500" icon="💳" />
-        <Card title="Receivable" value={receivable} color="text-yellow-500" icon="📥" />
+        <Link href="/debt">
+          <div>
+            <Card title="Debt" value={debt} color="text-cyan-500" icon="💳" />
+          </div>
+        </Link>
+        <Link href="/receivable">
+          <div>
+            <Card title="Receivable" value={receivable} color="text-yellow-500" icon="📥" />
+          </div>
+        </Link>
         <ReportCard />
       </div>
 
