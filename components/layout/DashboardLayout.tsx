@@ -20,12 +20,12 @@ export default function DashboardLayout({
           <h1 className="text-green-500 text-xl font-bold">My Finance</h1>
 
           {/* THEME TOGGLE */}
-          <button
-            onClick={toggleTheme}
-            className="mt-4 px-3 py-2 rounded-lg text-sm bg-gray-200 dark:bg-slate-700"
-          >
-            🌗 Toggle
-          </button>
+            <button
+              onClick={toggleTheme}
+              className="mt-4 w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:scale-105 transition-all"
+            >
+              🌙
+            </button>
         </div>
 
         {/* NAV */}
