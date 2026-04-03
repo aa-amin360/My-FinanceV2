@@ -7,7 +7,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { toggleTheme } = useTheme();
+  const { toggleTheme, theme } = useTheme();
 
   return (
     <div className="flex min-h-screen bg-white text-black dark:bg-slate-950 dark:text-white">
@@ -24,7 +24,7 @@ export default function DashboardLayout({
               onClick={toggleTheme}
               className="mt-4 w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:scale-105 transition-all"
             >
-              🌙
+              {theme === "dark" ? "🌙" : "☀️"}
             </button>
         </div>
 
