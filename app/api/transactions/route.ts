@@ -44,14 +44,14 @@ async function getEntityId(client: any, name: string, type: string) {
 }
 
 // =========================
-// POST
+// POST (FIXED)
 // =========================
 
 export async function POST(req: Request) {
   const client = await pool.connect();
 
   try {
-    await client.query("BEGIN"); // 🔥 IMPORTANT
+    await client.query("BEGIN");
 
     const body = await req.json();
 
@@ -137,87 +137,25 @@ export async function POST(req: Request) {
         throw new Error("Invalid type");
     }
 
-    // =========================
-    // INSERT TRANSACTION
-    // =========================
-    const result = await client.query(`
-      SELECT 
-        t.id,
-        t.type,
-        t.amount,
-        t.date,
-        t.note,
-        t.entity_id,
-    
-        t.category_id, -- ✅ ADD THIS
-        c.name AS category_name, -- ✅ ADD THIS
-    
-        fa.name AS from_account,
-        ta.name AS to_account
-    
-      FROM transactions t
-    
-      LEFT JOIN categories c 
-        ON t.category_id = c.id -- ✅ CRITICAL LINE
-    
-      LEFT JOIN accounts fa 
-        ON t.from_account = fa.id
-    
-      LEFT JOIN accounts ta 
-        ON t.to_account = ta.id
-    
-      ORDER BY t.date DESC, t.created_at DESC
-    `);
+    // ✅ INSERT (CORRECT)
+    const result = await client.query(
+      `INSERT INTO transactions 
+      (type, amount, from_account, to_account, entity_id, category_id, date, note)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+      RETURNING *`,
+      [
+        type,
+        amount,
+        from_account,
+        to_account,
+        entity_id,
+        category_id || null,
+        date,
+        note,
+      ]
+    );
 
-    // =========================
-    // DEBT
-    // =========================
-    if (type === "DEBT_TAKEN") {
-      await client.query(
-        `INSERT INTO debts (entity_id, total_amount, remaining_amount)
-         VALUES ($1,$2,$2)
-         ON CONFLICT (entity_id)
-         DO UPDATE SET
-           total_amount = debts.total_amount + $2,
-           remaining_amount = debts.remaining_amount + $2`,
-        [entity_id, amount]
-      );
-    }
-
-    if (type === "DEBT_REPAID") {
-      await client.query(
-        `UPDATE debts
-         SET remaining_amount = remaining_amount - $1
-         WHERE entity_id = $2`,
-        [amount, entity_id]
-      );
-    }
-
-    // =========================
-    // RECEIVABLE
-    // =========================
-    if (type === "RECEIVABLE_GIVEN") {
-      await client.query(
-        `INSERT INTO receivables (entity_id, total_amount, remaining_amount)
-         VALUES ($1,$2,$2)
-         ON CONFLICT (entity_id)
-         DO UPDATE SET
-           total_amount = receivables.total_amount + $2,
-           remaining_amount = receivables.remaining_amount + $2`,
-        [entity_id, amount]
-      );
-    }
-
-    if (type === "RECEIVABLE_RECEIVED") {
-      await client.query(
-        `UPDATE receivables
-         SET remaining_amount = remaining_amount - $1
-         WHERE entity_id = $2`,
-        [amount, entity_id]
-      );
-    }
-
-    await client.query("COMMIT"); // 🔥 IMPORTANT
+    await client.query("COMMIT");
 
     return NextResponse.json({
       success: true,
@@ -225,9 +163,7 @@ export async function POST(req: Request) {
     });
 
   } catch (err: any) {
-    await client.query("ROLLBACK"); // 🔥 IMPORTANT
-
-    console.error("TRANSACTION ERROR:", err);
+    await client.query("ROLLBACK");
 
     return NextResponse.json(
       { error: err.message },
@@ -239,7 +175,7 @@ export async function POST(req: Request) {
 }
 
 // =========================
-// GET
+// GET (FIXED)
 // =========================
 
 export async function GET() {
@@ -253,12 +189,25 @@ export async function GET() {
         t.amount,
         t.date,
         t.note,
-        t.entity_id, -- ✅ ADD THIS
+        t.entity_id,
+
+        t.category_id,
+        c.name AS category_name,
+
         fa.name AS from_account,
         ta.name AS to_account
+
       FROM transactions t
-      LEFT JOIN accounts fa ON t.from_account = fa.id
-      LEFT JOIN accounts ta ON t.to_account = ta.id
+
+      LEFT JOIN categories c 
+        ON t.category_id = c.id
+
+      LEFT JOIN accounts fa 
+        ON t.from_account = fa.id
+
+      LEFT JOIN accounts ta 
+        ON t.to_account = ta.id
+
       ORDER BY t.date DESC, t.created_at DESC
     `);
 
