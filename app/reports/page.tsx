@@ -99,6 +99,8 @@ export default function ReportsPage() {
       value: categoryMap[key],
     }));
 
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
   return (
     <DashboardLayout>
       <h1 className="text-2xl font-bold mb-4">Reports</h1>
@@ -132,7 +134,11 @@ export default function ReportsPage() {
 
       {/* CHART */}
       <CashflowChart data={chartData} />
-      <CategoryDonut data={donutData} />
+      
+      <CategoryDonut
+        data={donutData}
+        onSelect={(cat: string) => setSelectedCategory(cat)}
+      />
     </DashboardLayout>
   );
 }
