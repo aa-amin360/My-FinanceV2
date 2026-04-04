@@ -26,9 +26,11 @@ async function getAccountId(client: any, name: string) {
 }
 
 async function getEntityId(client: any, name: string, type: string) {
+  const clean = name.trim().toLowerCase();
+
   const res = await client.query(
-    `SELECT id FROM entities WHERE name = $1 LIMIT 1`,
-    [name]
+    `SELECT id FROM entities WHERE LOWER(name) = $1 LIMIT 1`,
+    [clean]
   );
 
   if (res.rows.length > 0) return res.rows[0].id;
@@ -37,14 +39,14 @@ async function getEntityId(client: any, name: string, type: string) {
     `INSERT INTO entities (name, type)
      VALUES ($1, $2)
      RETURNING id`,
-    [name, type]
+    [clean, type]
   );
 
   return insert.rows[0].id;
 }
 
 // =========================
-// POST (FIXED)
+// POST (FULLY FIXED ENGINE)
 // =========================
 
 export async function POST(req: Request) {
@@ -87,6 +89,10 @@ export async function POST(req: Request) {
 
     let from_account: string | null = null;
     let to_account: string | null = null;
+
+    // =========================
+    // ACCOUNT FLOW
+    // =========================
 
     switch (type) {
       case "INCOME":
@@ -137,7 +143,10 @@ export async function POST(req: Request) {
         throw new Error("Invalid type");
     }
 
-    // ✅ INSERT (CORRECT)
+    // =========================
+    // INSERT TRANSACTION
+    // =========================
+
     const result = await client.query(
       `INSERT INTO transactions 
       (type, amount, from_account, to_account, entity_id, category_id, date, note)
@@ -154,6 +163,52 @@ export async function POST(req: Request) {
         note,
       ]
     );
+
+    // =========================
+    // 🔥 STATE SYNC (THE FIX)
+    // =========================
+
+    if (entity_id) {
+      // ---------- DEBT ----------
+      if (type === "DEBT_TAKEN") {
+        await client.query(`
+          INSERT INTO debts (entity_id, total_amount, remaining_amount)
+          VALUES ($1, $2, $2)
+          ON CONFLICT (entity_id)
+          DO UPDATE SET
+            total_amount = debts.total_amount + $2,
+            remaining_amount = debts.remaining_amount + $2
+        `, [entity_id, amount]);
+      }
+
+      if (type === "DEBT_REPAID") {
+        await client.query(`
+          UPDATE debts
+          SET remaining_amount = remaining_amount - $2
+          WHERE entity_id = $1
+        `, [entity_id, amount]);
+      }
+
+      // ---------- RECEIVABLE ----------
+      if (type === "RECEIVABLE_GIVEN") {
+        await client.query(`
+          INSERT INTO receivables (entity_id, total_amount, remaining_amount)
+          VALUES ($1, $2, $2)
+          ON CONFLICT (entity_id)
+          DO UPDATE SET
+            total_amount = receivables.total_amount + $2,
+            remaining_amount = receivables.remaining_amount + $2
+        `, [entity_id, amount]);
+      }
+
+      if (type === "RECEIVABLE_RECEIVED") {
+        await client.query(`
+          UPDATE receivables
+          SET remaining_amount = remaining_amount - $2
+          WHERE entity_id = $1
+        `, [entity_id, amount]);
+      }
+    }
 
     await client.query("COMMIT");
 
@@ -175,7 +230,7 @@ export async function POST(req: Request) {
 }
 
 // =========================
-// GET (FIXED)
+// GET
 // =========================
 
 export async function GET() {
@@ -190,24 +245,14 @@ export async function GET() {
         t.date,
         t.note,
         t.entity_id,
-
         t.category_id,
         c.name AS category_name,
-
         fa.name AS from_account,
         ta.name AS to_account
-
       FROM transactions t
-
-      LEFT JOIN categories c 
-        ON t.category_id = c.id
-
-      LEFT JOIN accounts fa 
-        ON t.from_account = fa.id
-
-      LEFT JOIN accounts ta 
-        ON t.to_account = ta.id
-
+      LEFT JOIN categories c ON t.category_id = c.id
+      LEFT JOIN accounts fa ON t.from_account = fa.id
+      LEFT JOIN accounts ta ON t.to_account = ta.id
       ORDER BY t.date DESC, t.created_at DESC
     `);
 
