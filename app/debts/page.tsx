@@ -23,6 +23,9 @@ export default function DebtPage() {
   const [debts, setDebts] = useState<Debt[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
+  // =========================
+  // LOAD DATA
+  // =========================
   const loadData = () => {
     fetch("/api/debts/details", { cache: "no-store" })
       .then((res) => res.json())
@@ -34,18 +37,35 @@ export default function DebtPage() {
   };
 
   useEffect(() => {
+    loadData();
+  }, []);
+
+  // =========================
+  // FAB LISTENER (FIXED)
+  // =========================
+  useEffect(() => {
     const handler = (e: any) => {
       if (e.detail === "DEBT") {
-        // open your existing modal
-        setShowModal(true);
-  
-        // set correct action
-        setAction("DEBT_TAKEN");
+        const name = prompt("Enter person name");
+        const amount = prompt("Enter amount");
+
+        if (!name || !amount) return;
+
+        fetch("/api/transactions", {
+          method: "POST",
+          body: JSON.stringify({
+            type: "DEBT_TAKEN",
+            amount: Number(amount),
+            account: "Cash",
+            entity: name,
+            date: new Date().toISOString(),
+            note: "Debt Taken",
+          }),
+        }).then(() => loadData());
       }
     };
-  
+
     window.addEventListener("openAdd", handler);
-  
     return () => window.removeEventListener("openAdd", handler);
   }, []);
 
@@ -55,7 +75,7 @@ export default function DebtPage() {
   const handleRepay = async (entityName: string) => {
     const amount = prompt("Enter repay amount");
     if (!amount) return;
-  
+
     await fetch("/api/transactions", {
       method: "POST",
       body: JSON.stringify({
@@ -67,7 +87,7 @@ export default function DebtPage() {
         note: "Debt Repayment",
       }),
     });
-  
+
     loadData();
   };
 
