@@ -161,7 +161,7 @@ export default function Home() {
           <Card title="Debt" value={debt} color="text-cyan-500" icon="💳" />
         </Link>
 
-        <Link href="/receivable">
+        <Link href="/receivables">
           <Card title="Receivable" value={receivable} color="text-yellow-500" icon="📥" />
         </Link>
       </div>
