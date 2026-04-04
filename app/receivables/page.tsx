@@ -23,18 +23,50 @@ export default function ReceivablePage() {
   const [data, setData] = useState<Receivable[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
+  // =========================
+  // LOAD DATA
+  // =========================
   const loadData = () => {
     fetch("/api/receivables/details", { cache: "no-store" })
       .then((res) => res.json())
       .then((d) => setData(d.data || []));
 
     fetch("/api/transactions", { cache: "no-store" })
-      .then((d) => d.json())
+      .then((res) => res.json())
       .then((d) => setTransactions(d.data || []));
   };
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  // =========================
+  // FAB LISTENER (NEW)
+  // =========================
+  useEffect(() => {
+    const handler = (e: any) => {
+      if (e.detail === "RECEIVABLE") {
+        const name = prompt("Enter person name");
+        const amount = prompt("Enter amount");
+
+        if (!name || !amount) return;
+
+        fetch("/api/transactions", {
+          method: "POST",
+          body: JSON.stringify({
+            type: "RECEIVABLE_GIVEN",
+            amount: Number(amount),
+            account: "Cash",
+            entity: name,
+            date: new Date().toISOString(),
+            note: "Receivable Given",
+          }),
+        }).then(() => loadData());
+      }
+    };
+
+    window.addEventListener("openAdd", handler);
+    return () => window.removeEventListener("openAdd", handler);
   }, []);
 
   // =========================
@@ -50,7 +82,7 @@ export default function ReceivablePage() {
         type: "RECEIVABLE_RECEIVED",
         amount: Number(amount),
         account: "Cash",
-        entity: entityName, // ✅ NAME (important)
+        entity: entityName,
         date: new Date().toISOString(),
         note: "Receivable Received",
       }),
