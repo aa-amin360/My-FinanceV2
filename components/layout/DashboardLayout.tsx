@@ -38,6 +38,7 @@ export default function DashboardLayout({
           <Item label="Categories" href="/categories" pathname={pathname} />
           <Item label="Savings" href="/savings" pathname={pathname} />
           <Item label="Debt" href="/debts" pathname={pathname} />
+          <Item label="Receivable" href="/receivables" pathname={pathname} />
           <Item label="Reports" href="/reports" pathname={pathname} />
         </nav>
       </aside>
@@ -61,7 +62,7 @@ export default function DashboardLayout({
         onClick={() => {
           if (pathname === "/debts") {
             window.dispatchEvent(new CustomEvent("openAdd", { detail: "DEBT" }));
-          } else if (pathname === "/receivable") {
+          } else if (pathname === "/receivables") {
             window.dispatchEvent(new CustomEvent("openAdd", { detail: "RECEIVABLE" }));
           } else if (pathname === "/transactions") {
             window.dispatchEvent(new CustomEvent("openAdd", { detail: "TRANSACTION" }));
