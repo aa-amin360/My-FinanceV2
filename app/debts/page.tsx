@@ -34,7 +34,19 @@ export default function DebtPage() {
   };
 
   useEffect(() => {
-    loadData();
+    const handler = (e: any) => {
+      if (e.detail === "DEBT") {
+        // open your existing modal
+        setShowModal(true);
+  
+        // set correct action
+        setAction("DEBT_TAKEN");
+      }
+    };
+  
+    window.addEventListener("openAdd", handler);
+  
+    return () => window.removeEventListener("openAdd", handler);
   }, []);
 
   // =========================
