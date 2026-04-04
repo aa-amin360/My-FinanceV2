@@ -132,6 +132,7 @@ export default function ReportsPage() {
 
       {/* CHART */}
       <CashflowChart data={chartData} />
+      <CategoryDonut data={donutData} />
     </DashboardLayout>
   );
 }
