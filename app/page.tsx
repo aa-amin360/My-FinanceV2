@@ -169,6 +169,42 @@ export default function Home() {
       {/* CHART */}
       <CashflowChart data={chartData} />
 
+      {/* TRANSACTION HISTORY */}
+      <div className="mt-6">
+        <h3 className="text-lg font-semibold mb-3">Recent Transactions</h3>
+      
+        <div className="bg-gray-100 dark:bg-slate-900 rounded-2xl overflow-hidden">
+          {transactions.slice(0, 5).map((t) => (
+            <div
+              key={t.id}
+              className="flex justify-between px-4 py-3 border-b border-gray-200 dark:border-slate-800"
+            >
+              <div>
+                <p className="font-medium">{t.type}</p>
+                <p className="text-xs text-gray-500">
+                  {new Date(t.date).toDateString()}
+                </p>
+              </div>
+      
+              <div
+                className={`font-semibold ${
+                  t.type === "INCOME" ? "text-green-500" : "text-red-500"
+                }`}
+              >
+                {t.type === "INCOME" ? "+" : "-"}
+                {Number(t.amount).toFixed(2)} Tk
+              </div>
+            </div>
+          ))}
+      
+          {transactions.length === 0 && (
+            <div className="p-4 text-center text-gray-400">
+              No transactions yet
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* FAB */}
       <button
         className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-green-500 text-black text-2xl"
