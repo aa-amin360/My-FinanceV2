@@ -1,0 +1,37 @@
+"use client";
+
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+
+const COLORS = ["#22c55e", "#ef4444", "#3b82f6", "#eab308", "#a855f7"];
+
+export default function CategoryDonut({ data }: any) {
+  return (
+    <div className="bg-gray-100 dark:bg-slate-900 p-4 rounded-2xl">
+      <h3 className="mb-4 font-semibold">Expense Breakdown</h3>
+
+      <ResponsiveContainer width="100%" height={250}>
+        <PieChart>
+          <Pie
+            data={data}
+            dataKey="value"
+            nameKey="name"
+            innerRadius={60}
+            outerRadius={90}
+          >
+            {data.map((_: any, index: number) => (
+              <Cell key={index} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
+
+          <Tooltip />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
