@@ -2,6 +2,7 @@
 
 import { useTheme } from "../ThemeProvider";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function DashboardLayout({
   children,
@@ -9,6 +10,26 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { toggleTheme, theme } = useTheme();
+
+  function Item({ label, href }: any) {
+    const pathname = usePathname();
+  
+    const isActive = pathname === href;
+  
+    return (
+      <Link href={href}>
+        <div
+          className={`px-3 py-2 rounded-lg cursor-pointer transition ${
+            isActive
+              ? "bg-green-500 text-black font-semibold"
+              : "hover:bg-gray-200 dark:hover:bg-slate-800"
+          }`}
+        >
+          {label}
+        </div>
+      </Link>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-white text-black dark:bg-slate-950 dark:text-white">
@@ -31,7 +52,7 @@ export default function DashboardLayout({
 
         {/* NAV */}
         <nav className="flex flex-col gap-3 text-sm">
-          <Item label="Dashboard" href="/" active />
+          <Item label="Dashboard" href="/" />
           <Item label="Transactions" href="/transactions" />
           <Item label="Categories" href="/categories" />
           <Item label="Savings" href="/savings" />
@@ -53,6 +74,25 @@ export default function DashboardLayout({
           Coming soon...
         </div>
       </aside>
+
+      {/* FLOATING ACTION BUTTON */}
+      <button
+        onClick={() => {
+          if (pathname === "/debts") {
+            window.dispatchEvent(new CustomEvent("openAdd", { detail: "DEBT" }));
+          } else if (pathname === "/receivable") {
+            window.dispatchEvent(new CustomEvent("openAdd", { detail: "RECEIVABLE" }));
+          } else if (pathname === "/transactions") {
+            window.dispatchEvent(new CustomEvent("openAdd", { detail: "TRANSACTION" }));
+          } else {
+            window.dispatchEvent(new CustomEvent("openAdd", { detail: "GENERAL" }));
+          }
+        }}
+        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-green-500 text-black text-2xl flex items-center justify-center shadow-lg hover:scale-105 transition"
+      >
+        +
+      </button>
+      
     </div>
   );
 }
