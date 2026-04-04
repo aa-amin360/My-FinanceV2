@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import CashflowChart from "../../components/charts/CashflowChart";
+import CategoryDonut from "../../components/charts/CategoryDonut";
 
 type Transaction = {
   id: string;
@@ -80,6 +81,23 @@ export default function ReportsPage() {
   }));
 
   const savings = income - expense;
+
+  const categoryMap: Record<string, number> = {};
+
+    filteredTx.forEach((t: any) => {
+      if (t.type !== "EXPENSE") return;
+    
+      const category = t.category_name || "Other";
+      const amount = Number(t.amount);
+    
+      if (!categoryMap[category]) categoryMap[category] = 0;
+      categoryMap[category] += amount;
+    });
+    
+    const donutData = Object.keys(categoryMap).map((key) => ({
+      name: key,
+      value: categoryMap[key],
+    }));
 
   return (
     <DashboardLayout>
