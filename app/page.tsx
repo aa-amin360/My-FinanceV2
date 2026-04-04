@@ -157,7 +157,7 @@ export default function Home() {
         <Card title="Expenses" value={expense} color="text-red-500" icon="📉" />
         <Card title="Savings" value={0} color="text-blue-500" icon="💾" />
 
-        <Link href="/debt">
+        <Link href="/debts">
           <Card title="Debt" value={debt} color="text-cyan-500" icon="💳" />
         </Link>
 
