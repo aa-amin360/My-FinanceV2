@@ -10,7 +10,7 @@ import {
 
 const COLORS = ["#22c55e", "#ef4444", "#3b82f6", "#eab308", "#a855f7"];
 
-export default function CategoryDonut({ data }: any) {
+export default function CategoryDonut({ data, onSelect }: any) {
   return (
     <div className="bg-gray-100 dark:bg-slate-900 p-4 rounded-2xl">
       <h3 className="mb-4 font-semibold">Expense Breakdown</h3>
@@ -23,6 +23,7 @@ export default function CategoryDonut({ data }: any) {
             nameKey="name"
             innerRadius={60}
             outerRadius={90}
+            onClick={(entry) => onSelect?.(entry.name)}
           >
             {data.map((_: any, index: number) => (
               <Cell key={index} fill={COLORS[index % COLORS.length]} />
