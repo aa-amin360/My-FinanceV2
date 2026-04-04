@@ -11,6 +11,8 @@ export default function DashboardLayout({
 }) {
   const { toggleTheme, theme } = useTheme();
 
+  const pathname = usePathname();
+  
   function Item({ label, href }: any) {
     const pathname = usePathname();
   
@@ -96,23 +98,5 @@ export default function DashboardLayout({
     </div>
   );
 }
-
-// =========================
-// SIDEBAR ITEM
-// =========================
-
-function Item({ label, href, active }: any) {
-  return (
-    <Link href={href}>
-      <div
-        className={`px-3 py-2 rounded-lg cursor-pointer transition ${
-          active
-            ? "bg-green-500 text-black font-semibold"
-            : "hover:bg-gray-200 dark:hover:bg-slate-800"
-        }`}
-      >
-        {label}
-      </div>
-    </Link>
   );
 }
