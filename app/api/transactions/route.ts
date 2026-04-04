@@ -140,22 +140,34 @@ export async function POST(req: Request) {
     // =========================
     // INSERT TRANSACTION
     // =========================
-    const result = await client.query(
-      `INSERT INTO transactions 
-      (type, amount, from_account, to_account, category_id, entity_id, date, note)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-      RETURNING *`,
-      [
-        type,
-        amount,
-        from_account,
-        to_account,
-        category_id || null,
-        entity_id,
-        date,
-        note || null,
-      ]
-    );
+    const result = await client.query(`
+      SELECT 
+        t.id,
+        t.type,
+        t.amount,
+        t.date,
+        t.note,
+        t.entity_id,
+    
+        t.category_id, -- ✅ ADD THIS
+        c.name AS category_name, -- ✅ ADD THIS
+    
+        fa.name AS from_account,
+        ta.name AS to_account
+    
+      FROM transactions t
+    
+      LEFT JOIN categories c 
+        ON t.category_id = c.id -- ✅ CRITICAL LINE
+    
+      LEFT JOIN accounts fa 
+        ON t.from_account = fa.id
+    
+      LEFT JOIN accounts ta 
+        ON t.to_account = ta.id
+    
+      ORDER BY t.date DESC, t.created_at DESC
+    `);
 
     // =========================
     // DEBT
