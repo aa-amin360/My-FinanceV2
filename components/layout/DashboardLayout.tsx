@@ -10,28 +10,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { toggleTheme, theme } = useTheme();
-
   const pathname = usePathname();
-  
-  function Item({ label, href }: any) {
-    const pathname = usePathname();
-  
-    const isActive = pathname === href;
-  
-    return (
-      <Link href={href}>
-        <div
-          className={`px-3 py-2 rounded-lg cursor-pointer transition ${
-            isActive
-              ? "bg-green-500 text-black font-semibold"
-              : "hover:bg-gray-200 dark:hover:bg-slate-800"
-          }`}
-        >
-          {label}
-        </div>
-      </Link>
-    );
-  }
 
   return (
     <div className="flex min-h-screen bg-white text-black dark:bg-slate-950 dark:text-white">
@@ -44,22 +23,22 @@ export default function DashboardLayout({
           <h1 className="text-green-500 text-xl font-bold">My Finance</h1>
 
           {/* THEME TOGGLE */}
-            <button
-              onClick={toggleTheme}
-              className="mt-4 w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:scale-105 transition-all"
-            >
-              {theme === "dark" ? "🌙" : "☀️"}
-            </button>
+          <button
+            onClick={toggleTheme}
+            className="mt-4 w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:scale-105 transition-all"
+          >
+            {theme === "dark" ? "🌙" : "☀️"}
+          </button>
         </div>
 
         {/* NAV */}
         <nav className="flex flex-col gap-3 text-sm">
-          <Item label="Dashboard" href="/" />
-          <Item label="Transactions" href="/transactions" />
-          <Item label="Categories" href="/categories" />
-          <Item label="Savings" href="/savings" />
-          <Item label="Debt" href="/debts" />
-          <Item label="Reports" href="/reports" />
+          <Item label="Dashboard" href="/" pathname={pathname} />
+          <Item label="Transactions" href="/transactions" pathname={pathname} />
+          <Item label="Categories" href="/categories" pathname={pathname} />
+          <Item label="Savings" href="/savings" pathname={pathname} />
+          <Item label="Debt" href="/debts" pathname={pathname} />
+          <Item label="Reports" href="/reports" pathname={pathname} />
         </nav>
       </aside>
 
@@ -94,9 +73,36 @@ export default function DashboardLayout({
       >
         +
       </button>
-      
     </div>
   );
 }
+
+// =========================
+// SIDEBAR ITEM
+// =========================
+
+function Item({
+  label,
+  href,
+  pathname,
+}: {
+  label: string;
+  href: string;
+  pathname: string;
+}) {
+  const isActive = pathname === href;
+
+  return (
+    <Link href={href}>
+      <div
+        className={`px-3 py-2 rounded-lg cursor-pointer transition ${
+          isActive
+            ? "bg-green-500 text-black font-semibold"
+            : "hover:bg-gray-200 dark:hover:bg-slate-800"
+        }`}
+      >
+        {label}
+      </div>
+    </Link>
   );
 }
