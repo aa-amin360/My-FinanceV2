@@ -205,20 +205,52 @@ export default function Home() {
             {/* ACTION */}
             {step === "ACTION" && (
               <>
-                <h3 className="text-center font-semibold text-white">
+                <h3 className="text-center text-lg font-semibold tracking-wide text-gray-200 mb-2">
                   Select Action
                 </h3>
-
+            
                 <div className="grid grid-cols-2 gap-3">
-                  <ActionCard label="Income" onClick={() => { setAction("INCOME"); setStep("FORM"); }} />
-                  <ActionCard label="Expense" onClick={() => { setAction("EXPENSE"); setStep("FORM"); }} />
-                  <ActionCard label="Borrow" onClick={() => { setAction("BORROW"); setStep("FORM"); }} />
-                  <ActionCard label="Give" onClick={() => { setAction("GIVE"); setStep("FORM"); }} />
+                  
+                  <ActionCard
+                    label="Income"
+                    color="bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                    onClick={() => {
+                      setAction("INCOME");
+                      setStep("FORM");
+                    }}
+                  />
+            
+                  <ActionCard
+                    label="Expense"
+                    color="bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                    onClick={() => {
+                      setAction("EXPENSE");
+                      setStep("FORM");
+                    }}
+                  />
+            
+                  <ActionCard
+                    label="Borrow"
+                    color="bg-blue-500/20 text-blue-400 hover:bg-blue-500/30"
+                    onClick={() => {
+                      setAction("BORROW");
+                      setStep("FORM");
+                    }}
+                  />
+            
+                  <ActionCard
+                    label="Give"
+                    color="bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30"
+                    onClick={() => {
+                      setAction("GIVE");
+                      setStep("FORM");
+                    }}
+                  />
                 </div>
-
+            
                 <button
                   onClick={() => setShowModal(false)}
-                  className="text-sm text-gray-400"
+                  className="mt-3 text-sm text-gray-400 hover:text-white transition"
                 >
                   Cancel
                 </button>
