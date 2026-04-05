@@ -15,38 +15,34 @@ type Transaction = {
 
 export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [balance, setBalance] = useState(0);
   const [debt, setDebt] = useState(0);
   const [receivable, setReceivable] = useState(0);
-  const [balance, setBalance] = useState(0);
   const [categories, setCategories] = useState<any[]>([]);
 
-  // modal
   const [showModal, setShowModal] = useState(false);
   const [step, setStep] = useState<"ACTION" | "FORM">("ACTION");
 
-  // form
   const [action, setAction] = useState("INCOME");
   const [amount, setAmount] = useState("");
   const [account, setAccount] = useState("Cash");
-  const [note, setNote] = useState("");
   const [category, setCategory] = useState("");
   const [entity, setEntity] = useState("");
+  const [note, setNote] = useState("");
 
-  // =========================
-  // LOAD DATA
-  // =========================
+  // ================= LOAD DATA =================
   const loadData = async () => {
     const tx = await fetch("/api/transactions").then((r) => r.json());
     setTransactions(tx.data || []);
 
+    const b = await fetch("/api/balance").then((r) => r.json());
+    setBalance(Number(b.total || 0));
+
     const d = await fetch("/api/debts").then((r) => r.json());
     setDebt(Number(d.total || 0));
 
-    const rcv = await fetch("/api/receivables").then((r) => r.json());
-    setReceivable(Number(rcv.total || 0));
-
-    const bal = await fetch("/api/balance").then((r) => r.json());
-    setBalance(Number(bal.total || 0));
+    const r = await fetch("/api/receivables").then((r) => r.json());
+    setReceivable(Number(r.total || 0));
   };
 
   useEffect(() => {
@@ -57,9 +53,7 @@ export default function Home() {
       .then((data) => setCategories(data.data || []));
   }, []);
 
-  // =========================
-  // 🔥 GLOBAL + BUTTON HANDLER
-  // =========================
+  // ================= GLOBAL + =================
   useEffect(() => {
     const handler = (e: any) => {
       if (e.detail === "GENERAL") {
@@ -72,13 +66,11 @@ export default function Home() {
     return () => window.removeEventListener("openAdd", handler);
   }, []);
 
-  // =========================
-  // CALCULATIONS
-  // =========================
+  // ================= CALC =================
   let income = 0;
   let expense = 0;
 
-  const monthlyMap: Record<string, { income: number; expense: number }> = {};
+  const monthlyMap: Record<string, any> = {};
 
   transactions.forEach((t) => {
     const amt = Number(t.amount);
@@ -107,18 +99,8 @@ export default function Home() {
     expense: monthlyMap[m].expense,
   }));
 
-  // =========================
-  // SUBMIT
-  // =========================
+  // ================= SUBMIT =================
   const handleSubmit = async () => {
-    if (
-      (action === "INCOME" || action === "EXPENSE") &&
-      !category
-    ) {
-      alert("Select category");
-      return;
-    }
-
     let type = "";
 
     if (action === "INCOME") type = "INCOME";
@@ -142,7 +124,6 @@ export default function Home() {
       body: JSON.stringify(body),
     });
 
-    // reset
     setShowModal(false);
     setStep("ACTION");
     setAmount("");
@@ -150,18 +131,14 @@ export default function Home() {
     setCategory("");
     setEntity("");
 
-    await loadData(); 
+    loadData();
   };
-
-  
 
   return (
     <DashboardLayout>
       {/* BALANCE */}
       <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-2xl text-black">
-        <h1 className="text-3xl font-bold">
-          {balance.toFixed(2)} Tk
-        </h1>
+        <h1 className="text-3xl font-bold">{balance.toFixed(2)} Tk</h1>
       </div>
 
       {/* CARDS */}
@@ -170,22 +147,22 @@ export default function Home() {
         <Card title="Expenses" value={expense} color="text-red-500" />
 
         <Link href="/debts">
-          <Card title="Debt" value={debt} color="text-cyan-500" />
+          <Card title="Debt" value={debt} color="text-cyan-400" />
         </Link>
 
         <Link href="/receivables">
-          <Card title="Receivable" value={receivable} color="text-yellow-500" />
+          <Card title="Receivable" value={receivable} color="text-yellow-400" />
         </Link>
       </div>
 
       {/* CHART */}
-      <CashflowChart data={chartData} />
+      <div className="mt-6">
+        <CashflowChart data={chartData} />
+      </div>
 
       {/* HISTORY */}
       <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-3">
-          Recent Transactions
-        </h3>
+        <h3 className="text-lg font-semibold mb-3">Recent Transactions</h3>
 
         <div className="bg-gray-100 dark:bg-slate-900 rounded-2xl overflow-hidden">
           {transactions.slice(0, 5).map((t) => {
@@ -217,110 +194,65 @@ export default function Home() {
               </div>
             );
           })}
-
-          {transactions.length === 0 && (
-            <div className="p-4 text-center text-gray-400">
-              No transactions yet
-            </div>
-          )}
         </div>
       </div>
 
       {/* MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/70 flex justify-center items-center">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl w-80 flex flex-col gap-3">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+          <div className="w-[340px] bg-slate-900 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
 
-            {/* ================= ACTION STEP ================= */}
+            {/* ACTION */}
             {step === "ACTION" && (
               <>
-                <h3 className="text-center text-lg font-semibold mb-4">
+                <h3 className="text-center font-semibold text-white">
                   Select Action
                 </h3>
-            
+
                 <div className="grid grid-cols-2 gap-3">
-                  <ActionCard
-                    label="Income"
-                    icon="📈"
-                    color="bg-green-500/20 text-green-400"
-                    onClick={() => {
-                      setAction("INCOME");
-                      setStep("FORM");
-                    }}
-                  />
-            
-                  <ActionCard
-                    label="Expense"
-                    icon="📉"
-                    color="bg-red-500/20 text-red-400"
-                    onClick={() => {
-                      setAction("EXPENSE");
-                      setStep("FORM");
-                    }}
-                  />
-            
-                  <ActionCard
-                    label="Borrow"
-                    icon="💳"
-                    color="bg-blue-500/20 text-blue-400"
-                    onClick={() => {
-                      setAction("BORROW");
-                      setStep("FORM");
-                    }}
-                  />
-            
-                  <ActionCard
-                    label="Give"
-                    icon="📥"
-                    color="bg-yellow-500/20 text-yellow-400"
-                    onClick={() => {
-                      setAction("GIVE");
-                      setStep("FORM");
-                    }}
-                  />
+                  <ActionCard label="Income" onClick={() => { setAction("INCOME"); setStep("FORM"); }} />
+                  <ActionCard label="Expense" onClick={() => { setAction("EXPENSE"); setStep("FORM"); }} />
+                  <ActionCard label="Borrow" onClick={() => { setAction("BORROW"); setStep("FORM"); }} />
+                  <ActionCard label="Give" onClick={() => { setAction("GIVE"); setStep("FORM"); }} />
                 </div>
-            
+
                 <button
                   onClick={() => setShowModal(false)}
-                  className="mt-4 text-sm text-gray-400 hover:text-white transition"
+                  className="text-sm text-gray-400"
                 >
                   Cancel
                 </button>
               </>
             )}
-            
-            {/* ================= FORM STEP ================= */}
+
+            {/* FORM */}
             {step === "FORM" && (
               <>
-                <h3 className="text-lg font-semibold mb-2">{action}</h3>
-            
-                {/* AMOUNT */}
+                <h3 className="font-semibold text-white">{action}</h3>
+
                 <input
-                  className="w-full p-3 rounded-xl bg-gray-200 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full p-3 rounded-xl bg-slate-800 text-white"
                   placeholder="Enter amount"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                 />
-            
-                {/* ACCOUNT */}
+
                 <select
-                  className="w-full p-3 rounded-xl bg-gray-200 dark:bg-slate-800 focus:outline-none"
+                  className="w-full p-3 rounded-xl bg-slate-800 text-white"
                   value={account}
                   onChange={(e) => setAccount(e.target.value)}
                 >
                   <option>Cash</option>
                   <option>Bank</option>
                 </select>
-            
-                {/* CATEGORY */}
+
                 {(action === "INCOME" || action === "EXPENSE") && (
                   <select
-                    className="w-full p-3 rounded-xl bg-gray-200 dark:bg-slate-800 focus:outline-none"
+                    className="w-full p-3 rounded-xl bg-slate-800 text-white"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                   >
                     <option value="">Select Category</option>
-            
                     {categories
                       .filter((c) => c.type === action)
                       .map((c) => (
@@ -330,43 +262,38 @@ export default function Home() {
                       ))}
                   </select>
                 )}
-            
-                {/* ENTITY */}
+
                 {(action === "BORROW" || action === "GIVE") && (
                   <input
-                    className="w-full p-3 rounded-xl bg-gray-200 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Person / Bank name"
+                    className="w-full p-3 rounded-xl bg-slate-800 text-white"
+                    placeholder="Person / Bank"
                     value={entity}
                     onChange={(e) => setEntity(e.target.value)}
                   />
                 )}
-            
-                {/* NOTE */}
+
                 <input
-                  className="w-full p-3 rounded-xl bg-gray-200 dark:bg-slate-800 focus:outline-none"
-                  placeholder="Add note (optional)"
+                  className="w-full p-3 rounded-xl bg-slate-800 text-white"
+                  placeholder="Note"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                 />
-            
-                {/* ACTION BUTTONS */}
-                <div className="flex gap-2 mt-2">
-                  <button
-                    onClick={handleSubmit}
-                    className="flex-1 bg-green-500 text-black py-3 rounded-xl font-semibold hover:scale-105 transition"
-                  >
-                    Save
-                  </button>
-            
-                  <button
-                    onClick={() => setStep("ACTION")}
-                    className="flex-1 bg-gray-300 dark:bg-slate-700 py-3 rounded-xl hover:scale-105 transition"
-                  >
-                    Back
-                  </button>
-                </div>
+
+                <button
+                  onClick={handleSubmit}
+                  className="bg-green-500 text-black py-3 rounded-xl"
+                >
+                  Save
+                </button>
+
+                <button
+                  onClick={() => setStep("ACTION")}
+                  className="bg-slate-700 py-3 rounded-xl text-white"
+                >
+                  Back
+                </button>
               </>
-            )}            
+            )}
           </div>
         </div>
       )}
@@ -374,29 +301,24 @@ export default function Home() {
   );
 }
 
-// =========================
-// CARD
-// =========================
+// ================= COMPONENTS =================
 
 function Card({ title, value, color }: any) {
   return (
     <div className="bg-gray-100 dark:bg-slate-900 p-5 rounded-2xl">
       <p className={color}>{title}</p>
-      <h2 className="text-2xl mt-3 font-bold">
-        {value.toFixed(2)} Tk
-      </h2>
+      <h2 className="text-2xl mt-2 font-bold">{value.toFixed(2)} Tk</h2>
     </div>
   );
 }
 
-function ActionCard({ label, icon, color, onClick }: any) {
+function ActionCard({ label, onClick }: any) {
   return (
     <div
       onClick={onClick}
-      className={`p-4 rounded-xl cursor-pointer transition transform hover:scale-105 ${color}`}
+      className="p-4 rounded-xl bg-slate-800 text-white hover:scale-105 transition cursor-pointer text-center"
     >
-      <div className="text-2xl mb-2">{icon}</div>
-      <div className="text-sm font-semibold">{label}</div>
+      {label}
     </div>
   );
 }
