@@ -13,6 +13,10 @@ type Transaction = {
   note: string | null;
 };
 
+// =========================
+// MAIN
+// =========================
+
 export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [debt, setDebt] = useState(0);
@@ -20,11 +24,9 @@ export default function Home() {
   const [balance, setBalance] = useState(0);
   const [categories, setCategories] = useState<any[]>([]);
 
-  // modal
   const [showModal, setShowModal] = useState(false);
   const [step, setStep] = useState<"ACTION" | "FORM">("ACTION");
 
-  // form
   const [action, setAction] = useState("INCOME");
   const [amount, setAmount] = useState("");
   const [account, setAccount] = useState("Cash");
@@ -35,6 +37,7 @@ export default function Home() {
   // =========================
   // LOAD DATA
   // =========================
+
   const loadData = async () => {
     const tx = await fetch("/api/transactions").then((r) => r.json());
     setTransactions(tx.data || []);
@@ -42,11 +45,11 @@ export default function Home() {
     const d = await fetch("/api/debts").then((r) => r.json());
     setDebt(Number(d.total || 0));
 
-    const rcv = await fetch("/api/receivables").then((r) => r.json());
-    setReceivable(Number(rcv.total || 0));
+    const r = await fetch("/api/receivables").then((r) => r.json());
+    setReceivable(Number(r.total || 0));
 
-    const bal = await fetch("/api/balance").then((r) => r.json());
-    setBalance(Number(bal.total || 0));
+    const b = await fetch("/api/balance").then((r) => r.json());
+    setBalance(Number(b.total || 0));
   };
 
   useEffect(() => {
@@ -58,8 +61,9 @@ export default function Home() {
   }, []);
 
   // =========================
-  // 🔥 GLOBAL + BUTTON HANDLER
+  // GLOBAL +
   // =========================
+
   useEffect(() => {
     const handler = (e: any) => {
       if (e.detail === "GENERAL") {
@@ -75,6 +79,7 @@ export default function Home() {
   // =========================
   // CALCULATIONS
   // =========================
+
   let income = 0;
   let expense = 0;
 
@@ -110,11 +115,9 @@ export default function Home() {
   // =========================
   // SUBMIT
   // =========================
+
   const handleSubmit = async () => {
-    if (
-      (action === "INCOME" || action === "EXPENSE") &&
-      !category
-    ) {
+    if ((action === "INCOME" || action === "EXPENSE") && !category) {
       alert("Select category");
       return;
     }
@@ -150,18 +153,14 @@ export default function Home() {
     setCategory("");
     setEntity("");
 
-    await loadData(); 
+    await loadData();
   };
-
-  
 
   return (
     <DashboardLayout>
       {/* BALANCE */}
       <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-2xl text-black">
-        <h1 className="text-3xl font-bold">
-          {balance.toFixed(2)} Tk
-        </h1>
+        <h1 className="text-3xl font-bold">{balance.toFixed(2)} Tk</h1>
       </div>
 
       {/* CARDS */}
@@ -179,13 +178,13 @@ export default function Home() {
       </div>
 
       {/* CHART */}
-      <CashflowChart data={chartData} />
+      <div className="mt-6">
+        <CashflowChart data={chartData} />
+      </div>
 
       {/* HISTORY */}
       <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-3">
-          Recent Transactions
-        </h3>
+        <h3 className="text-lg font-semibold mb-3">Recent Transactions</h3>
 
         <div className="bg-gray-100 dark:bg-slate-900 rounded-2xl overflow-hidden">
           {transactions.slice(0, 5).map((t) => {
@@ -228,175 +227,129 @@ export default function Home() {
 
       {/* MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/70 flex justify-center items-center">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl w-80 flex flex-col gap-3">
-
-            {/* ================= ACTION STEP ================= */}
-            {step === "ACTION" && (
-              <>
-                <h3 className="text-center text-lg font-semibold mb-4">
-                  Select Action
-                </h3>
-            
-                <div className="grid grid-cols-2 gap-3">
-                  <ActionCard
-                    label="Income"
-                    icon="📈"
-                    color="bg-green-500/20 text-green-400"
-                    onClick={() => {
-                      setAction("INCOME");
-                      setStep("FORM");
-                    }}
-                  />
-            
-                  <ActionCard
-                    label="Expense"
-                    icon="📉"
-                    color="bg-red-500/20 text-red-400"
-                    onClick={() => {
-                      setAction("EXPENSE");
-                      setStep("FORM");
-                    }}
-                  />
-            
-                  <ActionCard
-                    label="Borrow"
-                    icon="💳"
-                    color="bg-blue-500/20 text-blue-400"
-                    onClick={() => {
-                      setAction("BORROW");
-                      setStep("FORM");
-                    }}
-                  />
-            
-                  <ActionCard
-                    label="Give"
-                    icon="📥"
-                    color="bg-yellow-500/20 text-yellow-400"
-                    onClick={() => {
-                      setAction("GIVE");
-                      setStep("FORM");
-                    }}
-                  />
-                </div>
-            
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="mt-4 text-sm text-gray-400 hover:text-white transition"
-                >
-                  Cancel
-                </button>
-              </>
-            )}
-            
-            {/* ================= FORM STEP ================= */}
-            {step === "FORM" && (
-              <>
-                <h3 className="text-lg font-semibold mb-2">{action}</h3>
-            
-                {/* AMOUNT */}
-                <input
-                  className="w-full p-3 rounded-xl bg-gray-200 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="Enter amount"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                />
-            
-                {/* ACCOUNT */}
-                <select
-                  className="w-full p-3 rounded-xl bg-gray-200 dark:bg-slate-800 focus:outline-none"
-                  value={account}
-                  onChange={(e) => setAccount(e.target.value)}
-                >
-                  <option>Cash</option>
-                  <option>Bank</option>
-                </select>
-            
-                {/* CATEGORY */}
-                {(action === "INCOME" || action === "EXPENSE") && (
-                  <select
-                    className="w-full p-3 rounded-xl bg-gray-200 dark:bg-slate-800 focus:outline-none"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                  >
-                    <option value="">Select Category</option>
-            
-                    {categories
-                      .filter((c) => c.type === action)
-                      .map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                  </select>
-                )}
-            
-                {/* ENTITY */}
-                {(action === "BORROW" || action === "GIVE") && (
-                  <input
-                    className="w-full p-3 rounded-xl bg-gray-200 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Person / Bank name"
-                    value={entity}
-                    onChange={(e) => setEntity(e.target.value)}
-                  />
-                )}
-            
-                {/* NOTE */}
-                <input
-                  className="w-full p-3 rounded-xl bg-gray-200 dark:bg-slate-800 focus:outline-none"
-                  placeholder="Add note (optional)"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                />
-            
-                {/* ACTION BUTTONS */}
-                <div className="flex gap-2 mt-2">
-                  <button
-                    onClick={handleSubmit}
-                    className="flex-1 bg-green-500 text-black py-3 rounded-xl font-semibold hover:scale-105 transition"
-                  >
-                    Save
-                  </button>
-            
-                  <button
-                    onClick={() => setStep("ACTION")}
-                    className="flex-1 bg-gray-300 dark:bg-slate-700 py-3 rounded-xl hover:scale-105 transition"
-                  >
-                    Back
-                  </button>
-                </div>
-              </>
-            )}            
-          </div>
-        </div>
+        <Modal
+          step={step}
+          setStep={setStep}
+          setShowModal={setShowModal}
+          action={action}
+          setAction={setAction}
+          amount={amount}
+          setAmount={setAmount}
+          account={account}
+          setAccount={setAccount}
+          category={category}
+          setCategory={setCategory}
+          entity={entity}
+          setEntity={setEntity}
+          note={note}
+          setNote={setNote}
+          categories={categories}
+          handleSubmit={handleSubmit}
+        />
       )}
     </DashboardLayout>
   );
 }
 
 // =========================
-// CARD
+// MODAL COMPONENT
+// =========================
+
+function Modal(props: any) {
+  const {
+    step,
+    setStep,
+    setShowModal,
+    action,
+    setAction,
+    amount,
+    setAmount,
+    account,
+    setAccount,
+    category,
+    setCategory,
+    entity,
+    setEntity,
+    note,
+    setNote,
+    categories,
+    handleSubmit,
+  } = props;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+      <div className="w-[340px] bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
+
+        {/* ACTION */}
+        {step === "ACTION" && (
+          <>
+            <h3 className="text-center font-semibold">Select Action</h3>
+
+            <div className="grid grid-cols-2 gap-3">
+              <ActionCard label="Income" icon="📈" onClick={() => { setAction("INCOME"); setStep("FORM"); }} />
+              <ActionCard label="Expense" icon="📉" onClick={() => { setAction("EXPENSE"); setStep("FORM"); }} />
+              <ActionCard label="Borrow" icon="💳" onClick={() => { setAction("BORROW"); setStep("FORM"); }} />
+              <ActionCard label="Give" icon="📥" onClick={() => { setAction("GIVE"); setStep("FORM"); }} />
+            </div>
+
+            <button onClick={() => setShowModal(false)} className="text-sm text-gray-400">Cancel</button>
+          </>
+        )}
+
+        {/* FORM */}
+        {step === "FORM" && (
+          <>
+            <h3 className="font-semibold">{action}</h3>
+
+            <input className="input" placeholder="Amount" value={amount} onChange={(e)=>setAmount(e.target.value)} />
+
+            <select className="input" value={account} onChange={(e)=>setAccount(e.target.value)}>
+              <option>Cash</option>
+              <option>Bank</option>
+            </select>
+
+            {(action==="INCOME"||action==="EXPENSE") && (
+              <select className="input" value={category} onChange={(e)=>setCategory(e.target.value)}>
+                <option value="">Category</option>
+                {categories.filter((c:any)=>c.type===action).map((c:any)=>(
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            )}
+
+            {(action==="BORROW"||action==="GIVE") && (
+              <input className="input" placeholder="Entity" value={entity} onChange={(e)=>setEntity(e.target.value)} />
+            )}
+
+            <input className="input" placeholder="Note" value={note} onChange={(e)=>setNote(e.target.value)} />
+
+            <button onClick={handleSubmit} className="btn-primary">Save</button>
+            <button onClick={()=>setStep("ACTION")} className="btn-secondary">Back</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// =========================
+// SMALL COMPONENTS
 // =========================
 
 function Card({ title, value, color }: any) {
   return (
     <div className="bg-gray-100 dark:bg-slate-900 p-5 rounded-2xl">
       <p className={color}>{title}</p>
-      <h2 className="text-2xl mt-3 font-bold">
-        {value.toFixed(2)} Tk
-      </h2>
+      <h2 className="text-2xl mt-2 font-bold">{value.toFixed(2)} Tk</h2>
     </div>
   );
 }
 
-function ActionCard({ label, icon, color, onClick }: any) {
+function ActionCard({ label, icon, onClick }: any) {
   return (
-    <div
-      onClick={onClick}
-      className={`p-4 rounded-xl cursor-pointer transition transform hover:scale-105 ${color}`}
-    >
-      <div className="text-2xl mb-2">{icon}</div>
-      <div className="text-sm font-semibold">{label}</div>
+    <div onClick={onClick} className="p-4 rounded-xl bg-slate-800 hover:scale-105 transition cursor-pointer">
+      <div className="text-xl">{icon}</div>
+      <div className="text-sm mt-1">{label}</div>
     </div>
   );
 }
