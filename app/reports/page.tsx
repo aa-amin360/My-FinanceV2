@@ -134,7 +134,11 @@ export default function ReportsPage() {
 
       {/* CHART */}
       <CashflowChart data={chartData} />
-      
+
+      <h3 className="text-lg font-semibold mb-3">
+        Donut Chart
+      </h3>
+   
       <CategoryDonut
         data={donutData}
         onSelect={(cat: string) => setSelectedCategory(cat)}
