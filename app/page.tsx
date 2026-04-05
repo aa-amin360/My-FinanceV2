@@ -231,25 +231,14 @@ export default function Home() {
         <div className="fixed inset-0 bg-black/70 flex justify-center items-center">
           <div className="bg-white dark:bg-slate-900 p-6 rounded-xl w-80 flex flex-col gap-3">
 
+            {/* ================= ACTION STEP ================= */}
             {step === "ACTION" && (
               <>
-                <h3>Select Action</h3>
-                <button onClick={() => { setAction("INCOME"); setStep("FORM"); }}>Income</button>
-                <button onClick={() => { setAction("EXPENSE"); setStep("FORM"); }}>Expense</button>
-                <button onClick={() => { setAction("BORROW"); setStep("FORM"); }}>Borrow</button>
-                <button onClick={() => { setAction("GIVE"); setStep("FORM"); }}>Give</button>
-                <button onClick={() => setShowModal(false)}>Cancel</button>
-              </>
-            )}
-
-            {step === "ACTION" && (
-              <>
-                <h3 className="text-center text-lg font-semibold mb-2">
+                <h3 className="text-center text-lg font-semibold mb-4">
                   Select Action
                 </h3>
             
                 <div className="grid grid-cols-2 gap-3">
-                  
                   <ActionCard
                     label="Income"
                     icon="📈"
@@ -293,12 +282,91 @@ export default function Home() {
             
                 <button
                   onClick={() => setShowModal(false)}
-                  className="mt-3 text-sm text-gray-400 hover:text-white"
+                  className="mt-4 text-sm text-gray-400 hover:text-white transition"
                 >
                   Cancel
                 </button>
               </>
             )}
+            
+            {/* ================= FORM STEP ================= */}
+            {step === "FORM" && (
+              <>
+                <h3 className="text-lg font-semibold mb-2">{action}</h3>
+            
+                {/* AMOUNT */}
+                <input
+                  className="w-full p-3 rounded-xl bg-gray-200 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="Enter amount"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
+            
+                {/* ACCOUNT */}
+                <select
+                  className="w-full p-3 rounded-xl bg-gray-200 dark:bg-slate-800 focus:outline-none"
+                  value={account}
+                  onChange={(e) => setAccount(e.target.value)}
+                >
+                  <option>Cash</option>
+                  <option>Bank</option>
+                </select>
+            
+                {/* CATEGORY */}
+                {(action === "INCOME" || action === "EXPENSE") && (
+                  <select
+                    className="w-full p-3 rounded-xl bg-gray-200 dark:bg-slate-800 focus:outline-none"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                  >
+                    <option value="">Select Category</option>
+            
+                    {categories
+                      .filter((c) => c.type === action)
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                  </select>
+                )}
+            
+                {/* ENTITY */}
+                {(action === "BORROW" || action === "GIVE") && (
+                  <input
+                    className="w-full p-3 rounded-xl bg-gray-200 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Person / Bank name"
+                    value={entity}
+                    onChange={(e) => setEntity(e.target.value)}
+                  />
+                )}
+            
+                {/* NOTE */}
+                <input
+                  className="w-full p-3 rounded-xl bg-gray-200 dark:bg-slate-800 focus:outline-none"
+                  placeholder="Add note (optional)"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                />
+            
+                {/* ACTION BUTTONS */}
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={handleSubmit}
+                    className="flex-1 bg-green-500 text-black py-3 rounded-xl font-semibold hover:scale-105 transition"
+                  >
+                    Save
+                  </button>
+            
+                  <button
+                    onClick={() => setStep("ACTION")}
+                    className="flex-1 bg-gray-300 dark:bg-slate-700 py-3 rounded-xl hover:scale-105 transition"
+                  >
+                    Back
+                  </button>
+                </div>
+              </>
+            )}            
           </div>
         </div>
       )}
