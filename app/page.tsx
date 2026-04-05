@@ -344,11 +344,11 @@ function Card({ title, value, color }: any) {
   );
 }
 
-function ActionCard({ label, onClick }: any) {
+function ActionCard({ label, color, onClick }: any) {
   return (
     <div
       onClick={onClick}
-      className="p-4 rounded-xl bg-slate-800 text-white hover:scale-105 transition cursor-pointer text-center"
+      className={`p-4 rounded-xl cursor-pointer transition-all duration-200 text-center font-medium tracking-wide ${color}`}
     >
       {label}
     </div>
