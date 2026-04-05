@@ -9,8 +9,6 @@ type Transaction = {
   id: string;
   type: string;
   amount: string;
-  from_account: string | null;
-  to_account: string | null;
   date: string;
   note: string | null;
 };
@@ -20,12 +18,13 @@ export default function Home() {
   const [debt, setDebt] = useState(0);
   const [receivable, setReceivable] = useState(0);
   const [balance, setBalance] = useState(0);
-
   const [categories, setCategories] = useState<any[]>([]);
 
+  // modal
   const [showModal, setShowModal] = useState(false);
   const [step, setStep] = useState<"ACTION" | "FORM">("ACTION");
 
+  // form
   const [action, setAction] = useState("INCOME");
   const [amount, setAmount] = useState("");
   const [account, setAccount] = useState("Cash");
@@ -36,31 +35,41 @@ export default function Home() {
   // =========================
   // LOAD DATA
   // =========================
-  const loadData = () => {
-    fetch("/api/transactions")
-      .then((res) => res.json())
-      .then((data) => setTransactions(data.data || []));
+  const loadData = async () => {
+    const tx = await fetch("/api/transactions").then((r) => r.json());
+    setTransactions(tx.data || []);
 
-    fetch("/api/debts")
-      .then((res) => res.json())
-      .then((data) => setDebt(Number(data.total || 0)));
+    const d = await fetch("/api/debts").then((r) => r.json());
+    setDebt(Number(d.total || 0));
 
-    fetch("/api/receivables")
-      .then((res) => res.json())
-      .then((data) => setReceivable(Number(data.total || 0)));
+    const rcv = await fetch("/api/receivables").then((r) => r.json());
+    setReceivable(Number(rcv.total || 0));
 
-    fetch("/api/balance")
-      .then((res) => res.json())
-      .then((data) => setBalance(Number(data.total || 0)));
+    const bal = await fetch("/api/balance").then((r) => r.json());
+    setBalance(Number(bal.total || 0));
   };
 
   useEffect(() => {
     loadData();
 
-    // load categories
     fetch("/api/categories")
       .then((res) => res.json())
       .then((data) => setCategories(data.data || []));
+  }, []);
+
+  // =========================
+  // 🔥 GLOBAL + BUTTON HANDLER
+  // =========================
+  useEffect(() => {
+    const handler = (e: any) => {
+      if (e.detail === "GENERAL") {
+        setShowModal(true);
+        setStep("ACTION");
+      }
+    };
+
+    window.addEventListener("openAdd", handler);
+    return () => window.removeEventListener("openAdd", handler);
   }, []);
 
   // =========================
@@ -69,32 +78,33 @@ export default function Home() {
   let income = 0;
   let expense = 0;
 
-  const monthlyDataMap: Record<string, { income: number; expense: number }> = {};
+  const monthlyMap: Record<string, { income: number; expense: number }> = {};
 
   transactions.forEach((t) => {
-    const amount = Number(t.amount);
-    const date = new Date(t.date);
-    const month = date.toLocaleString("default", { month: "short" });
+    const amt = Number(t.amount);
+    const month = new Date(t.date).toLocaleString("default", {
+      month: "short",
+    });
 
-    if (!monthlyDataMap[month]) {
-      monthlyDataMap[month] = { income: 0, expense: 0 };
+    if (!monthlyMap[month]) {
+      monthlyMap[month] = { income: 0, expense: 0 };
     }
 
     if (t.type === "INCOME") {
-      income += amount;
-      monthlyDataMap[month].income += amount;
+      income += amt;
+      monthlyMap[month].income += amt;
     }
 
     if (t.type === "EXPENSE") {
-      expense += amount;
-      monthlyDataMap[month].expense += amount;
+      expense += amt;
+      monthlyMap[month].expense += amt;
     }
   });
 
-  const chartData = Object.keys(monthlyDataMap).map((month) => ({
-    month,
-    income: monthlyDataMap[month].income,
-    expense: monthlyDataMap[month].expense,
+  const chartData = Object.keys(monthlyMap).map((m) => ({
+    month: m,
+    income: monthlyMap[m].income,
+    expense: monthlyMap[m].expense,
   }));
 
   // =========================
@@ -132,6 +142,7 @@ export default function Home() {
       body: JSON.stringify(body),
     });
 
+    // reset
     setShowModal(false);
     setStep("ACTION");
     setAmount("");
@@ -139,7 +150,7 @@ export default function Home() {
     setCategory("");
     setEntity("");
 
-    loadData();
+    await loadData(); // 🔥 IMPORTANT FIX
   };
 
   return (
@@ -153,50 +164,58 @@ export default function Home() {
 
       {/* CARDS */}
       <div className="grid grid-cols-2 gap-4 mt-6">
-        <Card title="Income" value={income} color="text-green-500" icon="📈" />
-        <Card title="Expenses" value={expense} color="text-red-500" icon="📉" />
-        <Card title="Savings" value={0} color="text-blue-500" icon="💾" />
+        <Card title="Income" value={income} color="text-green-500" />
+        <Card title="Expenses" value={expense} color="text-red-500" />
 
         <Link href="/debts">
-          <Card title="Debt" value={debt} color="text-cyan-500" icon="💳" />
+          <Card title="Debt" value={debt} color="text-cyan-500" />
         </Link>
 
         <Link href="/receivables">
-          <Card title="Receivable" value={receivable} color="text-yellow-500" icon="📥" />
+          <Card title="Receivable" value={receivable} color="text-yellow-500" />
         </Link>
       </div>
 
       {/* CHART */}
       <CashflowChart data={chartData} />
 
-      {/* TRANSACTION HISTORY */}
+      {/* HISTORY */}
       <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-3">Recent Transactions</h3>
-      
+        <h3 className="text-lg font-semibold mb-3">
+          Recent Transactions
+        </h3>
+
         <div className="bg-gray-100 dark:bg-slate-900 rounded-2xl overflow-hidden">
-          {transactions.slice(0, 5).map((t) => (
-            <div
-              key={t.id}
-              className="flex justify-between px-4 py-3 border-b border-gray-200 dark:border-slate-800"
-            >
-              <div>
-                <p className="font-medium">{t.type}</p>
-                <p className="text-xs text-gray-500">
-                  {new Date(t.date).toDateString()}
-                </p>
-              </div>
-      
+          {transactions.slice(0, 5).map((t) => {
+            const isPositive =
+              t.type === "INCOME" ||
+              t.type === "DEBT_TAKEN" ||
+              t.type === "RECEIVABLE_RECEIVED";
+
+            return (
               <div
-                className={`font-semibold ${
-                  t.type === "INCOME" ? "text-green-500" : "text-red-500"
-                }`}
+                key={t.id}
+                className="flex justify-between px-4 py-3 border-b border-gray-200 dark:border-slate-800"
               >
-                {t.type === "INCOME" ? "+" : "-"}
-                {Number(t.amount).toFixed(2)} Tk
+                <div>
+                  <p className="font-medium">{t.type}</p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(t.date).toDateString()}
+                  </p>
+                </div>
+
+                <div
+                  className={`font-semibold ${
+                    isPositive ? "text-green-500" : "text-red-500"
+                  }`}
+                >
+                  {isPositive ? "+" : "-"}
+                  {Number(t.amount).toFixed(2)} Tk
+                </div>
               </div>
-            </div>
-          ))}
-      
+            );
+          })}
+
           {transactions.length === 0 && (
             <div className="p-4 text-center text-gray-400">
               No transactions yet
@@ -205,22 +224,11 @@ export default function Home() {
         </div>
       </div>
 
-      {/* FAB */}
-      <button
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-green-500 text-black text-2xl"
-        onClick={() => {
-          setShowModal(true);
-          setStep("ACTION");
-        }}
-      >
-        +
-      </button>
-
       {/* MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/70 flex justify-center items-center">
           <div className="bg-white dark:bg-slate-900 p-6 rounded-xl w-80 flex flex-col gap-3">
-            
+
             {step === "ACTION" && (
               <>
                 <h3>Select Action</h3>
@@ -259,7 +267,6 @@ export default function Home() {
                     onChange={(e) => setCategory(e.target.value)}
                   >
                     <option value="">Select Category</option>
-
                     {categories
                       .filter((c) => c.type === action)
                       .map((c) => (
@@ -273,7 +280,7 @@ export default function Home() {
                 {(action === "BORROW" || action === "GIVE") && (
                   <input
                     className="p-2 rounded bg-gray-200 dark:bg-slate-800"
-                    placeholder="Person / Bank"
+                    placeholder="Person"
                     value={entity}
                     onChange={(e) => setEntity(e.target.value)}
                   />
@@ -298,17 +305,16 @@ export default function Home() {
 }
 
 // =========================
-// COMPONENTS
+// CARD
 // =========================
 
-function Card({ title, value, color, icon }: any) {
+function Card({ title, value, color }: any) {
   return (
     <div className="bg-gray-100 dark:bg-slate-900 p-5 rounded-2xl">
-      <div className="flex justify-between">
-        <p className={color}>{title}</p>
-        <span>{icon}</span>
-      </div>
-      <h2 className="text-2xl mt-3 font-bold">{value.toFixed(2)} Tk</h2>
+      <p className={color}>{title}</p>
+      <h2 className="text-2xl mt-3 font-bold">
+        {value.toFixed(2)} Tk
+      </h2>
     </div>
   );
 }
