@@ -199,92 +199,109 @@ export default function Home() {
 
       {/* MODAL */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center">
-          <div className="w-[340px] bg-slate-900 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-
-            {/* ACTION */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          
+          <div className="w-[340px] bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 transition-all">
+      
+            {/* ================= ACTION ================= */}
             {step === "ACTION" && (
               <>
-                <h3 className="text-center text-lg font-semibold tracking-wide text-gray-200 mb-2">
+                <h3 className="text-center text-lg font-semibold tracking-wide text-gray-800 dark:text-gray-200">
                   Select Action
                 </h3>
-            
-                <div className="grid grid-cols-2 gap-3">
+      
+                <div className="grid grid-cols-2 gap-3 mt-2">
                   
                   <ActionCard
                     label="Income"
-                    color="bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                    color="bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-500/20 dark:text-green-400 dark:hover:bg-green-500/30"
                     onClick={() => {
                       setAction("INCOME");
                       setStep("FORM");
                     }}
                   />
-            
+      
                   <ActionCard
                     label="Expense"
-                    color="bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                    color="bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-500/30"
                     onClick={() => {
                       setAction("EXPENSE");
                       setStep("FORM");
                     }}
                   />
-            
+      
                   <ActionCard
                     label="Borrow"
-                    color="bg-blue-500/20 text-blue-400 hover:bg-blue-500/30"
+                    color="bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-500/20 dark:text-blue-400 dark:hover:bg-blue-500/30"
                     onClick={() => {
                       setAction("BORROW");
                       setStep("FORM");
                     }}
                   />
-            
+      
                   <ActionCard
                     label="Give"
-                    color="bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30"
+                    color="bg-yellow-100 text-yellow-600 hover:bg-yellow-200 dark:bg-yellow-500/20 dark:text-yellow-400 dark:hover:bg-yellow-500/30"
                     onClick={() => {
                       setAction("GIVE");
                       setStep("FORM");
                     }}
                   />
                 </div>
-            
+      
                 <button
                   onClick={() => setShowModal(false)}
-                  className="mt-3 text-sm text-gray-400 hover:text-white transition"
+                  className="mt-3 text-sm text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition"
                 >
                   Cancel
                 </button>
               </>
             )}
-
-            {/* FORM */}
+      
+            {/* ================= FORM ================= */}
             {step === "FORM" && (
               <>
-                <h3 className="font-semibold text-white">{action}</h3>
-
+                {/* HEADER */}
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                    {action}
+                  </h3>
+      
+                  <button
+                    onClick={() => setStep("ACTION")}
+                    className="text-sm text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
+                  >
+                    ← Back
+                  </button>
+                </div>
+      
+                {/* AMOUNT */}
                 <input
-                  className="w-full p-3 rounded-xl bg-slate-800 text-white"
+                  className="w-full p-3 rounded-xl bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Enter amount"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                 />
-
+      
+                {/* ACCOUNT */}
                 <select
-                  className="w-full p-3 rounded-xl bg-slate-800 text-white"
+                  className="w-full p-3 rounded-xl bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-white focus:outline-none"
                   value={account}
                   onChange={(e) => setAccount(e.target.value)}
                 >
                   <option>Cash</option>
                   <option>Bank</option>
                 </select>
-
+      
+                {/* CATEGORY */}
                 {(action === "INCOME" || action === "EXPENSE") && (
                   <select
-                    className="w-full p-3 rounded-xl bg-slate-800 text-white"
+                    className="w-full p-3 rounded-xl bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-white"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                   >
                     <option value="">Select Category</option>
+      
                     {categories
                       .filter((c) => c.type === action)
                       .map((c) => (
@@ -294,36 +311,41 @@ export default function Home() {
                       ))}
                   </select>
                 )}
-
+      
+                {/* ENTITY */}
                 {(action === "BORROW" || action === "GIVE") && (
                   <input
-                    className="w-full p-3 rounded-xl bg-slate-800 text-white"
+                    className="w-full p-3 rounded-xl bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-white"
                     placeholder="Person / Bank"
                     value={entity}
                     onChange={(e) => setEntity(e.target.value)}
                   />
                 )}
-
+      
+                {/* NOTE */}
                 <input
-                  className="w-full p-3 rounded-xl bg-slate-800 text-white"
-                  placeholder="Note"
+                  className="w-full p-3 rounded-xl bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-white"
+                  placeholder="Add note (optional)"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                 />
-
-                <button
-                  onClick={handleSubmit}
-                  className="bg-green-500 text-black py-3 rounded-xl"
-                >
-                  Save
-                </button>
-
-                <button
-                  onClick={() => setStep("ACTION")}
-                  className="bg-slate-700 py-3 rounded-xl text-white"
-                >
-                  Back
-                </button>
+      
+                {/* ACTION BUTTONS */}
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={handleSubmit}
+                    className="flex-1 bg-green-500 text-black py-3 rounded-xl font-semibold hover:scale-[1.02] transition"
+                  >
+                    Save
+                  </button>
+      
+                  <button
+                    onClick={() => setStep("ACTION")}
+                    className="flex-1 bg-gray-200 text-gray-700 dark:bg-slate-700 dark:text-white py-3 rounded-xl hover:scale-[1.02] transition"
+                  >
+                    Back
+                  </button>
+                </div>
               </>
             )}
           </div>
@@ -348,7 +370,7 @@ function ActionCard({ label, color, onClick }: any) {
   return (
     <div
       onClick={onClick}
-      className={`p-4 rounded-xl cursor-pointer transition-all duration-200 text-center font-medium tracking-wide ${color}`}
+      className={`p-4 rounded-xl text-center font-medium tracking-wide cursor-pointer transition-all duration-200 ${color}`}
     >
       {label}
     </div>
