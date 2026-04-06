@@ -200,8 +200,10 @@ export default function Home() {
       {/* MODAL */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          
-          <div className="w-[340px] bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 transition-all">
+      
+          {/* MODAL BOX */}
+          <div className="w-[340px] bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-2xl flex flex-col gap-4
+                          animate-modalIn">
       
             {/* ================= ACTION ================= */}
             {step === "ACTION" && (
@@ -211,7 +213,7 @@ export default function Home() {
                 </h3>
       
                 <div className="grid grid-cols-2 gap-3 mt-2">
-                  
+      
                   <ActionCard
                     label="Income"
                     color="bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-500/20 dark:text-green-400 dark:hover:bg-green-500/30"
@@ -275,17 +277,16 @@ export default function Home() {
                   </button>
                 </div>
       
-                {/* AMOUNT */}
+                {/* INPUTS */}
                 <input
-                  className="w-full p-3 rounded-xl bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full p-3 rounded-xl bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition"
                   placeholder="Enter amount"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                 />
       
-                {/* ACCOUNT */}
                 <select
-                  className="w-full p-3 rounded-xl bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-white focus:outline-none"
+                  className="w-full p-3 rounded-xl bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-white transition"
                   value={account}
                   onChange={(e) => setAccount(e.target.value)}
                 >
@@ -293,7 +294,6 @@ export default function Home() {
                   <option>Bank</option>
                 </select>
       
-                {/* CATEGORY */}
                 {(action === "INCOME" || action === "EXPENSE") && (
                   <select
                     className="w-full p-3 rounded-xl bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-white"
@@ -301,7 +301,6 @@ export default function Home() {
                     onChange={(e) => setCategory(e.target.value)}
                   >
                     <option value="">Select Category</option>
-      
                     {categories
                       .filter((c) => c.type === action)
                       .map((c) => (
@@ -312,7 +311,6 @@ export default function Home() {
                   </select>
                 )}
       
-                {/* ENTITY */}
                 {(action === "BORROW" || action === "GIVE") && (
                   <input
                     className="w-full p-3 rounded-xl bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-white"
@@ -322,7 +320,6 @@ export default function Home() {
                   />
                 )}
       
-                {/* NOTE */}
                 <input
                   className="w-full p-3 rounded-xl bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-white"
                   placeholder="Add note (optional)"
@@ -330,18 +327,20 @@ export default function Home() {
                   onChange={(e) => setNote(e.target.value)}
                 />
       
-                {/* ACTION BUTTONS */}
+                {/* BUTTONS */}
                 <div className="flex gap-2 mt-2">
                   <button
                     onClick={handleSubmit}
-                    className="flex-1 bg-green-500 text-black py-3 rounded-xl font-semibold hover:scale-[1.02] transition"
+                    className="flex-1 bg-green-500 text-black py-3 rounded-xl font-semibold
+                               active:scale-95 hover:scale-[1.02] transition"
                   >
                     Save
                   </button>
       
                   <button
                     onClick={() => setStep("ACTION")}
-                    className="flex-1 bg-gray-200 text-gray-700 dark:bg-slate-700 dark:text-white py-3 rounded-xl hover:scale-[1.02] transition"
+                    className="flex-1 bg-gray-200 text-gray-700 dark:bg-slate-700 dark:text-white py-3 rounded-xl
+                               active:scale-95 hover:scale-[1.02] transition"
                   >
                     Back
                   </button>
@@ -370,7 +369,8 @@ function ActionCard({ label, color, onClick }: any) {
   return (
     <div
       onClick={onClick}
-      className={`p-4 rounded-xl text-center font-medium tracking-wide cursor-pointer transition-all duration-200 ${color}`}
+      className={`p-4 rounded-xl text-center font-medium tracking-wide cursor-pointer
+                  transition-all duration-200 active:scale-95 hover:scale-[1.03] ${color}`}
     >
       {label}
     </div>
