@@ -46,22 +46,11 @@ export default function DebtPage() {
   useEffect(() => {
     const handler = (e: any) => {
       if (e.detail === "DEBT") {
-        const name = prompt("Enter person name");
-        const amount = prompt("Enter amount");
-
-        if (!name || !amount) return;
-
-        fetch("/api/transactions", {
-          method: "POST",
-          body: JSON.stringify({
-            type: "DEBT_TAKEN",
-            amount: Number(amount),
-            account: "Cash",
-            entity: name,
-            date: new Date().toISOString(),
-            note: "Debt Taken",
-          }),
-        }).then(() => loadData());
+        window.dispatchEvent(
+          new CustomEvent("openAdd", {
+            detail: "DEBT",
+          })
+        );
       }
     };
 
@@ -72,23 +61,15 @@ export default function DebtPage() {
   // =========================
   // REPAY FUNCTION
   // =========================
-  const handleRepay = async (entityName: string) => {
-    const amount = prompt("Enter repay amount");
-    if (!amount) return;
-
-    await fetch("/api/transactions", {
-      method: "POST",
-      body: JSON.stringify({
-        type: "DEBT_REPAID",
-        amount: Number(amount),
-        account: "Cash",
-        entity: entityName,
-        date: new Date().toISOString(),
-        note: "Debt Repayment",
-      }),
-    });
-
-    loadData();
+  const handleRepay = (entityName: string) => {
+    window.dispatchEvent(
+      new CustomEvent("openAdd", {
+        detail: {
+          type: "DEBT_REPAID",
+          entity: entityName,
+        },
+      })
+    );
   };
 
   return (
