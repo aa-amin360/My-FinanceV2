@@ -75,8 +75,35 @@ export default function DashboardLayout({
 
   // ================= SUBMIT =================
   const handleSubmit = async () => {
+    setError("");
+  
+    // ================= VALIDATION =================
+  
+    if (!amount || Number(amount) <= 0) {
+      setError("Enter a valid amount");
+      return;
+    }
+  
+    if ((action === "INCOME" || action === "EXPENSE") && !category) {
+      setError("Select a category");
+      return;
+    }
+  
+    if (
+      (action === "BORROW" ||
+        action === "GIVE" ||
+        action === "REPAY" ||
+        action === "RECEIVE") &&
+      !entity
+    ) {
+      setError("Enter person / entity");
+      return;
+    }
+  
+    // ================= API =================
+  
     const type = actionToTypeMap[action];
-
+  
     const body: any = {
       type,
       amount: Number(amount),
@@ -84,22 +111,24 @@ export default function DashboardLayout({
       date: new Date().toISOString(),
       note,
     };
-
+  
     if (category) body.category_id = category;
     if (entity) body.entity = entity;
-
+  
     await fetch("/api/transactions", {
       method: "POST",
       body: JSON.stringify(body),
     });
-
+  
+    // RESET
     setShowModal(false);
     setStep("ACTION");
     setAmount("");
     setCategory("");
     setEntity("");
     setNote("");
-
+    setError("");
+  
     window.dispatchEvent(new Event("refreshData"));
   };
 
@@ -162,7 +191,7 @@ export default function DashboardLayout({
 
       {/* ================= MODAL ================= */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center">
           <div className="w-[340px] bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 animate-modalIn">
 
             {/* ACTION */}
@@ -249,6 +278,12 @@ export default function DashboardLayout({
                   Save
                 </button>
 
+                {error && (
+                  <div className="text-red-500 text-sm text-center">
+                    {error}
+                  </div>
+                )}
+
                 <button
                   onClick={() => setStep("ACTION")}
                   className="bg-gray-200 dark:bg-slate-700 py-3 rounded-xl"
@@ -285,10 +320,17 @@ function Item({ label, href, pathname }: any) {
 }
 
 function ActionCard({ label, onClick }: any) {
+  const styles: any = {
+    Income: "bg-green-500/20 text-green-400 hover:bg-green-500/30",
+    Expense: "bg-red-500/20 text-red-400 hover:bg-red-500/30",
+    Borrow: "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30",
+    Give: "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30",
+  };
+
   return (
     <div
       onClick={onClick}
-      className="p-4 rounded-xl text-center cursor-pointer bg-gray-200 dark:bg-slate-800 hover:scale-[1.03] active:scale-95 transition"
+      className={`p-4 rounded-xl text-center cursor-pointer transition active:scale-95 hover:scale-[1.03] ${styles[label]}`}
     >
       {label}
     </div>
