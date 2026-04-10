@@ -118,10 +118,64 @@ export default function DashboardLayout({
         +
       </button>
 
-      {/* ================= TEMP MODAL (TEST) ================= */}
       {showModal && (
-        <div className="fixed bottom-6 right-24 bg-black text-white px-4 py-2 rounded-lg shadow">
-          Modal → {action || step}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      
+          <div className="w-[340px] bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 animate-modalIn">
+      
+            {/* ACTION STEP */}
+            {step === "ACTION" && (
+              <>
+                <h3 className="text-center text-lg font-semibold text-gray-800 dark:text-gray-200">
+                  Select Action
+                </h3>
+      
+                <div className="grid grid-cols-2 gap-3 mt-2">
+      
+                  <ActionCard label="Income" onClick={() => { setAction("INCOME"); setStep("FORM"); }} color="bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400" />
+      
+                  <ActionCard label="Expense" onClick={() => { setAction("EXPENSE"); setStep("FORM"); }} color="bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400" />
+      
+                  <ActionCard label="Borrow" onClick={() => { setAction("BORROW"); setStep("FORM"); }} color="bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400" />
+      
+                  <ActionCard label="Give" onClick={() => { setAction("GIVE"); setStep("FORM"); }} color="bg-yellow-100 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400" />
+      
+                </div>
+      
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="text-sm text-gray-500 dark:text-gray-400"
+                >
+                  Cancel
+                </button>
+              </>
+            )}
+      
+            {/* FORM STEP */}
+            {step === "FORM" && (
+              <>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                  {action}
+                </h3>
+      
+                <input className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800" placeholder="Amount" />
+      
+                <button
+                  className="bg-green-500 text-black py-3 rounded-xl"
+                  onClick={() => setShowModal(false)}
+                >
+                  Save
+                </button>
+      
+                <button
+                  className="bg-gray-200 dark:bg-slate-700 py-3 rounded-xl"
+                  onClick={() => setStep("ACTION")}
+                >
+                  Back
+                </button>
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -153,5 +207,16 @@ function Item({
         {label}
       </div>
     </Link>
+  );
+}
+
+function ActionCard({ label, onClick, color }: any) {
+  return (
+    <div
+      onClick={onClick}
+      className={`p-4 rounded-xl text-center cursor-pointer transition active:scale-95 hover:scale-[1.03] ${color}`}
+    >
+      {label}
+    </div>
   );
 }
