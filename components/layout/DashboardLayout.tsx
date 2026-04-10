@@ -3,6 +3,7 @@
 import { useTheme } from "../ThemeProvider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function DashboardLayout({
   children,
@@ -11,6 +12,49 @@ export default function DashboardLayout({
 }) {
   const { toggleTheme, theme } = useTheme();
   const pathname = usePathname();
+
+  // ================= GLOBAL MODAL STATE =================
+  const [showModal, setShowModal] = useState(false);
+  const [step, setStep] = useState<"ACTION" | "FORM">("ACTION");
+  const [action, setAction] = useState("");
+  const [entity, setEntity] = useState("");
+
+  // ================= EVENT LISTENER =================
+  useEffect(() => {
+    const handler = (e: any) => {
+      setShowModal(true);
+
+      // 🔹 FROM + BUTTON (STRING)
+      if (typeof e.detail === "string") {
+        if (e.detail === "DEBT") {
+          setAction("BORROW");
+          setStep("FORM");
+        } else if (e.detail === "RECEIVABLE") {
+          setAction("GIVE");
+          setStep("FORM");
+        } else {
+          setStep("ACTION"); // dashboard / transactions
+        }
+      }
+
+      // 🔹 FROM BUTTON ACTION (OBJECT)
+      if (typeof e.detail === "object") {
+        setStep("FORM");
+        setEntity(e.detail.entity);
+
+        if (e.detail.type === "DEBT_REPAID") {
+          setAction("REPAY");
+        }
+
+        if (e.detail.type === "RECEIVABLE_RECEIVED") {
+          setAction("RECEIVE");
+        }
+      }
+    };
+
+    window.addEventListener("openAdd", handler);
+    return () => window.removeEventListener("openAdd", handler);
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-white text-black dark:bg-slate-950 dark:text-white">
@@ -22,7 +66,6 @@ export default function DashboardLayout({
         <div>
           <h1 className="text-green-500 text-xl font-bold">My Finance</h1>
 
-          {/* THEME TOGGLE */}
           <button
             onClick={toggleTheme}
             className="mt-4 w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:scale-105 transition-all"
@@ -65,7 +108,7 @@ export default function DashboardLayout({
           } else if (pathname === "/receivables") {
             window.dispatchEvent(new CustomEvent("openAdd", { detail: "RECEIVABLE" }));
           } else if (pathname === "/transactions") {
-            window.dispatchEvent(new CustomEvent("openAdd", { detail: "TRANSACTION" }));
+            window.dispatchEvent(new CustomEvent("openAdd", { detail: "GENERAL" }));
           } else {
             window.dispatchEvent(new CustomEvent("openAdd", { detail: "GENERAL" }));
           }
@@ -74,13 +117,18 @@ export default function DashboardLayout({
       >
         +
       </button>
+
+      {/* ================= TEMP MODAL (TEST) ================= */}
+      {showModal && (
+        <div className="fixed bottom-6 right-24 bg-black text-white px-4 py-2 rounded-lg shadow">
+          Modal → {action || step}
+        </div>
+      )}
     </div>
   );
 }
 
-// =========================
-// SIDEBAR ITEM
-// =========================
+// ================= SIDEBAR ITEM =================
 
 function Item({
   label,
