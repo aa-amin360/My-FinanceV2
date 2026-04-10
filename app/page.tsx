@@ -18,13 +18,6 @@ export default function Home() {
   const [balance, setBalance] = useState(0);
   const [debt, setDebt] = useState(0);
   const [receivable, setReceivable] = useState(0);
-  const [categories, setCategories] = useState<any[]>([]);
-
-  const [amount, setAmount] = useState("");
-  const [account, setAccount] = useState("Cash");
-  const [category, setCategory] = useState("");
-  const [entity, setEntity] = useState("");
-  const [note, setNote] = useState("");
 
   // ================= LOAD DATA =================
   const loadData = async () => {
@@ -44,12 +37,13 @@ export default function Home() {
   useEffect(() => {
     loadData();
 
-    fetch("/api/categories")
-      .then((res) => res.json())
-      .then((data) => setCategories(data.data || []));
+    const refresh = () => loadData();
+    window.addEventListener("refreshData", refresh);
+
+    return () => window.removeEventListener("refreshData", refresh);
   }, []);
 
-  // ================= CALC =================
+  // ================= CALCULATIONS =================
   let income = 0;
   let expense = 0;
 
@@ -81,41 +75,6 @@ export default function Home() {
     income: monthlyMap[m].income,
     expense: monthlyMap[m].expense,
   }));
-
-  // ================= SUBMIT =================
-  const handleSubmit = async () => {
-    let type = "";
-
-    if (action === "INCOME") type = "INCOME";
-    if (action === "EXPENSE") type = "EXPENSE";
-    if (action === "BORROW") type = "DEBT_TAKEN";
-    if (action === "GIVE") type = "RECEIVABLE_GIVEN";
-
-    const body: any = {
-      type,
-      amount: Number(amount),
-      account,
-      date: new Date().toISOString(),
-      note,
-    };
-
-    if (category) body.category_id = category;
-    if (entity) body.entity = entity;
-
-    await fetch("/api/transactions", {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
-
-    setShowModal(false);
-    setStep("ACTION");
-    setAmount("");
-    setNote("");
-    setCategory("");
-    setEntity("");
-
-    loadData();
-  };
 
   return (
     <DashboardLayout>
@@ -179,32 +138,17 @@ export default function Home() {
           })}
         </div>
       </div>
-
-      {/* MODAL */}
-
     </DashboardLayout>
   );
 }
 
-// ================= COMPONENTS =================
+// ================= COMPONENT =================
 
 function Card({ title, value, color }: any) {
   return (
     <div className="bg-gray-100 dark:bg-slate-900 p-5 rounded-2xl">
       <p className={color}>{title}</p>
       <h2 className="text-2xl mt-2 font-bold">{value.toFixed(2)} Tk</h2>
-    </div>
-  );
-}
-
-function ActionCard({ label, color, onClick }: any) {
-  return (
-    <div
-      onClick={onClick}
-      className={`p-4 rounded-xl text-center font-medium tracking-wide cursor-pointer
-                  transition-all duration-200 active:scale-95 hover:scale-[1.03] ${color}`}
-    >
-      {label}
     </div>
   );
 }
