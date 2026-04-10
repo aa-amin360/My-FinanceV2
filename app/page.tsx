@@ -49,19 +49,6 @@ export default function Home() {
       .then((data) => setCategories(data.data || []));
   }, []);
 
-  // ================= GLOBAL + =================
-  useEffect(() => {
-    const handler = (e: any) => {
-      if (e.detail === "GENERAL") {
-        setShowModal(true);
-        setStep("ACTION");
-      }
-    };
-
-    window.addEventListener("openAdd", handler);
-    return () => window.removeEventListener("openAdd", handler);
-  }, []);
-
   // ================= CALC =================
   let income = 0;
   let expense = 0;
