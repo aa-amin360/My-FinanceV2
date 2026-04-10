@@ -13,7 +13,7 @@ export default function DashboardLayout({
   const { toggleTheme, theme } = useTheme();
   const pathname = usePathname();
 
-  // ================= GLOBAL MODAL STATE =================
+  // ================= MODAL STATE =================
   const [showModal, setShowModal] = useState(false);
   const [step, setStep] = useState<"ACTION" | "FORM">("ACTION");
   const [action, setAction] = useState("");
@@ -33,7 +33,7 @@ export default function DashboardLayout({
       .then((data) => setCategories(data.data || []));
   }, []);
 
-  // ================= EVENT LISTENER =================
+  // ================= EVENT =================
   useEffect(() => {
     const handler = (e: any) => {
       setShowModal(true);
@@ -93,7 +93,6 @@ export default function DashboardLayout({
       body: JSON.stringify(body),
     });
 
-    // RESET
     setShowModal(false);
     setStep("ACTION");
     setAmount("");
@@ -101,7 +100,6 @@ export default function DashboardLayout({
     setEntity("");
     setNote("");
 
-    // REFRESH ALL PAGES
     window.dispatchEvent(new Event("refreshData"));
   };
 
@@ -115,7 +113,7 @@ export default function DashboardLayout({
 
           <button
             onClick={toggleTheme}
-            className="mt-4 w-10 h-10 rounded-full bg-gray-200 dark:bg-slate-700"
+            className="mt-4 w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:scale-105 transition-all"
           >
             {theme === "dark" ? "🌙" : "☀️"}
           </button>
@@ -135,6 +133,17 @@ export default function DashboardLayout({
       {/* MAIN */}
       <main className="flex-1 p-6">{children}</main>
 
+      {/* RIGHT PANEL */}
+      <aside className="w-80 bg-gray-100 dark:bg-slate-900 p-5 hidden lg:block">
+        <h3 className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Insights
+        </h3>
+
+        <div className="bg-gray-200 dark:bg-slate-800 p-4 rounded-xl">
+          Coming soon...
+        </div>
+      </aside>
+
       {/* FLOATING BUTTON */}
       <button
         onClick={() => {
@@ -146,20 +155,22 @@ export default function DashboardLayout({
             window.dispatchEvent(new CustomEvent("openAdd", { detail: "GENERAL" }));
           }
         }}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-green-500 rounded-full text-2xl flex items-center justify-center"
+        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-green-500 text-black text-2xl flex items-center justify-center shadow-lg hover:scale-105 transition"
       >
         +
       </button>
 
       {/* ================= MODAL ================= */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-[340px] bg-white dark:bg-slate-900 rounded-2xl p-5 flex flex-col gap-4 animate-modalIn">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+          <div className="w-[340px] bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 animate-modalIn">
 
             {/* ACTION */}
             {step === "ACTION" && (
               <>
-                <h3 className="text-center font-semibold">Select Action</h3>
+                <h3 className="text-center text-lg font-semibold tracking-wide text-gray-800 dark:text-gray-200 mb-2">
+                  Select Action
+                </h3>
 
                 <div className="grid grid-cols-2 gap-3">
                   <ActionCard label="Income" onClick={() => { setAction("INCOME"); setStep("FORM"); }} />
@@ -168,26 +179,33 @@ export default function DashboardLayout({
                   <ActionCard label="Give" onClick={() => { setAction("GIVE"); setStep("FORM"); }} />
                 </div>
 
-                <button onClick={() => setShowModal(false)}>Cancel</button>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="mt-3 text-sm text-gray-500 dark:text-gray-400"
+                >
+                  Cancel
+                </button>
               </>
             )}
 
             {/* FORM */}
             {step === "FORM" && (
               <>
-                <h3 className="font-semibold">{action}</h3>
+                <h3 className="font-semibold text-gray-800 dark:text-white">
+                  {action}
+                </h3>
 
                 <input
+                  className="p-3 rounded bg-gray-200 dark:bg-slate-800"
+                  placeholder="Amount"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="p-3 rounded bg-gray-100 dark:bg-slate-800"
-                  placeholder="Amount"
                 />
 
                 <select
+                  className="p-3 rounded bg-gray-200 dark:bg-slate-800"
                   value={account}
                   onChange={(e) => setAccount(e.target.value)}
-                  className="p-3 rounded bg-gray-100 dark:bg-slate-800"
                 >
                   <option>Cash</option>
                   <option>Bank</option>
@@ -195,40 +213,48 @@ export default function DashboardLayout({
 
                 {(action === "INCOME" || action === "EXPENSE") && (
                   <select
+                    className="p-3 rounded bg-gray-200 dark:bg-slate-800"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="p-3 rounded bg-gray-100 dark:bg-slate-800"
                   >
-                    <option>Select Category</option>
+                    <option value="">Select Category</option>
+
                     {categories
                       .filter((c) => c.type === action)
                       .map((c) => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
                       ))}
                   </select>
                 )}
 
                 {(action !== "INCOME" && action !== "EXPENSE") && (
                   <input
+                    className="p-3 rounded bg-gray-200 dark:bg-slate-800"
+                    placeholder="Person / Bank"
                     value={entity}
                     onChange={(e) => setEntity(e.target.value)}
-                    className="p-3 rounded bg-gray-100 dark:bg-slate-800"
-                    placeholder="Person / Bank"
                   />
                 )}
 
                 <input
+                  className="p-3 rounded bg-gray-200 dark:bg-slate-800"
+                  placeholder="Note"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  className="p-3 rounded bg-gray-100 dark:bg-slate-800"
-                  placeholder="Note"
                 />
 
-                <button onClick={handleSubmit} className="bg-green-500 py-3 rounded">
+                <button onClick={handleSubmit} className="bg-green-500 text-black py-3 rounded-xl">
                   Save
                 </button>
 
-                <button onClick={() => setStep("ACTION")}>Back</button>
+                <button
+                  onClick={() => setStep("ACTION")}
+                  className="bg-gray-200 dark:bg-slate-700 py-3 rounded-xl"
+                >
+                  Back
+                </button>
               </>
             )}
           </div>
@@ -245,7 +271,13 @@ function Item({ label, href, pathname }: any) {
 
   return (
     <Link href={href}>
-      <div className={`p-2 rounded ${isActive ? "bg-green-500" : ""}`}>
+      <div
+        className={`px-3 py-2 rounded-lg cursor-pointer transition ${
+          isActive
+            ? "bg-green-500 text-black font-semibold"
+            : "hover:bg-gray-200 dark:hover:bg-slate-800"
+        }`}
+      >
         {label}
       </div>
     </Link>
@@ -256,7 +288,7 @@ function ActionCard({ label, onClick }: any) {
   return (
     <div
       onClick={onClick}
-      className="p-4 bg-gray-200 dark:bg-slate-800 rounded-xl text-center cursor-pointer"
+      className="p-4 rounded-xl text-center cursor-pointer bg-gray-200 dark:bg-slate-800 hover:scale-[1.03] active:scale-95 transition"
     >
       {label}
     </div>
