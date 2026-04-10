@@ -26,6 +26,8 @@ export default function DashboardLayout({
   const [note, setNote] = useState("");
   const [categories, setCategories] = useState<any[]>([]);
 
+  const [error, setError] = useState("");
+
   // ================= LOAD CATEGORIES =================
   useEffect(() => {
     fetch("/api/categories")
