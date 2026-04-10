@@ -46,25 +46,14 @@ export default function ReceivablePage() {
   useEffect(() => {
     const handler = (e: any) => {
       if (e.detail === "RECEIVABLE") {
-        const name = prompt("Enter person name");
-        const amount = prompt("Enter amount");
-
-        if (!name || !amount) return;
-
-        fetch("/api/transactions", {
-          method: "POST",
-          body: JSON.stringify({
-            type: "RECEIVABLE_GIVEN",
-            amount: Number(amount),
-            account: "Cash",
-            entity: name,
-            date: new Date().toISOString(),
-            note: "Receivable Given",
-          }),
-        }).then(() => loadData());
+        window.dispatchEvent(
+          new CustomEvent("openAdd", {
+            detail: "RECEIVABLE",
+          })
+        );
       }
     };
-
+  
     window.addEventListener("openAdd", handler);
     return () => window.removeEventListener("openAdd", handler);
   }, []);
@@ -72,23 +61,15 @@ export default function ReceivablePage() {
   // =========================
   // RECEIVE FUNCTION
   // =========================
-  const handleReceive = async (entityName: string) => {
-    const amount = prompt("Enter received amount");
-    if (!amount) return;
-
-    await fetch("/api/transactions", {
-      method: "POST",
-      body: JSON.stringify({
-        type: "RECEIVABLE_RECEIVED",
-        amount: Number(amount),
-        account: "Cash",
-        entity: entityName,
-        date: new Date().toISOString(),
-        note: "Receivable Received",
-      }),
-    });
-
-    loadData();
+  const handleReceive = (entityName: string) => {
+    window.dispatchEvent(
+      new CustomEvent("openAdd", {
+        detail: {
+          type: "RECEIVABLE_RECEIVED",
+          entity: entityName,
+        },
+      })
+    );
   };
 
   return (
