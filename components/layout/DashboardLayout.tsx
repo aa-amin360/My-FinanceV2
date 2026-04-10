@@ -27,6 +27,7 @@ export default function DashboardLayout({
   const [categories, setCategories] = useState<any[]>([]);
 
   const [error, setError] = useState("");
+  const [isDirectFlow, setIsDirectFlow] = useState(false);
 
   // ================= LOAD CATEGORIES =================
   useEffect(() => {
@@ -44,11 +45,14 @@ export default function DashboardLayout({
         if (e.detail === "DEBT") {
           setAction("BORROW");
           setStep("FORM");
+          setIsDirectFlow(true);
         } else if (e.detail === "RECEIVABLE") {
           setAction("GIVE");
           setStep("FORM");
+          setIsDirectFlow(true);
         } else {
           setStep("ACTION");
+          setIsDirectFlow(false);
         }
       }
 
@@ -78,7 +82,7 @@ export default function DashboardLayout({
   // ================= SUBMIT =================
   const handleSubmit = async () => {
     setError("");
-  
+      
     // ================= VALIDATION =================
   
     if (!amount || Number(amount) <= 0) {
@@ -101,7 +105,7 @@ export default function DashboardLayout({
       setError("Enter person / entity");
       return;
     }
-  
+      
     // ================= API =================
   
     const type = actionToTypeMap[action];
@@ -130,6 +134,7 @@ export default function DashboardLayout({
     setEntity("");
     setNote("");
     setError("");
+    setIsDirectFlow(false);
   
     window.dispatchEvent(new Event("refreshData"));
   };
@@ -194,7 +199,7 @@ export default function DashboardLayout({
       {/* ================= MODAL ================= */}
       {showModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center">
-          <div className="w-[340px] bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 animate-modalIn">
+          <div className="w-[340px] bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-2xl p-5 shadow-2xl flex flex-col gap-4 animate-modalIn">
 
             {/* ACTION */}
             {step === "ACTION" && (
@@ -211,7 +216,10 @@ export default function DashboardLayout({
                 </div>
 
                 <button
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    setIsDirectFlow(false);
+                  }}
                   className="mt-3 text-sm text-gray-500 dark:text-gray-400"
                 >
                   Cancel
@@ -227,7 +235,7 @@ export default function DashboardLayout({
                 </h3>
 
                 <input
-                  className="p-3 rounded bg-gray-200 dark:bg-slate-800"
+                  className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Amount"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
@@ -262,7 +270,7 @@ export default function DashboardLayout({
 
                 {(action !== "INCOME" && action !== "EXPENSE") && (
                   <input
-                    className="p-3 rounded bg-gray-200 dark:bg-slate-800"
+                    className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="Person / Bank"
                     value={entity}
                     onChange={(e) => setEntity(e.target.value)}
@@ -270,13 +278,13 @@ export default function DashboardLayout({
                 )}
 
                 <input
-                  className="p-3 rounded bg-gray-200 dark:bg-slate-800"
+                  className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Note"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                 />
 
-                <button onClick={handleSubmit} className="bg-green-500 text-black py-3 rounded-xl">
+                <button onClick={handleSubmit} className="bg-green-500 hover:bg-green-600 active:scale-95 transition py-3 rounded-xl">
                   Save
                 </button>
 
@@ -286,17 +294,19 @@ export default function DashboardLayout({
                   </div>
                 )}
 
-                <button
-                  onClick={() => setStep("ACTION")}
-                  className="bg-gray-200 dark:bg-slate-700 py-3 rounded-xl"
-                >
-                  Back
-                </button>
+                {!isDirectFlow && (
+                  <button
+                    onClick={() => setStep("ACTION")}
+                    className="bg-gray-200 dark:bg-slate-700 py-3 rounded-xl"
+                  >
+                    Back
+                  </button>
+                )}
               </>
             )}
           </div>
         </div>
-      )}
+      )}           
     </div>
   );
 }
@@ -323,10 +333,10 @@ function Item({ label, href, pathname }: any) {
 
 function ActionCard({ label, onClick }: any) {
   const styles: any = {
-    Income: "bg-green-500/20 text-green-400 hover:bg-green-500/30",
-    Expense: "bg-red-500/20 text-red-400 hover:bg-red-500/30",
-    Borrow: "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30",
-    Give: "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30",
+    Income: "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 hover:bg-green-500/30",
+    Expense: "bg-red-500/10 text-red-600 dark:text-green-400 border border-red-500/20 hover:bg-red-500/30",
+    Borrow: "bg-blue-500/10 text-blue-600 dark:text-green-400 border border-blue-500/20 hover:bg-blue-500/30",
+    Give: "bg-yellow-500/10 text-yellow-600 dark:text-green-400 border border-yellow-500/20 hover:bg-yellow-500/30",
   };
 
   return (
