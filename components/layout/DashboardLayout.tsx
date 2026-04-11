@@ -242,7 +242,7 @@ export default function DashboardLayout({
                 />
 
                 <select
-                  className="p-3 rounded bg-gray-200 dark:bg-slate-800"
+                  className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
                   value={account}
                   onChange={(e) => setAccount(e.target.value)}
                 >
@@ -252,7 +252,7 @@ export default function DashboardLayout({
 
                 {(action === "INCOME" || action === "EXPENSE") && (
                   <select
-                    className="p-3 rounded bg-gray-200 dark:bg-slate-800"
+                    className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                   >
