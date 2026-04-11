@@ -198,18 +198,27 @@ export default function DashboardLayout({
 
       {/* ================= MODAL ================= */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center">
-          <div className="w-[340px] bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-2xl p-5 shadow-2xl flex flex-col gap-4 animate-modalIn">
-
-            {/* ACTION */}
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center"
+          onClick={() => {
+            setShowModal(false);
+            setIsDirectFlow(false);
+            setStep("ACTION");
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-[340px] bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-2xl p-5 shadow-2xl flex flex-col gap-4 animate-modalIn"
+          >
+            {/* ================= ACTION ================= */}
             {step === "ACTION" && (
               <>
                 {/* HEADER */}
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-semibold tracking-wide text-gray-800 dark:text-gray-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
                     Select Action
                   </h3>
-            
+      
                   <button
                     onClick={() => {
                       setShowModal(false);
@@ -220,69 +229,60 @@ export default function DashboardLayout({
                     ✕
                   </button>
                 </div>
-            
+      
                 {/* ACTION GRID */}
                 <div className="grid grid-cols-2 gap-3">
-                  <ActionCard
-                    label="Income"
-                    onClick={() => {
-                      setAction("INCOME");
-                      setStep("FORM");
-                    }}
-                  />
-            
-                  <ActionCard
-                    label="Expense"
-                    onClick={() => {
-                      setAction("EXPENSE");
-                      setStep("FORM");
-                    }}
-                  />
-            
-                  <ActionCard
-                    label="Borrow"
-                    onClick={() => {
-                      setAction("BORROW");
-                      setStep("FORM");
-                    }}
-                  />
-            
-                  <ActionCard
-                    label="Give"
-                    onClick={() => {
-                      setAction("GIVE");
-                      setStep("FORM");
-                    }}
-                  />
+                  <ActionCard label="Income" onClick={() => { setAction("INCOME"); setStep("FORM"); }} />
+                  <ActionCard label="Expense" onClick={() => { setAction("EXPENSE"); setStep("FORM"); }} />
+                  <ActionCard label="Borrow" onClick={() => { setAction("BORROW"); setStep("FORM"); }} />
+                  <ActionCard label="Give" onClick={() => { setAction("GIVE"); setStep("FORM"); }} />
                 </div>
-            
-                {/* FOOTER */}
+      
+                {/* CANCEL */}
                 <button
                   onClick={() => {
                     setShowModal(false);
                     setIsDirectFlow(false);
                   }}
-                  className="mt-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition"
+                  className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition"
                 >
                   Cancel
                 </button>
               </>
             )}
-
-            {/* FORM */}
+      
+            {/* ================= FORM ================= */}
             {step === "FORM" && (
               <>
-                <h3 className="font-semibold text-gray-800 dark:text-white">
-                  {action}
-                </h3>
-
+                {/* HEADER */}
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-800 dark:text-white">
+                    {action === "INCOME" && "Add Income"}
+                    {action === "EXPENSE" && "Add Expense"}
+                    {action === "BORROW" && "Borrow Money"}
+                    {action === "GIVE" && "Give Money"}
+                  </h3>
+      
+                  <button
+                    onClick={() => {
+                      setShowModal(false);
+                      setIsDirectFlow(false);
+                      setStep("ACTION");
+                    }}
+                    className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-700 transition"
+                  >
+                    ✕
+                  </button>
+                </div>
+      
+                {/* INPUTS */}
                 <input
                   className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="Amount"
+                  placeholder="Enter amount"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                 />
-
+      
                 <select
                   className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
                   value={account}
@@ -291,7 +291,7 @@ export default function DashboardLayout({
                   <option>Cash</option>
                   <option>Bank</option>
                 </select>
-
+      
                 {(action === "INCOME" || action === "EXPENSE") && (
                   <select
                     className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -299,7 +299,6 @@ export default function DashboardLayout({
                     onChange={(e) => setCategory(e.target.value)}
                   >
                     <option value="">Select Category</option>
-
                     {categories
                       .filter((c) => c.type === action)
                       .map((c) => (
@@ -309,8 +308,8 @@ export default function DashboardLayout({
                       ))}
                   </select>
                 )}
-
-                {(action !== "INCOME" && action !== "EXPENSE") && (
+      
+                {(action === "BORROW" || action === "GIVE") && (
                   <input
                     className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="Person / Bank"
@@ -318,28 +317,34 @@ export default function DashboardLayout({
                     onChange={(e) => setEntity(e.target.value)}
                   />
                 )}
-
+      
                 <input
                   className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="Note"
+                  placeholder="Add note (optional)"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                 />
-
-                <button onClick={handleSubmit} className="bg-green-500 hover:bg-green-600 active:scale-95 transition py-3 rounded-xl">
-                  Save
-                </button>
-
+      
+                {/* ERROR */}
                 {error && (
                   <div className="text-red-500 text-sm text-center">
                     {error}
                   </div>
                 )}
-
+      
+                {/* SAVE */}
+                <button
+                  onClick={handleSubmit}
+                  className="bg-green-500 hover:bg-green-600 active:scale-95 transition py-3 rounded-xl text-black font-semibold"
+                >
+                  Save
+                </button>
+      
+                {/* BACK (ONLY MULTI STEP) */}
                 {!isDirectFlow && (
                   <button
                     onClick={() => setStep("ACTION")}
-                    className="bg-gray-200 dark:bg-slate-700 py-3 rounded-xl"
+                    className="bg-gray-200 dark:bg-slate-700 py-3 rounded-xl text-gray-800 dark:text-white"
                   >
                     Back
                   </button>
@@ -348,7 +353,7 @@ export default function DashboardLayout({
             )}
           </div>
         </div>
-      )}           
+      )}          
     </div>
   );
 }
