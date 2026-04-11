@@ -204,23 +204,65 @@ export default function DashboardLayout({
             {/* ACTION */}
             {step === "ACTION" && (
               <>
-                <h3 className="text-center text-lg font-semibold tracking-wide text-gray-800 dark:text-gray-200 mb-2">
-                  Select Action
-                </h3>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <ActionCard label="Income" onClick={() => { setAction("INCOME"); setStep("FORM"); }} />
-                  <ActionCard label="Expense" onClick={() => { setAction("EXPENSE"); setStep("FORM"); }} />
-                  <ActionCard label="Borrow" onClick={() => { setAction("BORROW"); setStep("FORM"); }} />
-                  <ActionCard label="Give" onClick={() => { setAction("GIVE"); setStep("FORM"); }} />
+                {/* HEADER */}
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-lg font-semibold tracking-wide text-gray-800 dark:text-gray-200">
+                    Select Action
+                  </h3>
+            
+                  <button
+                    onClick={() => {
+                      setShowModal(false);
+                      setIsDirectFlow(false);
+                    }}
+                    className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-700 transition"
+                  >
+                    ✕
+                  </button>
                 </div>
-
+            
+                {/* ACTION GRID */}
+                <div className="grid grid-cols-2 gap-3">
+                  <ActionCard
+                    label="Income"
+                    onClick={() => {
+                      setAction("INCOME");
+                      setStep("FORM");
+                    }}
+                  />
+            
+                  <ActionCard
+                    label="Expense"
+                    onClick={() => {
+                      setAction("EXPENSE");
+                      setStep("FORM");
+                    }}
+                  />
+            
+                  <ActionCard
+                    label="Borrow"
+                    onClick={() => {
+                      setAction("BORROW");
+                      setStep("FORM");
+                    }}
+                  />
+            
+                  <ActionCard
+                    label="Give"
+                    onClick={() => {
+                      setAction("GIVE");
+                      setStep("FORM");
+                    }}
+                  />
+                </div>
+            
+                {/* FOOTER */}
                 <button
                   onClick={() => {
                     setShowModal(false);
                     setIsDirectFlow(false);
                   }}
-                  className="mt-3 text-sm text-gray-500 dark:text-gray-400"
+                  className="mt-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition"
                 >
                   Cancel
                 </button>
