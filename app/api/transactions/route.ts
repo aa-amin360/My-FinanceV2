@@ -247,13 +247,15 @@ export async function GET() {
         t.entity_id,
         t.category_id,
         c.name AS category_name,
+        e.name AS entity_name,
         fa.name AS from_account,
         ta.name AS to_account
       FROM transactions t
       LEFT JOIN categories c ON t.category_id = c.id
+      LEFT JOIN entities e ON t.entity_id = e.id
       LEFT JOIN accounts fa ON t.from_account = fa.id
       LEFT JOIN accounts ta ON t.to_account = ta.id
-      ORDER BY t.date DESC, t.created_at DESC
+      ORDER BY t.date DESC, t.created_at DESC;
     `);
 
     return NextResponse.json({
