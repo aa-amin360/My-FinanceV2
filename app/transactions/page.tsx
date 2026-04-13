@@ -10,6 +10,7 @@ type Transaction = {
   date: string;
   note: string | null;
   category_name?: string;
+  entity_name?: string; // ✅ NEW (if backend supports)
 };
 
 export default function TransactionsPage() {
@@ -29,7 +30,7 @@ export default function TransactionsPage() {
   }, []);
 
   // =========================
-  // FAB LISTENER (NEW)
+  // FAB LISTENER
   // =========================
   useEffect(() => {
     const handler = (e: any) => {
@@ -56,11 +57,61 @@ export default function TransactionsPage() {
     return () => window.removeEventListener("openAdd", handler);
   }, []);
 
+  // =========================
+  // NAME RESOLVER (CORE FIX)
+  // =========================
+  const getDisplayName = (t: Transaction) => {
+    // Priority:
+    // 1. Entity (Debt / Receivable)
+    // 2. Note (Expense / Income source)
+    // 3. Category fallback
+    // 4. Type fallback
+
+    if (t.entity_name) return t.entity_name;
+    if (t.note) return t.note;
+    if (t.category_name) return t.category_name;
+
+    return t.type.replace("_", " ");
+  };
+
+  // =========================
+  // CATEGORY RESOLVER
+  // =========================
+  const getCategory = (t: Transaction) => {
+    if (t.category_name) return t.category_name;
+
+    // fallback to readable type
+    return t.type.replace("_", " ");
+  };
+
+  // =========================
+  // TYPE STYLE
+  // =========================
+  const getTypeStyle = (type: string) => {
+    switch (type) {
+      case "INCOME":
+        return "bg-green-500/20 text-green-500";
+      case "EXPENSE":
+        return "bg-red-500/20 text-red-500";
+      case "DEBT_TAKEN":
+        return "bg-blue-500/20 text-blue-500";
+      case "DEBT_REPAID":
+        return "bg-cyan-500/20 text-cyan-500";
+      case "RECEIVABLE_GIVEN":
+        return "bg-yellow-500/20 text-yellow-500";
+      case "RECEIVABLE_RECEIVED":
+        return "bg-purple-500/20 text-purple-500";
+      default:
+        return "bg-gray-500/20 text-gray-400";
+    }
+  };
+
   return (
     <DashboardLayout>
       <h1 className="text-2xl font-bold mb-6">Transactions</h1>
 
       <div className="bg-gray-100 dark:bg-slate-900 rounded-2xl overflow-hidden">
+
         {/* HEADER */}
         <div className="grid grid-cols-5 px-4 py-3 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-slate-800">
           <div>Name</div>
@@ -86,7 +137,7 @@ export default function TransactionsPage() {
             >
               {/* NAME */}
               <div className="font-medium">
-                {t.note || t.type.replace("_", " ")}
+                {getDisplayName(t)}
               </div>
 
               {/* DATE */}
@@ -97,21 +148,9 @@ export default function TransactionsPage() {
               {/* TYPE */}
               <div>
                 <span
-                  className={`px-2 py-1 rounded-full text-xs ${
-                    t.type === "INCOME"
-                      ? "bg-green-500/20 text-green-500"
-                      : t.type === "EXPENSE"
-                      ? "bg-red-500/20 text-red-500"
-                      : t.type === "DEBT_TAKEN"
-                      ? "bg-blue-500/20 text-blue-500"
-                      : t.type === "DEBT_REPAID"
-                      ? "bg-cyan-500/20 text-cyan-500"
-                      : t.type === "RECEIVABLE_GIVEN"
-                      ? "bg-yellow-500/20 text-yellow-500"
-                      : t.type === "RECEIVABLE_RECEIVED"
-                      ? "bg-purple-500/20 text-purple-500"
-                      : "bg-gray-500/20 text-gray-500"
-                  }`}
+                  className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
+                    t.type
+                  )}`}
                 >
                   {t.type.replace("_", " ")}
                 </span>
@@ -119,7 +158,7 @@ export default function TransactionsPage() {
 
               {/* CATEGORY */}
               <div className="text-sm text-gray-500 dark:text-gray-400">
-                {t.category_name || "-"}
+                {getCategory(t)}
               </div>
 
               {/* AMOUNT */}
@@ -135,7 +174,7 @@ export default function TransactionsPage() {
           );
         })}
 
-        {/* EMPTY STATE */}
+        {/* EMPTY */}
         {transactions.length === 0 && (
           <div className="p-6 text-center text-gray-400">
             No transactions yet
