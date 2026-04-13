@@ -57,20 +57,30 @@ export default function TransactionsPage() {
     return () => window.removeEventListener("openAdd", handler);
   }, []);
 
+  
   // =========================
   // NAME RESOLVER (CORE FIX)
   // =========================
+  const formatName = (name: string) => {
+    return name
+      .split(" ")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+  
+  // Priority:
+  // 1. Entity (Debt / Receivable)
+  // 2. Note (Expense / Income source)
+  // 3. Category fallback
+  // 4. Type fallback
+    
   const getDisplayName = (t: Transaction) => {
-    // Priority:
-    // 1. Entity (Debt / Receivable)
-    // 2. Note (Expense / Income source)
-    // 3. Category fallback
-    // 4. Type fallback
-
-    if (t.entity_name) return t.entity_name;
-    if (t.note) return t.note;
-    if (t.category_name) return t.category_name;
-
+    if (t.entity_name) return formatName(t.entity_name);
+  
+    if (t.note) return formatName(t.note);
+  
+    if (t.category_name) return formatName(t.category_name);
+  
     return t.type.replace("_", " ");
   };
 
