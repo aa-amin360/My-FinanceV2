@@ -397,23 +397,21 @@ function FloatingNav({ pathname }: { pathname: string }) {
 
         {items.map((item) => {
           const active = pathname === item.href;
-
+          const Icon = item.icon;
+        
           return (
             <Link key={item.href} href={item.href}>
               <div
                 className={`flex flex-col items-center justify-center px-2 py-1 rounded-lg text-xs transition ${
-                  active
-                    ? "text-green-400"
-                    : "text-gray-400"
+                  active ? "text-green-400" : "text-gray-400"
                 }`}
               >
-                <span className="text-base">{item.icon}</span>
-
-                {/* Responsive text */}
+                <Icon size={16} />
+        
                 <span className="hidden sm:block text-[10px]">
                   {item.short}
                 </span>
-
+        
                 <span className="hidden md:block text-xs">
                   {item.label}
                 </span>
