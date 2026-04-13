@@ -380,11 +380,11 @@ import {
 
 function FloatingNav({ pathname }: { pathname: string }) {
   const items = [
-    { label: "Home", short: "Home", href: "/", icon: Home },
-    { label: "Transactions", short: "Transactions", href: "/transactions", icon: ArrowLeftRight },
-    { label: "Debt", short: "Debt", href: "/debts", icon: CreditCard },
-    { label: "Receivable", short: "Recv", href: "/receivables", icon: Wallet },
-    { label: "Reports", short: "Rep", href: "/reports", icon: BarChart3 },
+    { label: "Home", href: "/", icon: Home },
+    { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
+    { label: "Debt", href: "/debts", icon: CreditCard },
+    { label: "Receivable", href: "/receivables", icon: Wallet },
+    { label: "Reports", href: "/reports", icon: BarChart3 },
   ];
 
   return (
@@ -409,7 +409,7 @@ function FloatingNav({ pathname }: { pathname: string }) {
                 <Icon size={16} />
         
                 <span className="hidden sm:block text-[10px]">
-                  {item.short}
+                  {item.label}
                 </span>
         
                 <span className="hidden md:block text-xs">
