@@ -3,6 +3,12 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 
+const formatType = (type: string) =>
+  type
+    .toLowerCase()
+    .replace("_", " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
 type Transaction = {
   id: string;
   type: string;
@@ -10,7 +16,7 @@ type Transaction = {
   date: string;
   note: string | null;
   category_name?: string;
-  entity_name?: string; // ✅ NEW (if backend supports)
+  entity_name?: string;
 };
 
 export default function TransactionsPage() {
@@ -81,7 +87,7 @@ export default function TransactionsPage() {
   
     if (t.category_name) return formatName(t.category_name);
   
-    return t.type.replace("_", " ");
+    return {formatType(t.type)};
   };
 
   // =========================
@@ -91,7 +97,7 @@ export default function TransactionsPage() {
     if (t.category_name) return t.category_name;
 
     // fallback to readable type
-    return t.type.replace("_", " ");
+    return {formatType(t.type)};
   };
 
   // =========================
@@ -131,85 +137,54 @@ export default function TransactionsPage() {
           <div className="text-right">Amount</div>
         </div>
 
-        {/* ROWS */}
-        {/* DESKTOP TABLE */}
-          <div className="hidden md:block">
-                    {transactions.map((t) => {
-            const amount = Number(t.amount);
-  
-            const isPositive =
-              t.type === "INCOME" ||
-              t.type === "DEBT_TAKEN" ||
-              t.type === "RECEIVABLE_RECEIVED";
-  
-            return (
-              <div
-                key={t.id}
-                className="grid grid-cols-5 px-4 py-3 border-b border-gray-200 dark:border-slate-800 hover:bg-gray-200 dark:hover:bg-slate-800 transition"
-              >
-                {/* NAME */}
-                <div className="font-medium">
-                  {getDisplayName(t)}
-                </div>
-  
-                {/* DATE */}
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {new Date(t.date).toDateString()}
-                </div>
-  
-                {/* TYPE */}
-                <div>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
-                      t.type
-                    )}`}
-                  >
-                    {t.type.replace("_", " ")}
-                  </span>
-                </div>
-  
-                {/* CATEGORY */}
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {getCategory(t)}
-                </div>
-  
-                {/* AMOUNT */}
+        <div className="pb-24 md:pb-0">
+          {/* ROWS */}
+          {/* DESKTOP TABLE */}
+            <div className="hidden md:block">
+                      {transactions.map((t) => {
+              const amount = Number(t.amount);
+    
+              const isPositive =
+                t.type === "INCOME" ||
+                t.type === "DEBT_TAKEN" ||
+                t.type === "RECEIVABLE_RECEIVED";
+    
+              return (
                 <div
-                  className={`text-right font-semibold ${
-                    isPositive ? "text-green-500" : "text-red-500"
-                  }`}
+                  key={t.id}
+                  className="grid grid-cols-5 px-4 py-3 border-b border-gray-200 dark:border-slate-800 hover:bg-gray-200 dark:hover:bg-slate-800 transition"
                 >
-                  {isPositive ? "+" : "-"}
-                  {amount.toFixed(2)} Tk
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        
-        {/* MOBILE CARD */}
-        <div className="md:hidden space-y-3">
-          {transactions.map((t) => {
-            const amount = Number(t.amount);
-        
-            const isPositive =
-              t.type === "INCOME" ||
-              t.type === "DEBT_TAKEN" ||
-              t.type === "RECEIVABLE_RECEIVED";
-        
-            return (
-              <div
-                key={t.id}
-                className="bg-gray-100 dark:bg-slate-900 p-4 rounded-xl"
-              >
-                {/* TOP */}
-                <div className="flex justify-between items-center">
-                  <div className="font-semibold">
+                  {/* NAME */}
+                  <div className="font-semibold text-white text-base">
                     {getDisplayName(t)}
                   </div>
-        
+    
+                  {/* DATE */}
+                  <div className="text-xs text-gray-500">
+                    {new Date(t.date).toDateString()}
+                  </div>
+  
+                  <div className="flex justify-between items-center mt-2">  
+                    {/* TYPE */}
+                    <div>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
+                          t.type
+                        )}`}
+                      >
+                        {formatType(t.type)}
+                      </span>
+                    </div>
+      
+                    {/* CATEGORY */}
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {getCategory(t)}
+                    </div>
+                  </div>
+    
+                  {/* AMOUNT */}
                   <div
-                    className={`font-semibold ${
+                    className={`text-right font-semibold ${
                       isPositive ? "text-green-500" : "text-red-500"
                     }`}
                   >
@@ -217,27 +192,64 @@ export default function TransactionsPage() {
                     {amount.toFixed(2)} Tk
                   </div>
                 </div>
-        
-                {/* MIDDLE */}
-                <div className="flex justify-between text-sm text-gray-500 mt-1">
-                  <span>{new Date(t.date).toDateString()}</span>
+              );
+            })}
+          </div>
+          
+          {/* MOBILE CARD */}
+          <div className="md:hidden space-y-3">
+            {transactions.map((t) => {
+              const amount = Number(t.amount);
+          
+              const isPositive =
+                t.type === "INCOME" ||
+                t.type === "DEBT_TAKEN" ||
+                t.type === "RECEIVABLE_RECEIVED";
+          
+              return (
+                <div
+                  key={t.id}
+                  className="bg-gray-100 dark:bg-slate-900 p-4 rounded-xl"
+                >
+                  {/* TOP */}
+                  <div className="flex justify-between items-center">
+                    <div className="font-semibold">
+                      {getDisplayName(t)}
+                    </div>
+          
+                    <div
+                      className={`font-semibold ${
+                        isPositive ? "text-green-500" : "text-red-500"
+                      }`}
+                    >
+                      {isPositive ? "+" : "-"}
+                      {amount.toFixed(2)} Tk
+                    </div>
+                  </div>
+          
+                  {/* MIDDLE */}
+                  <div className="flex justify-between text-sm text-gray-500 mt-1">
+                    <span>{new Date(t.date).toDateString()}</span>
+                  </div>
+          
+                  {/* BOTTOM */}
+                  <div className="flex justify-between items-center mt-2">
+                    {/* TYPE */}
+                    <span className="text-xs px-2 py-1 rounded-full bg-slate-700 text-white">
+                      {formatType(t.type)}
+                    </span>
+          
+                    {/* CATEGORY */}
+                    <span className="text-xs text-gray-400">
+                      {t.type.includes("DEBT") || t.type.includes("RECEIVABLE")
+                        ? "Loan"
+                        : getCategory(t)}
+                    </span>
+                  </div>
                 </div>
-        
-                {/* BOTTOM */}
-                <div className="flex justify-between items-center mt-2">
-                  {/* TYPE */}
-                  <span className="text-xs px-2 py-1 rounded-full bg-slate-700 text-white">
-                    {t.type.replace("_", " ")}
-                  </span>
-        
-                  {/* CATEGORY */}
-                  <span className="text-xs text-gray-400">
-                    {getCategory(t)}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
 
