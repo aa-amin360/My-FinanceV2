@@ -388,25 +388,35 @@ function FloatingNav({ pathname }: { pathname: string }) {
   ];
 
   return (
-    <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
-      <div className="flex items-center gap-2 px-3 py-2 rounded-full 
-      bg-slate-900/80 backdrop-blur-xl border border-slate-700 shadow-xl">
+    <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full px-4">
+      
+      <div className="flex justify-between items-center w-full max-w-md mx-auto 
+      px-2 py-2 rounded-full 
+      bg-slate-900/80 backdrop-blur-xl 
+      border border-slate-700 shadow-xl">
 
         {items.map((item) => {
           const active = pathname === item.href;
-          const Icon = item.icon;
 
           return (
             <Link key={item.href} href={item.href}>
               <div
-                className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm transition ${
+                className={`flex flex-col items-center justify-center px-2 py-1 rounded-lg text-xs transition ${
                   active
-                    ? "bg-green-500 text-black font-semibold"
-                    : "text-gray-300 hover:bg-slate-800"
+                    ? "text-green-400"
+                    : "text-gray-400"
                 }`}
               >
-                <Icon size={16} />
-                <span>{item.label}</span>
+                <span className="text-base">{item.icon}</span>
+
+                {/* Responsive text */}
+                <span className="hidden sm:block text-[10px]">
+                  {item.short}
+                </span>
+
+                <span className="hidden md:block text-xs">
+                  {item.label}
+                </span>
               </div>
             </Link>
           );
