@@ -87,7 +87,7 @@ export default function TransactionsPage() {
   
     if (t.category_name) return formatName(t.category_name);
   
-    return {formatType(t.type)};
+    return formatType(t.type);
   };
 
   // =========================
@@ -97,7 +97,7 @@ export default function TransactionsPage() {
     if (t.category_name) return t.category_name;
 
     // fallback to readable type
-    return {formatType(t.type)};
+    return formatType(t.type);
   };
 
   // =========================
