@@ -24,7 +24,7 @@ export default function DashboardLayout({
   const [account, setAccount] = useState("Cash");
   const [category, setCategory] = useState("");
   const [note, setNote] = useState("");
-  const [categories, setCategories] = useState<any[]>([];
+  const [categories, setCategories] = useState<any[]>([]);
 
   const [error, setError] = useState("");
   const [isDirectFlow, setIsDirectFlow] = useState(false);
