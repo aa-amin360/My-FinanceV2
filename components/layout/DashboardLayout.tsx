@@ -189,7 +189,7 @@ export default function DashboardLayout({
             window.dispatchEvent(new CustomEvent("openAdd", { detail: "GENERAL" }));
           }
         }}
-        className="fixed bottom-24 md:bottom-6 right-6 w-14 h-14 rounded-full bg-green-500 text-black text-2xl flex items-center justify-center shadow-lg hover:scale-105 transition z-50"
+        className="fixed bottom-28 md:bottom-6 right-6 w-14 h-14 rounded-full bg-green-500 text-black text-2xl flex items-center justify-center shadow-lg hover:scale-105 transition z-50"
       >
         +
       </button>
@@ -208,37 +208,150 @@ export default function DashboardLayout({
             onClick={(e) => e.stopPropagation()}
             className="w-[340px] bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-2xl p-5 shadow-2xl flex flex-col gap-4 animate-modalIn"
           >
+            {/* ================= ACTION ================= */}
             {step === "ACTION" && (
               <>
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold">Select Action</h3>
-                  <button onClick={() => setShowModal(false)}>✕</button>
+                {/* HEADER */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                    Select Action
+                  </h3>
+      
+                  <button
+                    onClick={() => {
+                      setShowModal(false);
+                      setIsDirectFlow(false);
+                    }}
+                    className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-700 transition"
+                  >
+                    ✕
+                  </button>
                 </div>
-
+      
+                {/* ACTION GRID */}
                 <div className="grid grid-cols-2 gap-3">
                   <ActionCard label="Income" onClick={() => { setAction("INCOME"); setStep("FORM"); }} />
                   <ActionCard label="Expense" onClick={() => { setAction("EXPENSE"); setStep("FORM"); }} />
                   <ActionCard label="Borrow" onClick={() => { setAction("BORROW"); setStep("FORM"); }} />
                   <ActionCard label="Give" onClick={() => { setAction("GIVE"); setStep("FORM"); }} />
                 </div>
+      
+                {/* CANCEL */}
+                <button
+                  onClick={() => {
+                    setShowModal(false);
+                    setIsDirectFlow(false);
+                  }}
+                  className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition"
+                >
+                  Cancel
+                </button>
               </>
             )}
-
+      
+            {/* ================= FORM ================= */}
             {step === "FORM" && (
               <>
-                <div className="flex justify-between items-center">
-                  <h3 className="font-semibold">{action}</h3>
-                  <button onClick={() => setShowModal(false)}>✕</button>
+                {/* HEADER */}
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-800 dark:text-white">
+                    {action === "INCOME" && "Add Income"}
+                    {action === "EXPENSE" && "Add Expense"}
+                    {action === "BORROW" && "Borrow Money"}
+                    {action === "GIVE" && "Give Money"}
+                  </h3>
+      
+                  <button
+                    onClick={() => {
+                      setShowModal(false);
+                      setIsDirectFlow(false);
+                      setStep("ACTION");
+                    }}
+                    className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-700 transition"
+                  >
+                    ✕
+                  </button>
                 </div>
-
-                <input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" />
-
-                <button onClick={handleSubmit}>Save</button>
+      
+                {/* INPUTS */}
+                <input
+                  className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="Enter amount"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
+      
+                <select
+                  className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  value={account}
+                  onChange={(e) => setAccount(e.target.value)}
+                >
+                  <option>Cash</option>
+                  <option>Bank</option>
+                </select>
+      
+                {(action === "INCOME" || action === "EXPENSE") && (
+                  <select
+                    className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                  >
+                    <option value="">Select Category</option>
+                    {categories
+                      .filter((c) => c.type === action)
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                  </select>
+                )}
+      
+                {(action === "BORROW" || action === "GIVE") && (
+                  <input
+                    className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="Person / Bank"
+                    value={entity}
+                    onChange={(e) => setEntity(e.target.value)}
+                  />
+                )}
+      
+                <input
+                  className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="Add note (optional)"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                />
+      
+                {/* ERROR */}
+                {error && (
+                  <div className="text-red-500 text-sm text-center">
+                    {error}
+                  </div>
+                )}
+      
+                {/* SAVE */}
+                <button
+                  onClick={handleSubmit}
+                  className="bg-green-500 hover:bg-green-600 active:scale-95 transition py-3 rounded-xl text-black font-semibold"
+                >
+                  Save
+                </button>
+      
+                {/* BACK (ONLY MULTI STEP) */}
+                {!isDirectFlow && (
+                  <button
+                    onClick={() => setStep("ACTION")}
+                    className="bg-gray-200 dark:bg-slate-700 py-3 rounded-xl text-gray-800 dark:text-white"
+                  >
+                    Back
+                  </button>
+                )}
               </>
             )}
           </div>
         </div>
-      )}
+      )} 
     </div>
   );
 }
@@ -267,15 +380,23 @@ function FloatingNav({ pathname }: { pathname: string }) {
   ];
 
   return (
-    <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-      <div className="flex gap-2 px-3 py-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xl">
-
+    <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+      <div className="flex items-center gap-2 px-2 py-2 rounded-full 
+      bg-slate-900/80 backdrop-blur-xl 
+      border border-slate-700 shadow-2xl">
+    
         {items.map((item) => {
           const active = pathname === item.href;
-
+    
           return (
             <Link key={item.href} href={item.href}>
-              <div className={active ? "bg-green-500 px-3 py-1 rounded-full" : "px-3 py-1"}>
+              <div
+                className={`px-4 py-2 rounded-full text-sm transition ${
+                  active
+                    ? "bg-green-500 text-black font-semibold"
+                    : "text-gray-300 hover:bg-slate-800"
+                }`}
+              >
                 {item.label}
               </div>
             </Link>
