@@ -380,11 +380,11 @@ import {
 
 function FloatingNav({ pathname }: { pathname: string }) {
   const items = [
-    { label: "Home", href: "/", icon: Home },
-    { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
-    { label: "Debt", href: "/debts", icon: CreditCard },
-    { label: "Receivable", href: "/receivables", icon: Wallet },
-    { label: "Reports", href: "/reports", icon: BarChart3 },
+    { label: "Home", short: "Home", href: "/", icon: Home },
+    { label: "Transactions", short: "Transactions", href: "/transactions", icon: ArrowLeftRight },
+    { label: "Debt", short: "Debt", href: "/debts", icon: CreditCard },
+    { label: "Receivable", short: "Recv", href: "/receivables", icon: Wallet },
+    { label: "Reports", short: "Rep", href: "/reports", icon: BarChart3 },
   ];
 
   return (
