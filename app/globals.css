@@ -17,3 +17,7 @@
 .animate-modalIn {
   animation: modalIn 0.25s ease-out;
 }
+
+.shadow-green-500\/30 {
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+}
