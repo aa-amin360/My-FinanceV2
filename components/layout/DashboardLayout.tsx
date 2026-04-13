@@ -370,34 +370,43 @@ function Item({ label, href, pathname }: any) {
   );
 }
 
+import {
+  Home,
+  ArrowLeftRight,
+  CreditCard,
+  Wallet,
+  BarChart3,
+} from "lucide-react";
+
 function FloatingNav({ pathname }: { pathname: string }) {
   const items = [
-    { label: "Home", href: "/" },
-    { label: "Tx", href: "/transactions" },
-    { label: "Debt", href: "/debts" },
-    { label: "Recv", href: "/receivables" },
-    { label: "Reports", href: "/reports" },
+    { label: "Home", href: "/", icon: Home },
+    { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
+    { label: "Debt", href: "/debts", icon: CreditCard },
+    { label: "Receivable", href: "/receivables", icon: Wallet },
+    { label: "Reports", href: "/reports", icon: BarChart3 },
   ];
 
   return (
     <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
-      <div className="flex items-center gap-2 px-2 py-2 rounded-full 
-      bg-slate-900/80 backdrop-blur-xl 
-      border border-slate-700 shadow-2xl">
-    
+      <div className="flex items-center gap-2 px-3 py-2 rounded-full 
+      bg-slate-900/80 backdrop-blur-xl border border-slate-700 shadow-xl">
+
         {items.map((item) => {
           const active = pathname === item.href;
-    
+          const Icon = item.icon;
+
           return (
             <Link key={item.href} href={item.href}>
               <div
-                className={`px-4 py-2 rounded-full text-sm transition ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm transition ${
                   active
                     ? "bg-green-500 text-black font-semibold"
                     : "text-gray-300 hover:bg-slate-800"
                 }`}
               >
-                {item.label}
+                <Icon size={16} />
+                <span>{item.label}</span>
               </div>
             </Link>
           );
@@ -408,10 +417,17 @@ function FloatingNav({ pathname }: { pathname: string }) {
 }
 
 function ActionCard({ label, onClick }: any) {
+  const styles: any = {
+    INCOME: "bg-green-500/20 text-green-400 hover:bg-green-500/30",
+    EXPENSE: "bg-red-500/20 text-red-400 hover:bg-red-500/30",
+    BORROW: "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30",
+    GIVE: "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30",
+  };
+
   return (
     <div
       onClick={onClick}
-      className="p-3 bg-gray-200 dark:bg-slate-800 rounded cursor-pointer text-center"
+      className={`p-4 rounded-xl cursor-pointer text-center font-medium transition-all duration-200 ${styles[label]}`}
     >
       {label}
     </div>
