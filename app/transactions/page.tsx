@@ -132,57 +132,64 @@ export default function TransactionsPage() {
         </div>
 
         {/* ROWS */}
-        {transactions.map((t) => {
-          const amount = Number(t.amount);
-
-          const isPositive =
-            t.type === "INCOME" ||
-            t.type === "DEBT_TAKEN" ||
-            t.type === "RECEIVABLE_RECEIVED";
-
-          return (
-            <div
-              key={t.id}
-              className="grid grid-cols-5 px-4 py-3 border-b border-gray-200 dark:border-slate-800 hover:bg-gray-200 dark:hover:bg-slate-800 transition"
-            >
-              {/* NAME */}
-              <div className="font-medium">
-                {getDisplayName(t)}
-              </div>
-
-              {/* DATE */}
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                {new Date(t.date).toDateString()}
-              </div>
-
-              {/* TYPE */}
-              <div>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
-                    t.type
-                  )}`}
-                >
-                  {t.type.replace("_", " ")}
-                </span>
-              </div>
-
-              {/* CATEGORY */}
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                {getCategory(t)}
-              </div>
-
-              {/* AMOUNT */}
+        {/* DESKTOP TABLE */}
+        <div className="hidden md:block">
+          {/* your current table here (unchanged) */}
+        </div>
+        
+        {/* MOBILE CARD */}
+        <div className="md:hidden space-y-3">
+          {transactions.map((t) => {
+            const amount = Number(t.amount);
+        
+            const isPositive =
+              t.type === "INCOME" ||
+              t.type === "DEBT_TAKEN" ||
+              t.type === "RECEIVABLE_RECEIVED";
+        
+            return (
               <div
-                className={`text-right font-semibold ${
-                  isPositive ? "text-green-500" : "text-red-500"
-                }`}
+                key={t.id}
+                className="bg-gray-100 dark:bg-slate-900 p-4 rounded-xl"
               >
-                {isPositive ? "+" : "-"}
-                {amount.toFixed(2)} Tk
+                {/* TOP */}
+                <div className="flex justify-between items-center">
+                  <div className="font-semibold">
+                    {getDisplayName(t)}
+                  </div>
+        
+                  <div
+                    className={`font-semibold ${
+                      isPositive ? "text-green-500" : "text-red-500"
+                    }`}
+                  >
+                    {isPositive ? "+" : "-"}
+                    {amount.toFixed(2)} Tk
+                  </div>
+                </div>
+        
+                {/* MIDDLE */}
+                <div className="flex justify-between text-sm text-gray-500 mt-1">
+                  <span>{new Date(t.date).toDateString()}</span>
+                </div>
+        
+                {/* BOTTOM */}
+                <div className="flex justify-between items-center mt-2">
+                  {/* TYPE */}
+                  <span className="text-xs px-2 py-1 rounded-full bg-slate-700 text-white">
+                    {t.type.replace("_", " ")}
+                  </span>
+        
+                  {/* CATEGORY */}
+                  <span className="text-xs text-gray-400">
+                    {getCategory(t)}
+                  </span>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+
 
         {/* EMPTY */}
         {transactions.length === 0 && (
