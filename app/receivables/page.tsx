@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import DashboardLayout from "../../components/layout/DashboardLayout";
 
 type Receivable = {
   entity_id: string;
@@ -22,7 +23,10 @@ export default function ReceivablePage() {
   const [data, setData] = useState<Receivable[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  useEffect(() => {
+  // =========================
+  // LOAD DATA
+  // =========================
+  const loadData = () => {
     fetch("/api/receivables/details", { cache: "no-store" })
       .then((res) => res.json())
       .then((d) => setData(d.data || []));
@@ -30,11 +34,47 @@ export default function ReceivablePage() {
     fetch("/api/transactions", { cache: "no-store" })
       .then((res) => res.json())
       .then((d) => setTransactions(d.data || []));
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
+  // =========================
+  // FAB LISTENER (NEW)
+  // =========================
+  useEffect(() => {
+    const handler = (e: any) => {
+      if (e.detail === "RECEIVABLE") {
+        window.dispatchEvent(
+          new CustomEvent("openAdd", {
+            detail: "RECEIVABLE",
+          })
+        );
+      }
+    };
+  
+    window.addEventListener("openAdd", handler);
+    return () => window.removeEventListener("openAdd", handler);
+  }, []);
+
+  // =========================
+  // RECEIVE FUNCTION
+  // =========================
+  const handleReceive = (entityName: string) => {
+    window.dispatchEvent(
+      new CustomEvent("openAdd", {
+        detail: {
+          type: "RECEIVABLE_RECEIVED",
+          entity: entityName,
+        },
+      })
+    );
+  };
+
   return (
-    <div style={container}>
-      <h2 style={title}>Receivable Details</h2>
+    <DashboardLayout>
+      <h1 className="text-2xl font-bold mb-6">Receivable Details</h1>
 
       {data.map((r) => {
         const personTx = transactions.filter(
@@ -45,91 +85,82 @@ export default function ReceivablePage() {
         );
 
         return (
-          <div key={r.entity_id} style={card}>
-            <h3>{r.name}</h3>
+          <div
+            key={r.entity_id}
+            className="bg-gray-100 dark:bg-slate-900 p-5 rounded-2xl mb-6"
+          >
+            {/* HEADER */}
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold">{r.name}</h3>
 
-            <div style={row}>
+              <button
+                onClick={() => handleReceive(r.name)}
+                className="px-3 py-1 rounded bg-blue-500 text-black text-sm"
+              >
+                Receive
+              </button>
+            </div>
+
+            {/* SUMMARY */}
+            <div className="mt-4 flex justify-between text-sm text-gray-600 dark:text-gray-400">
               <span>Total Given:</span>
               <span>{Number(r.total_amount).toFixed(2)} Tk</span>
             </div>
 
-            <div style={row}>
+            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
               <span>Remaining:</span>
-              <span>{Number(r.remaining_amount).toFixed(2)} Tk</span>
+              <span className="font-semibold text-yellow-500">
+                {Number(r.remaining_amount).toFixed(2)} Tk
+              </span>
             </div>
 
-            <div style={{ marginTop: 10, fontWeight: "bold" }}>
+            {/* TRANSACTIONS */}
+            <div className="mt-4 text-sm font-semibold">
               Transactions
             </div>
 
-            {personTx.map((t) => {
-              const amount = Number(t.amount);
+            <div className="mt-2 flex flex-col gap-2">
+              {personTx.map((t) => {
+                const amount = Number(t.amount);
 
-              return (
-                <div key={t.id} style={tx}>
-                  <div>
-                    {t.type.replace("_", " ")}
-                    <div style={date}>
-                      {new Date(t.date).toDateString()}
+                return (
+                  <div
+                    key={t.id}
+                    className="flex justify-between p-3 rounded-xl bg-gray-200 dark:bg-slate-800"
+                  >
+                    <div>
+                      <div className="text-sm">
+                        {t.type.replace("_", " ")}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {new Date(t.date).toDateString()}
+                      </div>
+                    </div>
+
+                    <div
+                      className={`font-semibold ${
+                        t.type === "RECEIVABLE_RECEIVED"
+                          ? "text-green-500"
+                          : "text-red-500"
+                      }`}
+                    >
+                      {t.type === "RECEIVABLE_RECEIVED" ? "+" : "-"}
+                      {amount.toFixed(2)} Tk
                     </div>
                   </div>
-
-                  <div
-                    style={{
-                      color:
-                        t.type === "RECEIVABLE_RECEIVED"
-                          ? "#22c55e"
-                          : "#ef4444",
-                    }}
-                  >
-                    {t.type === "RECEIVABLE_RECEIVED" ? "+" : "-"}
-                    {amount.toFixed(2)} Tk
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         );
       })}
-    </div>
+
+      {/* EMPTY STATE */}
+      {data.length === 0 && (
+        <div className="text-center text-gray-400">
+          No receivables yet
+        </div>
+      )}
+    </DashboardLayout>
   );
 }
-
-
-const container = {
-  background: "#020617",
-  color: "white",
-  minHeight: "100vh",
-  padding: 20,
-};
-
-const title = {
-  color: "#22c55e",
-};
-
-const card = {
-  background: "#0f172a",
-  padding: 15,
-  borderRadius: 10,
-  marginTop: 20,
-};
-
-const row = {
-  display: "flex",
-  justifyContent: "space-between",
-  marginTop: 5,
-};
-
-const tx = {
-  display: "flex",
-  justifyContent: "space-between",
-  marginTop: 10,
-  padding: 10,
-  background: "#020617",
-  borderRadius: 8,
-};
-
-const date = {
-  fontSize: 12,
-  opacity: 0.6,
-};

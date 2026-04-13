@@ -1,322 +1,154 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import DashboardLayout from "../components/layout/DashboardLayout";
+import CashflowChart from "../components/charts/CashflowChart";
+import Link from "next/link";
 
 type Transaction = {
   id: string;
   type: string;
   amount: string;
-  from_account: string | null;
-  to_account: string | null;
   date: string;
   note: string | null;
 };
 
 export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [balance, setBalance] = useState(0);
   const [debt, setDebt] = useState(0);
   const [receivable, setReceivable] = useState(0);
-  const [balance, setBalance] = useState(0);
 
-  const [showModal, setShowModal] = useState(false);
+  // ================= LOAD DATA =================
+  const loadData = async () => {
+    const tx = await fetch("/api/transactions").then((r) => r.json());
+    setTransactions(tx.data || []);
 
-  // 🧠 STEP FLOW
-  const [step, setStep] = useState<"ACTION" | "FORM">("ACTION");
+    const b = await fetch("/api/balance").then((r) => r.json());
+    setBalance(Number(b.total || 0));
 
-  // FORM STATE
-  const [action, setAction] = useState("INCOME");
-  const [amount, setAmount] = useState("");
-  const [account, setAccount] = useState("Cash");
-  const [note, setNote] = useState("");
-  const [category, setCategory] = useState("");
-  const [entity, setEntity] = useState("");
+    const d = await fetch("/api/debts").then((r) => r.json());
+    setDebt(Number(d.total || 0));
 
-  // =========================
-  // FETCH DATA
-  // =========================
-  const loadData = () => {
-    fetch("/api/transactions")
-      .then((res) => res.json())
-      .then((data) => setTransactions(data.data || []));
-
-    fetch("/api/debts")
-      .then((res) => res.json())
-      .then((data) => setDebt(Number(data.total || 0)));
-
-    fetch("/api/receivables")
-      .then((res) => res.json())
-      .then((data) => setReceivable(Number(data.total || 0)));
-
-    fetch("/api/balance")
-      .then((res) => res.json())
-      .then((data) => setBalance(Number(data.total || 0)));
+    const r = await fetch("/api/receivables").then((r) => r.json());
+    setReceivable(Number(r.total || 0));
   };
 
   useEffect(() => {
     loadData();
+
+    const refresh = () => loadData();
+    window.addEventListener("refreshData", refresh);
+
+    return () => window.removeEventListener("refreshData", refresh);
   }, []);
 
-  // =========================
-  // CALCULATIONS
-  // =========================
-
+  // ================= CALCULATIONS =================
   let income = 0;
   let expense = 0;
 
+  const monthlyMap: Record<string, any> = {};
+
   transactions.forEach((t) => {
-    const val = Number(t.amount);
-    if (t.type === "INCOME") income += val;
-    if (t.type === "EXPENSE") expense += val;
-  });
-
-  // =========================
-  // SUBMIT
-  // =========================
-
-  const handleSubmit = async () => {
-    let type = "";
-
-    if (action === "INCOME") type = "INCOME";
-    if (action === "EXPENSE") type = "EXPENSE";
-    if (action === "BORROW") type = "DEBT_TAKEN";
-    if (action === "GIVE") type = "RECEIVABLE_GIVEN";
-
-    const body: any = {
-      type,
-      amount: Number(amount),
-      account,
-      date: new Date().toISOString(),
-      note,
-    };
-
-    if (category) body.category = category;
-    if (entity) body.entity = entity;
-
-    await fetch("/api/transactions", {
-      method: "POST",
-      body: JSON.stringify(body),
+    const amt = Number(t.amount);
+    const month = new Date(t.date).toLocaleString("default", {
+      month: "short",
     });
 
-    // RESET
-    setShowModal(false);
-    setStep("ACTION");
-    setAmount("");
-    setNote("");
-    setCategory("");
-    setEntity("");
+    if (!monthlyMap[month]) {
+      monthlyMap[month] = { income: 0, expense: 0 };
+    }
 
-    loadData();
-  };
+    if (t.type === "INCOME") {
+      income += amt;
+      monthlyMap[month].income += amt;
+    }
 
-  // =========================
-  // UI
-  // =========================
+    if (t.type === "EXPENSE") {
+      expense += amt;
+      monthlyMap[month].expense += amt;
+    }
+  });
+
+  const chartData = Object.keys(monthlyMap).map((m) => ({
+    month: m,
+    income: monthlyMap[m].income,
+    expense: monthlyMap[m].expense,
+  }));
 
   return (
-    <div style={container}>
-      <h2 style={title}>My Finance</h2>
-
+    <DashboardLayout>
       {/* BALANCE */}
-      <div style={balanceCard}>
-        <div style={label}>Current Balance</div>
-        <h1>{balance.toFixed(2)} Tk</h1>
+      <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-2xl text-black">
+        <h1 className="text-3xl font-bold">{balance.toFixed(2)} Tk</h1>
       </div>
 
       {/* CARDS */}
-      <div style={grid}>
-        <Card title="Income" value={income} color="#22c55e" />
-        <Card title="Expenses" value={expense} color="#ef4444" />
-        <Card title="Savings" value={0} color="#3b82f6" />
-        <a href="/debts" style={{ textDecoration: "none" }}>
-          <Card title="Debt" value={debt} color="#60a5fa" />
-        </a>
-        <a href="/receivables" style={{ textDecoration: "none" }}>
-          <Card title="Receivable" value={receivable} color="#f59e0b" />
-        </a>
-        <ReportCard />
+      <div className="grid grid-cols-2 gap-4 mt-6">
+        <Card title="Income" value={income} color="text-green-500" />
+        <Card title="Expenses" value={expense} color="text-red-500" />
+
+        <Link href="/debts">
+          <Card title="Debt" value={debt} color="text-cyan-400" />
+        </Link>
+
+        <Link href="/receivables">
+          <Card title="Receivable" value={receivable} color="text-yellow-400" />
+        </Link>
       </div>
 
-      {/* TRANSACTIONS */}
-      <div style={sectionHeader}>
-        <h3>Recent Transactions</h3>
+      {/* CHART */}
+      <div className="mt-6">
+        <CashflowChart data={chartData} />
       </div>
 
-      {transactions.map((t) => {
-        const amount = Number(t.amount);
+      {/* HISTORY */}
+      <div className="mt-6">
+        <h3 className="text-lg font-semibold mb-3">Recent Transactions</h3>
 
-        const isPositive =
-          t.type === "INCOME" ||
-          t.type === "DEBT_TAKEN" ||
-          t.type === "RECEIVABLE_RECEIVED";
+        <div className="bg-gray-100 dark:bg-slate-900 rounded-2xl overflow-hidden">
+          {transactions.slice(0, 5).map((t) => {
+            const isPositive =
+              t.type === "INCOME" ||
+              t.type === "DEBT_TAKEN" ||
+              t.type === "RECEIVABLE_RECEIVED";
 
-        const sign = isPositive ? "+" : "-";
-        const color = isPositive ? "#22c55e" : "#ef4444";
+            return (
+              <div
+                key={t.id}
+                className="flex justify-between px-4 py-3 border-b border-gray-200 dark:border-slate-800"
+              >
+                <div>
+                  <p className="font-medium">{t.type}</p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(t.date).toDateString()}
+                  </p>
+                </div>
 
-        return (
-          <div key={t.id} style={transactionCard}>
-            <div>
-              <div style={txTitle}>
-                {t.note || t.type.replaceAll("_", " ")}
+                <div
+                  className={`font-semibold ${
+                    isPositive ? "text-green-500" : "text-red-500"
+                  }`}
+                >
+                  {isPositive ? "+" : "-"}
+                  {Number(t.amount).toFixed(2)} Tk
+                </div>
               </div>
-              <div style={txDate}>
-                {new Date(t.date).toDateString()}
-              </div>
-            </div>
-
-            <div style={{ color }}>
-              {sign} {amount} Tk
-            </div>
-          </div>
-        );
-      })}
-
-      {/* FLOAT BUTTON */}
-      <button
-        style={fab}
-        onClick={() => {
-          setShowModal(true);
-          setStep("ACTION");
-        }}
-      >
-        +
-      </button>
-
-      {/* MODAL */}
-      {showModal && (
-        <div style={modal}>
-          <div style={modalContent}>
-            
-            {/* STEP 1 */}
-            {step === "ACTION" && (
-              <>
-                <h3>Select Action</h3>
-
-                <button onClick={() => { setAction("INCOME"); setStep("FORM"); }}>Income</button>
-                <button onClick={() => { setAction("EXPENSE"); setStep("FORM"); }}>Expense</button>
-                <button onClick={() => { setAction("BORROW"); setStep("FORM"); }}>Borrow</button>
-                <button onClick={() => { setAction("GIVE"); setStep("FORM"); }}>Give</button>
-
-                <button onClick={() => setShowModal(false)}>Cancel</button>
-              </>
-            )}
-
-            {/* STEP 2 */}
-            {step === "FORM" && (
-              <>
-                <h3>{action}</h3>
-
-                <input
-                  placeholder="Amount"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                />
-
-                <select value={account} onChange={(e) => setAccount(e.target.value)}>
-                  <option>Cash</option>
-                  <option>Bank</option>
-                </select>
-
-                {(action === "INCOME" || action === "EXPENSE") && (
-                  <input
-                    placeholder="Category"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                  />
-                )}
-
-                {(action === "BORROW" || action === "GIVE") && (
-                  <input
-                    placeholder="Person / Bank"
-                    value={entity}
-                    onChange={(e) => setEntity(e.target.value)}
-                  />
-                )}
-
-                <input
-                  placeholder="Note"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                />
-
-                <button onClick={handleSubmit}>Save</button>
-
-                <button onClick={() => setStep("ACTION")}>← Back</button>
-              </>
-            )}
-          </div>
+            );
+          })}
         </div>
-      )}
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
 
-// =========================
-// COMPONENTS
-// =========================
+// ================= COMPONENT =================
 
 function Card({ title, value, color }: any) {
   return (
-    <div style={card}>
-      <div style={{ color }}>{title}</div>
-      <div>{value.toFixed(2)} Tk</div>
+    <div className="bg-gray-100 dark:bg-slate-900 p-5 rounded-2xl">
+      <p className={color}>{title}</p>
+      <h2 className="text-2xl mt-2 font-bold">{value.toFixed(2)} Tk</h2>
     </div>
   );
 }
-
-function ReportCard() {
-  return (
-    <div style={card}>
-      <div style={{ color: "#a78bfa" }}>Monthly Report</div>
-      <div style={{ opacity: 0.5 }}>Coming soon...</div>
-    </div>
-  );
-}
-
-// =========================
-// STYLES
-// =========================
-
-const container = { background: "#020617", color: "white", minHeight: "100vh", padding: 20 };
-const title = { color: "#22c55e" };
-const balanceCard = { background: "#0f172a", padding: 20, borderRadius: 12, marginTop: 20 };
-const label = { opacity: 0.6 };
-
-const grid = { display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10, marginTop: 20 };
-const card = { background: "#0f172a", padding: 15, borderRadius: 10 };
-
-const sectionHeader = { marginTop: 30 };
-const transactionCard = { background: "#0f172a", padding: 15, borderRadius: 10, marginTop: 10, display: "flex", justifyContent: "space-between" };
-const txTitle = { fontWeight: "bold" };
-const txDate = { opacity: 0.5 };
-
-const fab: React.CSSProperties = {
-  position: "fixed",
-  bottom: 20,
-  right: 20,
-  width: 60,
-  height: 60,
-  borderRadius: "50%",
-  background: "#22c55e",
-  fontSize: 30,
-};
-
-const modal: React.CSSProperties = {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  background: "rgba(0,0,0,0.7)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-};
-
-const modalContent: React.CSSProperties = {
-  background: "#111827",
-  padding: 20,
-  borderRadius: 10,
-  display: "flex",
-  flexDirection: "column",
-  gap: 10,
-};
