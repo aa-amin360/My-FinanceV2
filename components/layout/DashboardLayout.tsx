@@ -395,30 +395,33 @@ function FloatingNav({ pathname }: { pathname: string }) {
       bg-slate-900/80 backdrop-blur-xl 
       border border-slate-700 shadow-xl">
 
-        {items.map((item) => {
-          const active = pathname === item.href;
-          const Icon = item.icon;
-        
-          return (
-            <Link key={item.href} href={item.href}>
-              <div
-                className={`flex flex-col items-center justify-center px-2 py-1 rounded-lg text-xs transition ${
-                  active ? "text-green-400" : "text-gray-400"
+      {items.map((item) => {
+        const active = pathname === item.href;
+        const Icon = item.icon;
+      
+        return (
+          <Link key={item.href} href={item.href}>
+            <div
+              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+                active
+                  ? "bg-green-500 text-black shadow-lg shadow-green-500/30 scale-105"
+                  : "text-gray-400 hover:text-white hover:bg-slate-800"
+              }`}
+            >
+              <Icon size={16} />
+      
+              {/* show label only when active or on larger screens */}
+              <span
+                className={`text-sm transition-all ${
+                  active ? "block font-semibold" : "hidden sm:block"
                 }`}
               >
-                <Icon size={16} />
-        
-                <span className="hidden sm:block text-[10px]">
-                  {item.label}
-                </span>
-        
-                <span className="hidden md:block text-xs">
-                  {item.label}
-                </span>
-              </div>
-            </Link>
-          );
-        })}
+                {item.label}
+              </span>
+            </div>
+          </Link>
+        );
+      })}
       </div>
     </div>
   );
