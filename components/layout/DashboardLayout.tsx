@@ -373,13 +373,12 @@ function Item({ label, href, pathname }: any) {
 import { Home, ArrowLeftRight, CreditCard, Wallet, BarChart3, Tag, } from "lucide-react";
 
 function FloatingNav({ pathname }: { pathname: string }) {
+  const [showMore, setShowMore] = useState(false);
   const items = [
     { label: "Home", href: "/", icon: Home },
-    { label: "Categories", href: "/categories", icon: Tag },
     { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
-    { label: "Debt", href: "/debts", icon: CreditCard },
-    { label: "Receivable", href: "/receivables", icon: Wallet },
-    { label: "Reports", href: "/reports", icon: BarChart3 },
+    { label: "Categories", href: "/categories", icon: Tag },
+    { label: "More", action: "MORE", icon: BarChart3 },
   ];
 
   return (
@@ -395,26 +394,64 @@ function FloatingNav({ pathname }: { pathname: string }) {
         const Icon = item.icon;
       
         return (
-          <Link key={item.href} href={item.href}>
-            <div
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
-                active
-                  ? "bg-green-500 text-black shadow-lg shadow-green-500/30 scale-105"
-                  : "text-gray-400 hover:text-white hover:bg-slate-800"
-              }`}
-            >
-              <Icon size={16} />
-      
-              {/* show label only when active or on larger screens */}
-              <span
-                className={`text-sm transition-all ${
-                  active ? "block font-semibold" : "hidden sm:block"
-                }`}
+          <div key={item.label}>
+            {item.action === "MORE" ? (
+              <div
+                onClick={() => setShowMore(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-full cursor-pointer text-gray-400 hover:text-white hover:bg-slate-800"
               >
-                {item.label}
-              </span>
+                <item.icon size={16} />
+                <span className="hidden sm:block text-sm">More</span>
+              </div>
+            ) : (
+              <Link href={item.href}>
+                <div
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+                    pathname === item.href
+                      ? "bg-green-500 text-black shadow-lg shadow-green-500/30 scale-105"
+                      : "text-gray-400 hover:text-white hover:bg-slate-800"
+                  }`}
+                >
+                  <item.icon size={16} />
+          
+                  <span
+                    className={`text-sm ${
+                      pathname === item.href ? "block font-semibold" : "hidden sm:block"
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                </div>
+              </Link>
+            )}
+          </div>
+          {showMore && (
+            <div className="fixed inset-0 z-50 bg-black/50 flex items-end">
+              <div className="w-full bg-slate-900 rounded-t-2xl p-5">
+                <div className="flex flex-col gap-4 text-white">
+          
+                  <Link href="/debts" onClick={() => setShowMore(false)}>
+                    <div className="p-3 rounded-lg hover:bg-slate-800">Debt</div>
+                  </Link>
+          
+                  <Link href="/receivables" onClick={() => setShowMore(false)}>
+                    <div className="p-3 rounded-lg hover:bg-slate-800">Receivable</div>
+                  </Link>
+          
+                  <Link href="/reports" onClick={() => setShowMore(false)}>
+                    <div className="p-3 rounded-lg hover:bg-slate-800">Reports</div>
+                  </Link>
+          
+                  <button
+                    onClick={() => setShowMore(false)}
+                    className="mt-2 text-gray-400"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             </div>
-          </Link>
+          )}
         );
       })}
       </div>
