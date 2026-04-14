@@ -129,11 +129,10 @@ export default function TransactionsPage() {
       <div className="bg-gray-100 dark:bg-slate-900 rounded-2xl overflow-hidden">
 
         {/* HEADER */}
-        <div className="grid grid-cols-5 px-4 py-3 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-slate-800">
+        <div className="grid grid-cols-4 px-4 py-3 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-slate-800">
           <div>Name</div>
           <div>Date</div>
           <div>Type</div>
-          <div>Category</div>
           <div className="text-right">Amount</div>
         </div>
 
@@ -174,12 +173,7 @@ export default function TransactionsPage() {
                       >
                         {formatType(t.type)}
                       </span>
-                    </div>
-      
-                    {/* CATEGORY */}
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      {getCategory(t)}
-                    </div>
+                    </div>      
                   </div>
     
                   {/* AMOUNT */}
@@ -211,14 +205,14 @@ export default function TransactionsPage() {
                   key={t.id}
                   className="bg-gray-100 dark:bg-slate-900 p-4 rounded-xl"
                 >
-                  {/* TOP */}
+                  {/* ROW 1 → NAME + AMOUNT */}
                   <div className="flex justify-between items-center">
-                    <div className="font-semibold">
+                    <div className="font-semibold text-base text-gray-900 dark:text-white">
                       {getDisplayName(t)}
                     </div>
           
                     <div
-                      className={`font-semibold ${
+                      className={`font-semibold text-sm ${
                         isPositive ? "text-green-500" : "text-red-500"
                       }`}
                     >
@@ -227,23 +221,26 @@ export default function TransactionsPage() {
                     </div>
                   </div>
           
-                  {/* MIDDLE */}
-                  <div className="flex justify-between text-sm text-gray-500 mt-1">
-                    <span>{new Date(t.date).toDateString()}</span>
-                  </div>
+                  {/* ROW 2 → DATE + TYPE */}
+                  <div className="flex justify-between items-center mt-1">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {new Date(t.date).toDateString().slice(4, 10)}
+                    </div>
           
-                  {/* BOTTOM */}
-                  <div className="flex justify-between items-center mt-2">
-                    {/* TYPE */}
-                    <span className="text-xs px-2 py-1 rounded-full bg-slate-700 text-white">
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${
+                        t.type.includes("INCOME")
+                          ? "bg-green-500/20 text-green-400"
+                          : t.type.includes("EXPENSE")
+                          ? "bg-red-500/20 text-red-400"
+                          : t.type.includes("DEBT")
+                          ? "bg-blue-500/20 text-blue-400"
+                          : t.type.includes("RECEIVABLE")
+                          ? "bg-yellow-500/20 text-yellow-400"
+                          : "bg-gray-500/20 text-gray-400"
+                      }`}
+                    >
                       {formatType(t.type)}
-                    </span>
-          
-                    {/* CATEGORY */}
-                    <span className="text-xs text-gray-400">
-                      {t.type.includes("DEBT") || t.type.includes("RECEIVABLE")
-                        ? "Loan"
-                        : getCategory(t)}
                     </span>
                   </div>
                 </div>
