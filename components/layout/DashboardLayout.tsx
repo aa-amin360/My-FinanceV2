@@ -353,6 +353,34 @@ export default function DashboardLayout({
         </div>
       )} 
     </div>
+
+    {showMore && (
+      <div className="fixed inset-0 z-50 bg-black/50 flex items-end">
+        <div className="w-full bg-slate-900 rounded-t-2xl p-5">
+          <div className="flex flex-col gap-4 text-white">
+    
+            <Link href="/debts" onClick={() => setShowMore(false)}>
+              <div className="p-3 rounded-lg hover:bg-slate-800">Debt</div>
+            </Link>
+    
+            <Link href="/receivables" onClick={() => setShowMore(false)}>
+              <div className="p-3 rounded-lg hover:bg-slate-800">Receivable</div>
+            </Link>
+    
+            <Link href="/reports" onClick={() => setShowMore(false)}>
+              <div className="p-3 rounded-lg hover:bg-slate-800">Reports</div>
+            </Link>
+    
+            <button
+              onClick={() => setShowMore(false)}
+              className="mt-2 text-gray-400"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   );
 }
 
@@ -425,33 +453,6 @@ function FloatingNav({ pathname }: { pathname: string }) {
               </Link>
             )}
           </div>
-          {showMore && (
-            <div className="fixed inset-0 z-50 bg-black/50 flex items-end">
-              <div className="w-full bg-slate-900 rounded-t-2xl p-5">
-                <div className="flex flex-col gap-4 text-white">
-          
-                  <Link href="/debts" onClick={() => setShowMore(false)}>
-                    <div className="p-3 rounded-lg hover:bg-slate-800">Debt</div>
-                  </Link>
-          
-                  <Link href="/receivables" onClick={() => setShowMore(false)}>
-                    <div className="p-3 rounded-lg hover:bg-slate-800">Receivable</div>
-                  </Link>
-          
-                  <Link href="/reports" onClick={() => setShowMore(false)}>
-                    <div className="p-3 rounded-lg hover:bg-slate-800">Reports</div>
-                  </Link>
-          
-                  <button
-                    onClick={() => setShowMore(false)}
-                    className="mt-2 text-gray-400"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         );
       })}
       </div>
