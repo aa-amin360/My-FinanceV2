@@ -370,17 +370,12 @@ function Item({ label, href, pathname }: any) {
   );
 }
 
-import {
-  Home,
-  ArrowLeftRight,
-  CreditCard,
-  Wallet,
-  BarChart3,
-} from "lucide-react";
+import { Home, ArrowLeftRight, CreditCard, Wallet, BarChart3, Tag, } from "lucide-react";
 
 function FloatingNav({ pathname }: { pathname: string }) {
   const items = [
     { label: "Home", href: "/", icon: Home },
+    { label: "Categories", href: "/categories", icon: Tag },
     { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
     { label: "Debt", href: "/debts", icon: CreditCard },
     { label: "Receivable", href: "/receivables", icon: Wallet },
