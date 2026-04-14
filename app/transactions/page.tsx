@@ -3,6 +3,12 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 
+const formatType = (type: string) =>
+  type
+    .toLowerCase()
+    .replace("_", " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
 type Transaction = {
   id: string;
   type: string;
@@ -10,7 +16,7 @@ type Transaction = {
   date: string;
   note: string | null;
   category_name?: string;
-  entity_name?: string; // ✅ NEW (if backend supports)
+  entity_name?: string;
 };
 
 export default function TransactionsPage() {
@@ -81,7 +87,7 @@ export default function TransactionsPage() {
   
     if (t.category_name) return formatName(t.category_name);
   
-    return t.type.replace("_", " ");
+    return formatType(t.type);
   };
 
   // =========================
@@ -91,7 +97,7 @@ export default function TransactionsPage() {
     if (t.category_name) return t.category_name;
 
     // fallback to readable type
-    return t.type.replace("_", " ");
+    return formatType(t.type);
   };
 
   // =========================
@@ -123,66 +129,128 @@ export default function TransactionsPage() {
       <div className="bg-gray-100 dark:bg-slate-900 rounded-2xl overflow-hidden">
 
         {/* HEADER */}
-        <div className="grid grid-cols-5 px-4 py-3 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-slate-800">
+        <div className="grid grid-cols-4 px-4 py-3 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-slate-800">
           <div>Name</div>
           <div>Date</div>
           <div>Type</div>
-          <div>Category</div>
           <div className="text-right">Amount</div>
         </div>
 
-        {/* ROWS */}
-        {transactions.map((t) => {
-          const amount = Number(t.amount);
-
-          const isPositive =
-            t.type === "INCOME" ||
-            t.type === "DEBT_TAKEN" ||
-            t.type === "RECEIVABLE_RECEIVED";
-
-          return (
-            <div
-              key={t.id}
-              className="grid grid-cols-5 px-4 py-3 border-b border-gray-200 dark:border-slate-800 hover:bg-gray-200 dark:hover:bg-slate-800 transition"
-            >
-              {/* NAME */}
-              <div className="font-medium">
-                {getDisplayName(t)}
-              </div>
-
-              {/* DATE */}
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                {new Date(t.date).toDateString()}
-              </div>
-
-              {/* TYPE */}
-              <div>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
-                    t.type
-                  )}`}
+        <div className="pb-24 md:pb-0">
+          {/* ROWS */}
+          {/* DESKTOP TABLE */}
+            <div className="hidden md:block">
+                      {transactions.map((t) => {
+              const amount = Number(t.amount);
+    
+              const isPositive =
+                t.type === "INCOME" ||
+                t.type === "DEBT_TAKEN" ||
+                t.type === "RECEIVABLE_RECEIVED";
+    
+              return (
+                <div
+                  key={t.id}
+                  className="grid grid-cols-4 px-4 py-3 border-b border-gray-200 dark:border-slate-800 hover:bg-gray-200 dark:hover:bg-slate-800 transition"
                 >
-                  {t.type.replace("_", " ")}
-                </span>
-              </div>
+                  {/* NAME */}
+                  <div className="font-semibold text-white text-base">
+                    {getDisplayName(t)}
+                  </div>
+                
+                  {/* DATE */}
+                  <div className="text-xs text-gray-500">
+                    {new Date(t.date).toDateString()}
+                  </div>
+                
+                  {/* TYPE */}
+                  <div>
+                    <span className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(t.type)}`}>
+                      {formatType(t.type)}
+                    </span>
+                  </div>
+                
+                  {/* AMOUNT */}
+                  <div
+                    className={`text-right font-semibold ${
+                      t.type === "INCOME" ||
+                      t.type === "DEBT_TAKEN" ||
+                      t.type === "RECEIVABLE_RECEIVED"
+                        ? "text-green-500"
+                        : "text-red-500"
+                    }`}
+                  >
+                    {(t.type === "INCOME" ||
+                      t.type === "DEBT_TAKEN" ||
+                      t.type === "RECEIVABLE_RECEIVED"
+                      ? "+"
+                      : "-") + Number(t.amount).toFixed(2)}{" "}
+                    Tk
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          {/* MOBILE CARD */}
+          <div className="md:hidden space-y-3">
+            {transactions.map((t) => {
+              const amount = Number(t.amount);
+          
+              const isPositive =
+                t.type === "INCOME" ||
+                t.type === "DEBT_TAKEN" ||
+                t.type === "RECEIVABLE_RECEIVED";
+          
+              return (
+                <div
+                  key={t.id}
+                  className="bg-gray-100 dark:bg-slate-900 p-4 rounded-xl"
+                >
+                  {/* ROW 1 → NAME + AMOUNT */}
+                  <div className="flex justify-between items-center">
+                    <div className="font-semibold text-base text-gray-900 dark:text-white">
+                      {getDisplayName(t)}
+                    </div>
+          
+                    <div
+                      className={`font-semibold text-sm ${
+                        isPositive ? "text-green-500" : "text-red-500"
+                      }`}
+                    >
+                      {isPositive ? "+" : "-"}
+                      {amount.toFixed(2)} Tk
+                    </div>
+                  </div>
+          
+                  {/* ROW 2 → DATE + TYPE */}
+                  <div className="flex justify-between items-center mt-1">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {new Date(t.date).toDateString().slice(4, 10)}
+                    </div>
+          
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${
+                        t.type.includes("INCOME")
+                          ? "bg-green-500/20 text-green-400"
+                          : t.type.includes("EXPENSE")
+                          ? "bg-red-500/20 text-red-400"
+                          : t.type.includes("DEBT")
+                          ? "bg-blue-500/20 text-blue-400"
+                          : t.type.includes("RECEIVABLE")
+                          ? "bg-yellow-500/20 text-yellow-400"
+                          : "bg-gray-500/20 text-gray-400"
+                      }`}
+                    >
+                      {formatType(t.type)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-              {/* CATEGORY */}
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                {getCategory(t)}
-              </div>
-
-              {/* AMOUNT */}
-              <div
-                className={`text-right font-semibold ${
-                  isPositive ? "text-green-500" : "text-red-500"
-                }`}
-              >
-                {isPositive ? "+" : "-"}
-                {amount.toFixed(2)} Tk
-              </div>
-            </div>
-          );
-        })}
 
         {/* EMPTY */}
         {transactions.length === 0 && (
