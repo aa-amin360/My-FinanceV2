@@ -151,39 +151,41 @@ export default function TransactionsPage() {
               return (
                 <div
                   key={t.id}
-                  className="grid grid-cols-5 px-4 py-3 border-b border-gray-200 dark:border-slate-800 hover:bg-gray-200 dark:hover:bg-slate-800 transition"
+                  className="grid grid-cols-4 px-4 py-3 border-b border-gray-200 dark:border-slate-800 hover:bg-gray-200 dark:hover:bg-slate-800 transition"
                 >
                   {/* NAME */}
                   <div className="font-semibold text-white text-base">
                     {getDisplayName(t)}
                   </div>
-    
+                
                   {/* DATE */}
                   <div className="text-xs text-gray-500">
                     {new Date(t.date).toDateString()}
                   </div>
-  
-                  <div className="flex justify-between items-center mt-2">  
-                    {/* TYPE */}
-                    <div>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
-                          t.type
-                        )}`}
-                      >
-                        {formatType(t.type)}
-                      </span>
-                    </div>      
+                
+                  {/* TYPE */}
+                  <div>
+                    <span className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(t.type)}`}>
+                      {formatType(t.type)}
+                    </span>
                   </div>
-    
+                
                   {/* AMOUNT */}
                   <div
                     className={`text-right font-semibold ${
-                      isPositive ? "text-green-500" : "text-red-500"
+                      t.type === "INCOME" ||
+                      t.type === "DEBT_TAKEN" ||
+                      t.type === "RECEIVABLE_RECEIVED"
+                        ? "text-green-500"
+                        : "text-red-500"
                     }`}
                   >
-                    {isPositive ? "+" : "-"}
-                    {amount.toFixed(2)} Tk
+                    {(t.type === "INCOME" ||
+                      t.type === "DEBT_TAKEN" ||
+                      t.type === "RECEIVABLE_RECEIVED"
+                      ? "+"
+                      : "-") + Number(t.amount).toFixed(2)}{" "}
+                    Tk
                   </div>
                 </div>
               );
