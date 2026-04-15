@@ -424,17 +424,17 @@ function FloatingNav({ pathname }: { pathname: string }) {
             return (
               <Link key={item.href} href={item.href}>
                 <div
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+                  className={`flex items-center justify-center gap-2 px-3 py-2 rounded-full transition-all duration-300 ${
                     active
-                      ? "bg-green-500 text-black shadow-lg shadow-green-500/30 scale-105"
-                      : "text-gray-400 hover:text-white hover:bg-slate-800"
+                      ? "bg-green-500 text-black shadow-lg shadow-green-500/30 px-4 scale-105"
+                      : "text-gray-400 hover:text-white hover:bg-slate-800 w-10 h-10"
                   }`}
                 >
                   <Icon size={16} />
 
                   <span
-                    className={`text-sm transition-all ${
-                      active ? "block font-semibold" : "hidden sm:block"
+                    className={`text-sm whitespace-nowrap transition-all duration-300 ${
+                      active ? "block font-semibold ml-1" : "hidden"
                     }`}
                   >
                     {item.label}
