@@ -83,7 +83,6 @@ export default function Home() {
         balance: runningBalance,
       };
     });
-  });
 
   return (
     <DashboardLayout>
