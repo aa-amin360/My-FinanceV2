@@ -50,21 +50,11 @@ export default function Home() {
   transactions.forEach((t) => {
     const amt = Number(t.amount);
   
-    // INCOME FLOW
-    if (
-      t.type === "INCOME" ||
-      t.type === "DEBT_TAKEN" ||
-      t.type === "RECEIVABLE_RECEIVED"
-    ) {
+    if (t.type === "INCOME") {
       income += amt;
     }
   
-    // EXPENSE FLOW
-    if (
-      t.type === "EXPENSE" ||
-      t.type === "DEBT_REPAID" ||
-      t.type === "RECEIVABLE_GIVEN"
-    ) {
+    if (t.type === "EXPENSE") {
       expense += amt;
     }
   });
