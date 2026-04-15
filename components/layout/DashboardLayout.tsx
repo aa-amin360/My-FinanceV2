@@ -82,17 +82,17 @@ export default function DashboardLayout({
   // ================= SUBMIT =================
   const handleSubmit = async () => {
     setError("");
-
+  
     if (!amount || Number(amount) <= 0) {
       setError("Enter a valid amount");
       return;
     }
-
+  
     if ((action === "INCOME" || action === "EXPENSE") && !category) {
       setError("Select a category");
       return;
     }
-
+  
     if (
       ["BORROW", "GIVE", "REPAY", "RECEIVE"].includes(action) &&
       !entity
@@ -100,7 +100,7 @@ export default function DashboardLayout({
       setError("Enter person / entity");
       return;
     }
-
+  
     const body: any = {
       type: actionToTypeMap[action],
       amount: Number(amount),
@@ -108,15 +108,21 @@ export default function DashboardLayout({
       date: new Date().toISOString(),
       note,
     };
-
+  
     if (category) body.category_id = category;
     if (entity) body.entity = entity;
-
-    await fetch("/api/transactions", {
+  
+    const res = await fetch("/api/transactions", {
       method: "POST",
       body: JSON.stringify(body),
     });
+  
+    const data = await res.json();
 
+    if (res.ok) {
+      window.dispatchEvent(new Event("refreshData"));
+    }
+  
     // RESET
     setShowModal(false);
     setStep("ACTION");
@@ -126,8 +132,6 @@ export default function DashboardLayout({
     setNote("");
     setError("");
     setIsDirectFlow(false);
-
-    window.dispatchEvent(new Event("refreshData"));
   };
 
   return (
