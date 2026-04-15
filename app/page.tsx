@@ -24,13 +24,13 @@ export default function Home() {
     const tx = await fetch("/api/transactions", { cache: "no-store" }).then((r) => r.json());
     setTransactions(tx.data || []);
 
-    const b = await fetch("/api/balance").then((r) => r.json());
+    const b = await fetch("/api/balance", { cache: "no-store" }).then((r) => r.json());
     setBalance(Number(b.total || 0));
 
-    const d = await fetch("/api/debts").then((r) => r.json());
+    const d = await fetch("/api/debts", { cache: "no-store" }).then((r) => r.json());
     setDebt(Number(d.total || 0));
 
-    const r = await fetch("/api/receivables").then((r) => r.json());
+    const r = await fetch("/api/receivables", { cache: "no-store" }).then((r) => r.json());
     setReceivable(Number(r.total || 0));
   };
 
@@ -59,29 +59,30 @@ export default function Home() {
     }
   });
 
+  let runningBalance = 0;
+  
   const chartData = transactions
-  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-  .map((t, index, arr) => {
-    const isPositive =
-      t.type === "INCOME" ||
-      t.type === "DEBT_TAKEN" ||
-      t.type === "RECEIVABLE_RECEIVED";
-
-    const amount = Number(t.amount);
-
-    const prev = index === 0 ? 0 : (arr[index - 1] as any).balance || 0;
-
-    const balance = isPositive ? prev + amount : prev - amount;
-
-    (t as any).balance = balance;
-
-    return {
-      date: new Date(t.date).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
-      balance,
-    };
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .map((t) => {
+      const isPositive =
+        t.type === "INCOME" ||
+        t.type === "DEBT_TAKEN" ||
+        t.type === "RECEIVABLE_RECEIVED";
+  
+      const amount = Number(t.amount);
+  
+      runningBalance = isPositive
+        ? runningBalance + amount
+        : runningBalance - amount;
+  
+      return {
+        date: new Date(t.date).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+        balance: runningBalance,
+      };
+    });
   });
 
   return (
