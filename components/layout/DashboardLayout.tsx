@@ -484,16 +484,12 @@ function FloatingNav({ pathname }: { pathname: string }) {
 }
 
 function ActionCard({ label, onClick }: any) {
-
-  // ================= MORE MODAL STATE =================
-  const [showMore, setShowMore] = useState(false);
-  
-  // ================= NAV ITEMS =================
-  const items = [
-    { label: "Home", href: "/", icon: Home },
-    { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
-    { label: "More", action: "MORE", icon: BarChart3 },
-  ];
+  const styles: any = {
+    Income: "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 hover:bg-green-500/30",
+    Expense: "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 hover:bg-red-500/30",
+    Borrow: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/30",
+    Give: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20 hover:bg-yellow-500/30",
+  };
 
   return (
     <div
