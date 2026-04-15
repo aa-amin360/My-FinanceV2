@@ -115,74 +115,77 @@ export default function Home() {
         <h3 className="text-lg font-semibold mb-3">Recent Transactions</h3>
       
         <div className="space-y-3">
-          {transactions.slice(0, 5).map((t) => {
-            const amount = Number(t.amount);
+          {[...transactions]
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .slice(0, 5)
+            .map((t) => {
+              const amount = Number(t.amount);
       
-            const isPositive =
-              t.type === "INCOME" ||
-              t.type === "DEBT_TAKEN" ||
-              t.type === "RECEIVABLE_RECEIVED";
+              const isPositive =
+                t.type === "INCOME" ||
+                t.type === "DEBT_TAKEN" ||
+                t.type === "RECEIVABLE_RECEIVED";
       
-            const formatType = (type: string) =>
-              type
-                .toLowerCase()
-                .replace(/_/g, " ")
-                .replace(/\b\w/g, (c) => c.toUpperCase());
+              const formatType = (type: string) =>
+                type
+                  .toLowerCase()
+                  .replace(/_/g, " ")
+                  .replace(/\b\w/g, (c) => c.toUpperCase());
       
-            const getDisplayName = (t: any) => {
-              if (t.entity_name) return t.entity_name;
-              if (t.category_name) return t.category_name;
-              return formatType(t.type);
-            };
+              const getDisplayName = (t: any) => {
+                if (t.entity_name) return t.entity_name;
+                if (t.category_name) return t.category_name;
+                return formatType(t.type);
+              };
       
-            return (
-              <div
-                key={t.id}
-                className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 flex justify-between items-center hover:bg-slate-800 transition"
-              >
-                {/* LEFT */}
-                <div>
-                  <div className="font-medium">
-                    {getDisplayName(t)}
+              return (
+                <div
+                  key={t.id}
+                  className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 flex justify-between items-center hover:bg-slate-800 transition"
+                >
+                  {/* LEFT */}
+                  <div>
+                    <div className="font-medium">
+                      {getDisplayName(t)}
+                    </div>
+      
+                    <div className="text-xs text-gray-400 mt-1">
+                      {new Date(t.date).toDateString()}
+                    </div>
                   </div>
       
-                  <div className="text-xs text-gray-400 mt-1">
-                    {new Date(t.date).toDateString()}
-                  </div>
-                </div>
-      
-                {/* RIGHT */}
-                <div className="text-right">
-                  <div
-                    className={`font-semibold ${
-                      isPositive ? "text-green-500" : "text-red-500"
-                    }`}
-                  >
-                    {isPositive ? "+" : "-"}
-                    {amount.toFixed(2)} Tk
-                  </div>
-      
-                  <div className="mt-1">
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        t.type === "INCOME"
-                          ? "bg-green-500/20 text-green-400"
-                          : t.type === "EXPENSE"
-                          ? "bg-red-500/20 text-red-400"
-                          : t.type.includes("DEBT")
-                          ? "bg-blue-500/20 text-blue-400"
-                          : t.type.includes("RECEIVABLE")
-                          ? "bg-yellow-500/20 text-yellow-400"
-                          : "bg-gray-500/20 text-gray-400"
+                  {/* RIGHT */}
+                  <div className="text-right">
+                    <div
+                      className={`font-semibold ${
+                        isPositive ? "text-green-500" : "text-red-500"
                       }`}
                     >
-                      {formatType(t.type)}
-                    </span>
+                      {isPositive ? "+" : "-"}
+                      {amount.toFixed(2)} Tk
+                    </div>
+      
+                    <div className="mt-1">
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${
+                          t.type === "INCOME"
+                            ? "bg-green-500/20 text-green-400"
+                            : t.type === "EXPENSE"
+                            ? "bg-red-500/20 text-red-400"
+                            : t.type.includes("DEBT")
+                            ? "bg-blue-500/20 text-blue-400"
+                            : t.type.includes("RECEIVABLE")
+                            ? "bg-yellow-500/20 text-yellow-400"
+                            : "bg-gray-500/20 text-gray-400"
+                        }`}
+                      >
+                        {formatType(t.type)}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       </div>
     </DashboardLayout>
