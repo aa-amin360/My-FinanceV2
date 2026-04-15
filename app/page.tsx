@@ -21,7 +21,7 @@ export default function Home() {
 
   // ================= LOAD DATA =================
   const loadData = async () => {
-    const tx = await fetch("/api/transactions").then((r) => r.json());
+    const tx = await fetch("/api/transactions", { cache: "no-store" }).then((r) => r.json());
     setTransactions(tx.data || []);
 
     const b = await fetch("/api/balance").then((r) => r.json());
