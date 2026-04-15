@@ -132,9 +132,12 @@ export default function Home() {
                   .replace(/_/g, " ")
                   .replace(/\b\w/g, (c) => c.toUpperCase());
       
+              const capitalize = (text: string) =>
+                text ? text.charAt(0).toUpperCase() + text.slice(1) : "";
+              
               const getDisplayName = (t: any) => {
-                if (t.entity_name) return t.entity_name;
-                if (t.category_name) return t.category_name;
+                if (t.entity_name) return capitalize(t.entity_name);
+                if (t.category_name) return capitalize(t.category_name);
                 return formatType(t.type);
               };
       
