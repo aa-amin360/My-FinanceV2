@@ -52,34 +52,31 @@ export default function ReportsPage() {
   let income = 0;
   let expense = 0;
 
-  const monthlyMap: Record<string, { income: number; expense: number }> = {};
+  const chartData = transactions
+  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  .map((t, index, arr) => {
+    const isPositive =
+      t.type === "INCOME" ||
+      t.type === "DEBT_TAKEN" ||
+      t.type === "RECEIVABLE_RECEIVED";
 
-  filteredTx.forEach((t) => {
     const amount = Number(t.amount);
-    const date = new Date(t.date);
-    const month = date.toLocaleString("default", { month: "short" });
 
-    if (!monthlyMap[month]) {
-      monthlyMap[month] = { income: 0, expense: 0 };
-    }
+    const prev = index === 0 ? 0 : (arr[index - 1] as any).balance || 0;
 
-    if (t.type === "INCOME") {
-      income += amount;
-      monthlyMap[month].income += amount;
-    }
+    const balance = isPositive ? prev + amount : prev - amount;
 
-    if (t.type === "EXPENSE") {
-      expense += amount;
-      monthlyMap[month].expense += amount;
-    }
+    (t as any).balance = balance;
+
+    return {
+      date: new Date(t.date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
+      balance,
+    };
   });
-
-  const chartData = Object.keys(monthlyMap).map((month) => ({
-    month,
-    income: monthlyMap[month].income,
-    expense: monthlyMap[month].expense,
-  }));
-
+  
   const savings = income - expense;
 
   const categoryMap: Record<string, number> = {};
