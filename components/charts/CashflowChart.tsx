@@ -1,57 +1,76 @@
 "use client";
 
 import {
-  LineChart,
-  Line,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
 } from "recharts";
 
-type DataPoint = {
-  month: string;
-  income: number;
-  expense: number;
+type Props = {
+  data: {
+    date: string;
+    balance: number;
+  }[];
 };
 
-export default function CashflowChart({ data }: { data: DataPoint[] }) {
+export default function CashflowChart({ data }: Props) {
   return (
-    <div className="bg-slate-900 p-5 rounded-2xl mt-6">
-      <h3 className="mb-4 text-sm text-gray-400">Cashflow</h3>
+    <div className="bg-slate-900 rounded-2xl p-4 border border-slate-800">
+      <h3 className="text-sm text-gray-400 mb-2">Balance</h3>
 
-      <div className="w-full h-64">
-        <ResponsiveContainer>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+      <ResponsiveContainer width="100%" height={220}>
+        <AreaChart data={data}>
+          
+          {/* GRADIENT */}
+          <defs>
+            <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#22c55e" stopOpacity={0.4} />
+              <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+            </linearGradient>
+          </defs>
 
-            <XAxis dataKey="month" stroke="#94a3b8" />
-            <YAxis stroke="#94a3b8" />
+          {/* AXIS */}
+          <XAxis
+            dataKey="date"
+            stroke="#64748b"
+            fontSize={12}
+            tickLine={false}
+            axisLine={false}
+          />
 
-            <Tooltip
-              contentStyle={{
-                background: "#020617",
-                border: "none",
-              }}
-            />
+          <YAxis
+            stroke="#64748b"
+            fontSize={12}
+            tickLine={false}
+            axisLine={false}
+          />
 
-            <Line
-              type="monotone"
-              dataKey="income"
-              stroke="#22c55e"
-              strokeWidth={2}
-            />
+          {/* TOOLTIP */}
+          <Tooltip
+            contentStyle={{
+              background: "#020617",
+              border: "1px solid #1e293b",
+              borderRadius: "8px",
+              fontSize: "12px",
+            }}
+            formatter={(value: number) => `${value.toFixed(2)} Tk`}
+          />
 
-            <Line
-              type="monotone"
-              dataKey="expense"
-              stroke="#ef4444"
-              strokeWidth={2}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+          {/* AREA LINE */}
+          <Area
+            type="monotone"
+            dataKey="balance"
+            stroke="#22c55e"
+            strokeWidth={2}
+            fill="url(#balanceGradient)"
+            dot={{ r: 3 }}
+            activeDot={{ r: 5 }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   );
 }

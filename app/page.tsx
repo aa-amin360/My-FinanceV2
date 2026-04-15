@@ -21,16 +21,16 @@ export default function Home() {
 
   // ================= LOAD DATA =================
   const loadData = async () => {
-    const tx = await fetch("/api/transactions").then((r) => r.json());
+    const tx = await fetch("/api/transactions", { cache: "no-store" }).then((r) => r.json());
     setTransactions(tx.data || []);
 
-    const b = await fetch("/api/balance").then((r) => r.json());
+    const b = await fetch("/api/balance", { cache: "no-store" }).then((r) => r.json());
     setBalance(Number(b.total || 0));
 
-    const d = await fetch("/api/debts").then((r) => r.json());
+    const d = await fetch("/api/debts", { cache: "no-store" }).then((r) => r.json());
     setDebt(Number(d.total || 0));
 
-    const r = await fetch("/api/receivables").then((r) => r.json());
+    const r = await fetch("/api/receivables", { cache: "no-store" }).then((r) => r.json());
     setReceivable(Number(r.total || 0));
   };
 
@@ -47,34 +47,42 @@ export default function Home() {
   let income = 0;
   let expense = 0;
 
-  const monthlyMap: Record<string, any> = {};
-
   transactions.forEach((t) => {
     const amt = Number(t.amount);
-    const month = new Date(t.date).toLocaleString("default", {
-      month: "short",
-    });
-
-    if (!monthlyMap[month]) {
-      monthlyMap[month] = { income: 0, expense: 0 };
-    }
-
+  
     if (t.type === "INCOME") {
       income += amt;
-      monthlyMap[month].income += amt;
     }
-
+  
     if (t.type === "EXPENSE") {
       expense += amt;
-      monthlyMap[month].expense += amt;
     }
   });
 
-  const chartData = Object.keys(monthlyMap).map((m) => ({
-    month: m,
-    income: monthlyMap[m].income,
-    expense: monthlyMap[m].expense,
-  }));
+  let runningBalance = 0;
+  
+  const chartData = transactions
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .map((t) => {
+      const isPositive =
+        t.type === "INCOME" ||
+        t.type === "DEBT_TAKEN" ||
+        t.type === "RECEIVABLE_RECEIVED";
+  
+      const amount = Number(t.amount);
+  
+      runningBalance = isPositive
+        ? runningBalance + amount
+        : runningBalance - amount;
+  
+      return {
+        date: new Date(t.date).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+        balance: runningBalance,
+      };
+    });
 
   return (
     <DashboardLayout>
@@ -105,37 +113,82 @@ export default function Home() {
       {/* HISTORY */}
       <div className="mt-6">
         <h3 className="text-lg font-semibold mb-3">Recent Transactions</h3>
-
-        <div className="bg-gray-100 dark:bg-slate-900 rounded-2xl overflow-hidden">
-          {transactions.slice(0, 5).map((t) => {
-            const isPositive =
-              t.type === "INCOME" ||
-              t.type === "DEBT_TAKEN" ||
-              t.type === "RECEIVABLE_RECEIVED";
-
-            return (
-              <div
-                key={t.id}
-                className="flex justify-between px-4 py-3 border-b border-gray-200 dark:border-slate-800"
-              >
-                <div>
-                  <p className="font-medium">{t.type}</p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(t.date).toDateString()}
-                  </p>
-                </div>
-
+      
+        <div className="space-y-3">
+          {[...transactions]
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .slice(0, 5)
+            .map((t) => {
+              const amount = Number(t.amount);
+      
+              const isPositive =
+                t.type === "INCOME" ||
+                t.type === "DEBT_TAKEN" ||
+                t.type === "RECEIVABLE_RECEIVED";
+      
+              const formatType = (type: string) =>
+                type
+                  .toLowerCase()
+                  .replace(/_/g, " ")
+                  .replace(/\b\w/g, (c) => c.toUpperCase());
+      
+              const capitalize = (text: string) =>
+                text ? text.charAt(0).toUpperCase() + text.slice(1) : "";
+              
+              const getDisplayName = (t: any) => {
+                if (t.entity_name) return capitalize(t.entity_name);
+                if (t.category_name) return capitalize(t.category_name);
+                return formatType(t.type);
+              };
+      
+              return (
                 <div
-                  className={`font-semibold ${
-                    isPositive ? "text-green-500" : "text-red-500"
-                  }`}
+                  key={t.id}
+                  className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 flex justify-between items-center hover:bg-slate-800 transition"
                 >
-                  {isPositive ? "+" : "-"}
-                  {Number(t.amount).toFixed(2)} Tk
+                  {/* LEFT */}
+                  <div>
+                    <div className="font-medium">
+                      {getDisplayName(t)}
+                    </div>
+      
+                    <div className="text-xs text-gray-400 mt-1">
+                      {new Date(t.date).toDateString()}
+                    </div>
+                  </div>
+      
+                  {/* RIGHT */}
+                  <div className="text-right">
+                    <div
+                      className={`font-semibold ${
+                        isPositive ? "text-green-500" : "text-red-500"
+                      }`}
+                    >
+                      {isPositive ? "+" : "-"}
+                      {amount.toFixed(2)} Tk
+                    </div>
+      
+                    <div className="mt-1">
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${
+                          t.type === "INCOME"
+                            ? "bg-green-500/20 text-green-400"
+                            : t.type === "EXPENSE"
+                            ? "bg-red-500/20 text-red-400"
+                            : t.type.includes("DEBT")
+                            ? "bg-blue-500/20 text-blue-400"
+                            : t.type.includes("RECEIVABLE")
+                            ? "bg-yellow-500/20 text-yellow-400"
+                            : "bg-gray-500/20 text-gray-400"
+                        }`}
+                      >
+                        {formatType(t.type)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       </div>
     </DashboardLayout>

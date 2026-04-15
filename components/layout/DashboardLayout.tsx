@@ -82,17 +82,17 @@ export default function DashboardLayout({
   // ================= SUBMIT =================
   const handleSubmit = async () => {
     setError("");
-
+  
     if (!amount || Number(amount) <= 0) {
       setError("Enter a valid amount");
       return;
     }
-
+  
     if ((action === "INCOME" || action === "EXPENSE") && !category) {
       setError("Select a category");
       return;
     }
-
+  
     if (
       ["BORROW", "GIVE", "REPAY", "RECEIVE"].includes(action) &&
       !entity
@@ -100,7 +100,7 @@ export default function DashboardLayout({
       setError("Enter person / entity");
       return;
     }
-
+  
     const body: any = {
       type: actionToTypeMap[action],
       amount: Number(amount),
@@ -108,26 +108,32 @@ export default function DashboardLayout({
       date: new Date().toISOString(),
       note,
     };
-
+  
     if (category) body.category_id = category;
     if (entity) body.entity = entity;
-
-    await fetch("/api/transactions", {
+  
+    const res = await fetch("/api/transactions", {
       method: "POST",
       body: JSON.stringify(body),
     });
+  
+    const data = await res.json();
 
-    // RESET
-    setShowModal(false);
-    setStep("ACTION");
-    setAmount("");
-    setCategory("");
-    setEntity("");
-    setNote("");
-    setError("");
-    setIsDirectFlow(false);
+    if (res.ok) {
+      // RESET
+      setShowModal(false);
+      setStep("ACTION");
+      setAmount("");
+      setCategory("");
+      setEntity("");
+      setNote("");
+      setError("");
+      setIsDirectFlow(false);
+      
+      window.dispatchEvent(new Event("refreshData"));
+    }
+  
 
-    window.dispatchEvent(new Event("refreshData"));
   };
 
   return (
@@ -376,12 +382,15 @@ import {
   CreditCard,
   Wallet,
   BarChart3,
+  Tag,
 } from "lucide-react";
 
 function FloatingNav({ pathname }: { pathname: string }) {
+  // ================= NAV ITEMS =================
   const items = [
     { label: "Home", href: "/", icon: Home },
     { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
+    { label: "Categories", href: "/categories", icon: Tag },
     { label: "Debt", href: "/debts", icon: CreditCard },
     { label: "Receivable", href: "/receivables", icon: Wallet },
     { label: "Reports", href: "/reports", icon: BarChart3 },
@@ -390,38 +399,40 @@ function FloatingNav({ pathname }: { pathname: string }) {
   return (
     <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full px-4">
       
-      <div className="flex justify-between items-center w-full max-w-md mx-auto 
-      px-2 py-2 rounded-full 
-      bg-slate-900/80 backdrop-blur-xl 
-      border border-slate-700 shadow-xl">
+      <div
+        className="flex justify-around items-center w-full max-w-md mx-auto 
+        px-2 py-2 rounded-full 
+        bg-slate-900/80 backdrop-blur-xl 
+        border border-slate-700 shadow-xl"
+      >
+        {items.map((item) => {
+          const active = pathname === item.href;
+          const Icon = item.icon;
 
-      {items.map((item) => {
-        const active = pathname === item.href;
-        const Icon = item.icon;
-      
-        return (
-          <Link key={item.href} href={item.href}>
-            <div
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
-                active
-                  ? "bg-green-500 text-black shadow-lg shadow-green-500/30 scale-105"
-                  : "text-gray-400 hover:text-white hover:bg-slate-800"
-              }`}
-            >
-              <Icon size={16} />
-      
-              {/* show label only when active or on larger screens */}
-              <span
-                className={`text-sm transition-all ${
-                  active ? "block font-semibold" : "hidden sm:block"
+          return (
+            <Link key={item.href} href={item.href}>
+              <div
+                className={`flex items-center justify-center gap-2 py-2 rounded-full transition-all duration-300 ${
+                  active
+                    ? "bg-green-500 text-black shadow-lg shadow-green-500/30 px-4 scale-105"
+                    : "text-gray-400 hover:text-white hover:bg-slate-800 w-10 h-10"
                 }`}
               >
-                {item.label}
-              </span>
-            </div>
-          </Link>
-        );
-      })}
+                {/* ICON */}
+                <Icon size={16} />
+
+                {/* LABEL (ONLY ACTIVE) */}
+                <span
+                  className={`text-sm whitespace-nowrap transition-all duration-300 ${
+                    active ? "block font-semibold ml-1" : "hidden"
+                  }`}
+                >
+                  {item.label}
+                </span>
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
