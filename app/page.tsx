@@ -47,34 +47,30 @@ export default function Home() {
   let income = 0;
   let expense = 0;
 
-  const monthlyMap: Record<string, any> = {};
+  const chartData = transactions
+  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  .map((t, index, arr) => {
+    const isPositive =
+      t.type === "INCOME" ||
+      t.type === "DEBT_TAKEN" ||
+      t.type === "RECEIVABLE_RECEIVED";
 
-  transactions.forEach((t) => {
-    const amt = Number(t.amount);
-    const month = new Date(t.date).toLocaleString("default", {
-      month: "short",
-    });
+    const amount = Number(t.amount);
 
-    if (!monthlyMap[month]) {
-      monthlyMap[month] = { income: 0, expense: 0 };
-    }
+    const prev = index === 0 ? 0 : (arr[index - 1] as any).balance || 0;
 
-    if (t.type === "INCOME") {
-      income += amt;
-      monthlyMap[month].income += amt;
-    }
+    const balance = isPositive ? prev + amount : prev - amount;
 
-    if (t.type === "EXPENSE") {
-      expense += amt;
-      monthlyMap[month].expense += amt;
-    }
+    (t as any).balance = balance;
+
+    return {
+      date: new Date(t.date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
+      balance,
+    };
   });
-
-  const chartData = Object.keys(monthlyMap).map((m) => ({
-    month: m,
-    income: monthlyMap[m].income,
-    expense: monthlyMap[m].expense,
-  }));
 
   return (
     <DashboardLayout>
