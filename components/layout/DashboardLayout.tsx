@@ -120,18 +120,20 @@ export default function DashboardLayout({
     const data = await res.json();
 
     if (res.ok) {
+      // RESET
+      setShowModal(false);
+      setStep("ACTION");
+      setAmount("");
+      setCategory("");
+      setEntity("");
+      setNote("");
+      setError("");
+      setIsDirectFlow(false);
+      
       window.dispatchEvent(new Event("refreshData"));
     }
   
-    // RESET
-    setShowModal(false);
-    setStep("ACTION");
-    setAmount("");
-    setCategory("");
-    setEntity("");
-    setNote("");
-    setError("");
-    setIsDirectFlow(false);
+
   };
 
   return (
