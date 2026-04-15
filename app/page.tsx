@@ -47,6 +47,28 @@ export default function Home() {
   let income = 0;
   let expense = 0;
 
+  transactions.forEach((t) => {
+    const amt = Number(t.amount);
+  
+    // INCOME FLOW
+    if (
+      t.type === "INCOME" ||
+      t.type === "DEBT_TAKEN" ||
+      t.type === "RECEIVABLE_RECEIVED"
+    ) {
+      income += amt;
+    }
+  
+    // EXPENSE FLOW
+    if (
+      t.type === "EXPENSE" ||
+      t.type === "DEBT_REPAID" ||
+      t.type === "RECEIVABLE_GIVEN"
+    ) {
+      expense += amt;
+    }
+  });
+
   const chartData = transactions
   .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
   .map((t, index, arr) => {
