@@ -376,110 +376,59 @@ import {
   CreditCard,
   Wallet,
   BarChart3,
+  Tag,
 } from "lucide-react";
 
 function FloatingNav({ pathname }: { pathname: string }) {
-
-  // ================= MORE MODAL STATE =================
-  const [showMore, setShowMore] = useState(false);
-
   // ================= NAV ITEMS =================
   const items = [
     { label: "Home", href: "/", icon: Home },
     { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
-    { label: "More", action: "MORE", icon: BarChart3 },
+    { label: "Categories", href: "/categories", icon: Tag },
+    { label: "Debt", href: "/debts", icon: CreditCard },
+    { label: "Receivable", href: "/receivables", icon: Wallet },
+    { label: "Reports", href: "/reports", icon: BarChart3 },
   ];
 
   return (
-    <>
-      {/* ================= NAV BAR ================= */}
-      <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full px-4">
-        
-        <div className="flex justify-between items-center w-full max-w-md mx-auto 
+    <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full px-4">
+      
+      <div
+        className="flex justify-around items-center w-full max-w-md mx-auto 
         px-2 py-2 rounded-full 
         bg-slate-900/80 backdrop-blur-xl 
-        border border-slate-700 shadow-xl">
+        border border-slate-700 shadow-xl"
+      >
+        {items.map((item) => {
+          const active = pathname === item.href;
+          const Icon = item.icon;
 
-          {items.map((item) => {
+          return (
+            <Link key={item.href} href={item.href}>
+              <div
+                className={`flex items-center justify-center gap-2 py-2 rounded-full transition-all duration-300 ${
+                  active
+                    ? "bg-green-500 text-black shadow-lg shadow-green-500/30 px-4 scale-105"
+                    : "text-gray-400 hover:text-white hover:bg-slate-800 w-10 h-10"
+                }`}
+              >
+                {/* ICON */}
+                <Icon size={16} />
 
-            const Icon = item.icon;
-
-            // ================= HANDLE MORE BUTTON =================
-            if (item.action === "MORE") {
-              return (
-                <div
-                  key={item.label}
-                  onClick={() => setShowMore(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full text-gray-400 hover:text-white hover:bg-slate-800 cursor-pointer"
-                >
-                  <Icon size={16} />
-                  <span className="text-sm">More</span>
-                </div>
-              );
-            }
-
-            // ================= NORMAL NAV ITEM =================
-            const active = pathname === item.href;
-
-            return (
-              <Link key={item.href} href={item.href}>
-                <div
-                  className={`flex items-center justify-center gap-2 px-3 py-2 rounded-full transition-all duration-300 ${
-                    active
-                      ? "bg-green-500 text-black shadow-lg shadow-green-500/30 px-4 scale-105"
-                      : "text-gray-400 hover:text-white hover:bg-slate-800 w-10 h-10"
+                {/* LABEL (ONLY ACTIVE) */}
+                <span
+                  className={`text-sm whitespace-nowrap transition-all duration-300 ${
+                    active ? "block font-semibold ml-1" : "hidden"
                   }`}
                 >
-                  <Icon size={16} />
-
-                  <span
-                    className={`text-sm whitespace-nowrap transition-all duration-300 ${
-                      active ? "block font-semibold ml-1" : "hidden"
-                    }`}
-                  >
-                    {item.label}
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
-
-        </div>
+                  {item.label}
+                </span>
+              </div>
+            </Link>
+          );
+        })}
       </div>
-
-      {/* ================= MORE MODAL ================= */}
-      {showMore && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end">
-          <div className="w-full bg-slate-900/95 rounded-t-2xl p-5">
-
-            <Link href="/categories" onClick={() => setShowMore(false)}>
-              <div className="p-3 rounded-lg hover:bg-slate-800">Categories</div>
-            </Link>
-
-            <Link href="/debts" onClick={() => setShowMore(false)}>
-              <div className="p-3 rounded-lg hover:bg-slate-800">Debt</div>
-            </Link>
-
-            <Link href="/receivables" onClick={() => setShowMore(false)}>
-              <div className="p-3 rounded-lg hover:bg-slate-800">Receivable</div>
-            </Link>
-
-            <Link href="/reports" onClick={() => setShowMore(false)}>
-              <div className="p-3 rounded-lg hover:bg-slate-800">Reports</div>
-            </Link>
-
-            <button
-              onClick={() => setShowMore(false)}
-              className="mt-3 text-center text-gray-400 w-full"
-            >
-              Close
-            </button>
-
-          </div>
-        </div>
-      )}
-
-    </>
+    </div>
   );
 }
 
