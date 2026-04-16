@@ -14,6 +14,7 @@ export default function DashboardLayout({
 }) {
   const { toggleTheme, theme } = useTheme();
   const pathname = usePathname();
+  const currentBalance = Number(balance || 0);
 
   // ================= MODAL STATE =================
   const [showModal, setShowModal] = useState(false);
