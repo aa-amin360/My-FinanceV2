@@ -85,7 +85,7 @@ export default function Home() {
     });
 
   return (
-    <DashboardLayout>
+    <DashboardLayout balance={balance}>
       {/* BALANCE */}
       <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-2xl text-black">
         <h1 className="text-3xl font-bold">{balance.toFixed(2)} Tk</h1>
