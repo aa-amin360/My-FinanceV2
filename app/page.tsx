@@ -19,6 +19,7 @@ export default function Home() {
   const [balance, setBalance] = useState(0);
   const [debt, setDebt] = useState(0);
   const [receivable, setReceivable] = useState(0);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // ================= LOAD DATA =================
   const loadData = async () => {
@@ -84,11 +85,8 @@ export default function Home() {
         balance: runningBalance,
       };
     });
-
-  const handleDelete = async (id: string) => {
-    const ok = confirm("Delete this transaction?");
-    if (!ok) return;
   
+  const handleDelete = async (id: string) => {
     await fetch(`/api/transactions/${id}`, {
       method: "DELETE",
     });
@@ -204,7 +202,7 @@ export default function Home() {
       
                     {/* DELETE ICON (ONLY CHANGE) */}
                     <button
-                      onClick={() => handleDelete(t.id)}
+                      onClick={() => setDeleteId(t.id)}
                       className="p-2 rounded-full hover:bg-red-500/20 text-red-400 hover:text-red-300 transition"
                     >
                       <Trash2 size={18} />
@@ -216,6 +214,42 @@ export default function Home() {
             })}
         </div>
       </div>
+
+      
+      {deleteId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          
+          <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 w-[320px] text-center shadow-xl">
+            
+            <h3 className="text-lg font-semibold mb-4">
+              Delete this transaction?
+            </h3>
+      
+            <div className="flex gap-3 justify-center">
+              
+              <button
+                onClick={async () => {
+                  await handleDelete(deleteId);
+                  setDeleteId(null);
+                }}
+                className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600 transition"
+              >
+                Delete
+              </button>
+      
+              <button
+                onClick={() => setDeleteId(null)}
+                className="px-4 py-2 rounded bg-slate-700 text-gray-300 hover:bg-slate-600 transition"
+              >
+                Cancel
+              </button>
+      
+            </div>
+      
+          </div>
+      
+        </div>
+      )}
     </DashboardLayout>
   );
 }
