@@ -37,12 +37,17 @@ export default function Home() {
   };
 
   useEffect(() => {
-    loadData();
-
-    const refresh = () => loadData();
-    window.addEventListener("refreshData", refresh);
-
-    return () => window.removeEventListener("refreshData", refresh);
+    fetchData();
+  
+    const handleRefresh = () => {
+      fetchData();
+    };
+  
+    window.addEventListener("refreshData", handleRefresh);
+  
+    return () => {
+      window.removeEventListener("refreshData", handleRefresh);
+    };
   }, []);
 
   // ================= CALCULATIONS =================
