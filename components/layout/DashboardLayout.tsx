@@ -20,7 +20,7 @@ export default function DashboardLayout({
   const [entity, setEntity] = useState("");
 
   // ================= FORM STATE =================
-  // const [balance, setBalance] = useState(0);
+  const [balance, setBalance] = useState(0);
   const [amount, setAmount] = useState("");
   const [account, setAccount] = useState("Cash");
   const [category, setCategory] = useState("");
