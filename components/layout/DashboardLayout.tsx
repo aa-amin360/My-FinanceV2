@@ -7,8 +7,10 @@ import { useEffect, useState } from "react";
 
 export default function DashboardLayout({
   children,
+  balance,
 }: {
   children: React.ReactNode;
+  balance: number;
 }) {
   const { toggleTheme, theme } = useTheme();
   const pathname = usePathname();
@@ -20,7 +22,6 @@ export default function DashboardLayout({
   const [entity, setEntity] = useState("");
 
   // ================= FORM STATE =================
-  const [balance, setBalance] = useState(0);
   const [amount, setAmount] = useState("");
   const [account, setAccount] = useState("Cash");
   const [category, setCategory] = useState("");
@@ -29,20 +30,6 @@ export default function DashboardLayout({
 
   const [error, setError] = useState("");
   const [isDirectFlow, setIsDirectFlow] = useState(false);
-
-  useEffect(() => {
-    const loadBalance = async () => {
-      const res = await fetch("/api/balance", { cache: "no-store" });
-      const data = await res.json();
-      setBalance(data.balance || 0);
-    };
-  
-    loadBalance();
-  
-    window.addEventListener("refreshData", loadBalance);
-  
-    return () => window.removeEventListener("refreshData", loadBalance);
-  }, []);
 
   // ================= LOAD CATEGORIES =================
   useEffect(() => {
