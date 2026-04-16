@@ -1,0 +1,95 @@
+export const runtime = "nodejs";
+
+import { NextResponse } from "next/server";
+import { Pool } from "pg";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const id = params.id;
+
+    const tx = await client.query(
+      `SELECT * FROM transactions WHERE id = $1`,
+      [id]
+    );
+
+    if (tx.rows.length === 0) {
+      throw new Error("Transaction not found");
+    }
+
+    const t = tx.rows[0];
+    const amount = Number(t.amount);
+
+    // ===== REVERSE EFFECT =====
+
+    if (t.entity_id) {
+      if (t.type === "DEBT_TAKEN") {
+        await client.query(
+          `UPDATE debts 
+           SET total_amount = total_amount - $2,
+               remaining_amount = remaining_amount - $2
+           WHERE entity_id = $1`,
+          [t.entity_id, amount]
+        );
+      }
+
+      if (t.type === "DEBT_REPAID") {
+        await client.query(
+          `UPDATE debts 
+           SET remaining_amount = remaining_amount + $2
+           WHERE entity_id = $1`,
+          [t.entity_id, amount]
+        );
+      }
+
+      if (t.type === "RECEIVABLE_GIVEN") {
+        await client.query(
+          `UPDATE receivables 
+           SET total_amount = total_amount - $2,
+               remaining_amount = remaining_amount - $2
+           WHERE entity_id = $1`,
+          [t.entity_id, amount]
+        );
+      }
+
+      if (t.type === "RECEIVABLE_RECEIVED") {
+        await client.query(
+          `UPDATE receivables 
+           SET remaining_amount = remaining_amount + $2
+           WHERE entity_id = $1`,
+          [t.entity_id, amount]
+        );
+      }
+    }
+
+    // ===== DELETE =====
+    await client.query(
+      `DELETE FROM transactions WHERE id = $1`,
+      [id]
+    );
+
+    await client.query("COMMIT");
+
+    return NextResponse.json({ success: true });
+
+  } catch (err: any) {
+    await client.query("ROLLBACK");
+
+    return NextResponse.json(
+      { error: err.message },
+      { status: 500 }
+    );
+  } finally {
+    client.release();
+  }
+}
