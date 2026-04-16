@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import CashflowChart from "../components/charts/CashflowChart";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 
 type Transaction = {
   id: string;
@@ -145,7 +146,7 @@ export default function Home() {
       
               const capitalize = (text: string) =>
                 text ? text.charAt(0).toUpperCase() + text.slice(1) : "";
-              
+      
               const getDisplayName = (t: any) => {
                 if (t.entity_name) return capitalize(t.entity_name);
                 if (t.category_name) return capitalize(t.category_name);
@@ -169,41 +170,46 @@ export default function Home() {
                   </div>
       
                   {/* RIGHT */}
-                  <div className="text-right">
-                    <div
-                      className={`font-semibold ${
-                        isPositive ? "text-green-500" : "text-red-500"
-                      }`}
-                    >
-                      {isPositive ? "+" : "-"}
-                      {amount.toFixed(2)} Tk
-                    </div>
-      
-                    <div className="mt-1">
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full ${
-                          t.type === "INCOME"
-                            ? "bg-green-500/20 text-green-400"
-                            : t.type === "EXPENSE"
-                            ? "bg-red-500/20 text-red-400"
-                            : t.type.includes("DEBT")
-                            ? "bg-blue-500/20 text-blue-400"
-                            : t.type.includes("RECEIVABLE")
-                            ? "bg-yellow-500/20 text-yellow-400"
-                            : "bg-gray-500/20 text-gray-400"
+                  <div className="flex items-center gap-4">
+                    
+                    {/* AMOUNT + TYPE */}
+                    <div className="text-right">
+                      <div
+                        className={`font-semibold ${
+                          isPositive ? "text-green-500" : "text-red-500"
                         }`}
                       >
-                        {formatType(t.type)}
-                      </span>
+                        {isPositive ? "+" : "-"}
+                        {amount.toFixed(2)} Tk
+                      </div>
+      
+                      <div className="mt-1">
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full ${
+                            t.type === "INCOME"
+                              ? "bg-green-500/20 text-green-400"
+                              : t.type === "EXPENSE"
+                              ? "bg-red-500/20 text-red-400"
+                              : t.type.includes("DEBT")
+                              ? "bg-blue-500/20 text-blue-400"
+                              : t.type.includes("RECEIVABLE")
+                              ? "bg-yellow-500/20 text-yellow-400"
+                              : "bg-gray-500/20 text-gray-400"
+                          }`}
+                        >
+                          {formatType(t.type)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="mt-2">
-                      <button
-                        onClick={() => handleDelete(t.id)}
-                        className="text-xs px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30"
-                      >
-                        Delete
-                      </button>
-                    </div>
+      
+                    {/* DELETE ICON (ONLY CHANGE) */}
+                    <button
+                      onClick={() => handleDelete(t.id)}
+                      className="p-2 rounded-full hover:bg-red-500/20 text-red-400 hover:text-red-300 transition"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+      
                   </div>
                 </div>
               );
