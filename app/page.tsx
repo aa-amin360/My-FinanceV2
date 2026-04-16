@@ -84,6 +84,17 @@ export default function Home() {
       };
     });
 
+  const handleDelete = async (id: string) => {
+    const ok = confirm("Delete this transaction?");
+    if (!ok) return;
+  
+    await fetch(`/api/transactions/${id}`, {
+      method: "DELETE",
+    });
+  
+    window.dispatchEvent(new Event("refreshData"));
+  };
+
   return (
     <DashboardLayout balance={balance}>
       {/* BALANCE */}
@@ -184,6 +195,14 @@ export default function Home() {
                       >
                         {formatType(t.type)}
                       </span>
+                    </div>
+                    <div className="mt-2">
+                      <button
+                        onClick={() => handleDelete(t.id)}
+                        className="text-xs px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 </div>
