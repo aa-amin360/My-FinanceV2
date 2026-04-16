@@ -35,6 +35,14 @@ export default function DashboardLayout({
     fetch("/api/categories")
       .then((res) => res.json())
       .then((data) => setCategories(data.data || []));
+
+    const loadBalance = async () => {
+      const res = await fetch("/api/balance", { cache: "no-store" });
+      const data = await res.json();
+      setBalance(data.balance || 0);
+    };
+  
+    loadBalance();
   }, []);
 
   // ================= EVENT HANDLER =================
