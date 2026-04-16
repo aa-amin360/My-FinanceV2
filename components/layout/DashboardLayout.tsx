@@ -31,13 +31,15 @@ export default function DashboardLayout({
   const [isDirectFlow, setIsDirectFlow] = useState(false);
 
   useEffect(() => {
-    const loadBalance = async () => {
+    const refresh = async () => {
       const res = await fetch("/api/balance", { cache: "no-store" });
       const data = await res.json();
       setBalance(data.balance || 0);
     };
   
-    loadBalance();
+    window.addEventListener("refreshData", refresh);
+  
+    return () => window.removeEventListener("refreshData", refresh);
   }, []);
 
   // ================= LOAD CATEGORIES =================
@@ -51,7 +53,11 @@ export default function DashboardLayout({
 
   // ================= EVENT HANDLER =================
   useEffect(() => {
-    const handler = (e: any) => {
+    const handler = async (e: any) => {
+      const res = await fetch("/api/balance", { cache: "no-store" });
+      const data = await res.json();
+      setBalance(data.balance || 0);
+    
       setShowModal(true);
 
       if (typeof e.detail === "string") {
