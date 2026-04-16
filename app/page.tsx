@@ -28,10 +28,10 @@ export default function Home() {
     setBalance(Number(b.balance || 0));
 
     const d = await fetch("/api/debts", { cache: "no-store" }).then((r) => r.json());
-    setDebt(Number(d.balance || 0));
+    setDebt(Number(d.total || 0));
 
     const r = await fetch("/api/receivables", { cache: "no-store" }).then((r) => r.json());
-    setReceivable(Number(r.balance || 0));
+    setReceivable(Number(r.total || 0));
   };
 
   useEffect(() => {
