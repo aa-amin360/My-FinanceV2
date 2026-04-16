@@ -30,12 +30,7 @@ export default function DashboardLayout({
   const [error, setError] = useState("");
   const [isDirectFlow, setIsDirectFlow] = useState(false);
 
-  // ================= LOAD CATEGORIES =================
   useEffect(() => {
-    fetch("/api/categories")
-      .then((res) => res.json())
-      .then((data) => setCategories(data.data || []));
-
     const loadBalance = async () => {
       const res = await fetch("/api/balance", { cache: "no-store" });
       const data = await res.json();
@@ -44,6 +39,15 @@ export default function DashboardLayout({
   
     loadBalance();
   }, []);
+
+  // ================= LOAD CATEGORIES =================
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data) => setCategories(data.data || []));
+  }, []);
+
+  
 
   // ================= EVENT HANDLER =================
   useEffect(() => {
