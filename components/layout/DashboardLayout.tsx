@@ -100,6 +100,22 @@ export default function DashboardLayout({
       setError("Enter person / entity");
       return;
     }
+
+    // ================= BALANCE CHECK =================
+    const currentBalance = Number(balance); // make sure balance exists in state
+    const amountNumber = Number(amount);
+    
+    // Block expense
+    if (action === "EXPENSE" && amountNumber > currentBalance) {
+      setError(`Not enough balance (You have ${currentBalance} Tk)`);
+      return;
+    }
+    
+    // Block receivable given (GIVE)
+    if (action === "GIVE" && amountNumber > currentBalance) {
+      setError(`You only have ${currentBalance} Tk`);
+      return;
+    }    
   
     const body: any = {
       type: actionToTypeMap[action],
