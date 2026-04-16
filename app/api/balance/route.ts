@@ -53,7 +53,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      total: balance,
+      balance: balance,
     });
 
   } catch (err: any) {
