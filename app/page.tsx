@@ -25,13 +25,13 @@ export default function Home() {
     setTransactions(tx.data || []);
 
     const b = await fetch("/api/balance", { cache: "no-store" }).then((r) => r.json());
-    setBalance(Number(b.total || 0));
+    setBalance(Number(b.balance || 0));
 
     const d = await fetch("/api/debts", { cache: "no-store" }).then((r) => r.json());
-    setDebt(Number(d.total || 0));
+    setDebt(Number(d.balance || 0));
 
     const r = await fetch("/api/receivables", { cache: "no-store" }).then((r) => r.json());
-    setReceivable(Number(r.total || 0));
+    setReceivable(Number(r.balance || 0));
   };
 
   useEffect(() => {
