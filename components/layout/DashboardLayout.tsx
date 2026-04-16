@@ -42,11 +42,7 @@ export default function DashboardLayout({
 
   // ================= EVENT HANDLER =================
   useEffect(() => {
-    const handler = async (e: any) => {
-      const res = await fetch("/api/balance", { cache: "no-store" });
-      const data = await res.json();
-      setBalance(data.balance || 0);
-    
+    const handler = async (e: any) => {    
       setShowModal(true);
 
       if (typeof e.detail === "string") {
