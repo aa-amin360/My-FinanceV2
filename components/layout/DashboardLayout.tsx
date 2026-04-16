@@ -10,7 +10,7 @@ export default function DashboardLayout({
   balance,
 }: {
   children: React.ReactNode;
-  balance: number;
+  balance?: number;
 }) {
   const { toggleTheme, theme } = useTheme();
   const pathname = usePathname();
