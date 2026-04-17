@@ -37,10 +37,10 @@ export default function Home() {
   };
 
   useEffect(() => {
-    fetchData();
+    loadData();
   
     const handleRefresh = () => {
-      fetchData();
+      loadData();
     };
   
     window.addEventListener("refreshData", handleRefresh);
