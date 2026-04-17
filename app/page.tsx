@@ -103,18 +103,28 @@ export default function Home() {
     <DashboardLayout balance={balance}>
       {/* BALANCE */}
       <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-2xl text-black">
-        <h1 className="text-3xl font-bold">{balance.toFixed(2)} Tk</h1>
+        <h1
+          className={`font-bold ${
+            balance > 1000000
+              ? "text-2xl"
+              : balance > 100000
+              ? "text-3xl"
+              : "text-4xl"
+          }`}
+        >
+          {Number(balance).toLocaleString("en-BD")} Tk
+        </h1>
       </div>
-
+      
       {/* CARDS */}
       <div className="grid grid-cols-2 gap-4 mt-6">
         <Card title="Income" value={income} color="text-green-500" />
         <Card title="Expenses" value={expense} color="text-red-500" />
-
+      
         <Link href="/debts">
           <Card title="Debt" value={debt} color="text-cyan-400" />
         </Link>
-
+      
         <Link href="/receivables">
           <Card title="Receivable" value={receivable} color="text-yellow-400" />
         </Link>
