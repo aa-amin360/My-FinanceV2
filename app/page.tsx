@@ -193,7 +193,7 @@ export default function Home() {
                         }`}
                       >
                         {isPositive ? "+" : "-"}
-                        {amount.toFixed(2)} Tk
+                        {Number(amount).toLocaleString("en-BD")} Tk
                       </div>
       
                       <div className="mt-1">
@@ -275,7 +275,18 @@ function Card({ title, value, color }: any) {
   return (
     <div className="bg-gray-100 dark:bg-slate-900 p-5 rounded-2xl">
       <p className={color}>{title}</p>
-      <h2 className="text-2xl mt-2 font-bold">{value.toFixed(2)} Tk</h2>
+
+      <h2
+        className={`mt-2 font-bold ${
+          value > 1000000
+            ? "text-lg"
+            : value > 100000
+            ? "text-xl"
+            : "text-2xl"
+        }`}
+      >
+        {Number(value).toLocaleString("en-BD")} Tk
+      </h2>
     </div>
   );
 }
