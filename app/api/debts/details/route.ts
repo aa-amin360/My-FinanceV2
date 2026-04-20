@@ -10,21 +10,23 @@ const pool = new Pool({
 
 export async function GET() {
   const client = await pool.connect();
+  const debts = result.rows.filter(d => Number(d.remaining) > 0);
 
   try {
     const result = await client.query(`
       SELECT 
-        d.entity_id,
-        e.name,
-        d.total_amount,
-        d.remaining_amount
-      FROM debts d
-      JOIN entities e ON d.entity_id = e.id
+        entity,
+        SUM(CASE WHEN type = 'DEBT_TAKEN' THEN amount ELSE 0 END) AS total,
+        SUM(CASE WHEN type = 'DEBT_TAKEN' THEN amount ELSE 0 END) -
+        SUM(CASE WHEN type = 'DEBT_REPAID' THEN amount ELSE 0 END) AS remaining
+      FROM transactions
+      WHERE type IN ('DEBT_TAKEN', 'DEBT_REPAID')
+      GROUP BY entity
     `);
 
     return NextResponse.json({
       success: true,
-      data: result.rows,
+      data: debts,
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message });
