@@ -10,9 +10,9 @@ const pool = new Pool({
 
 export async function GET() {
   const client = await pool.connect();
-  const debts = result.rows.filter(d => Number(d.remaining) > 0);
-
+  
   try {
+    const debts = result.rows.filter(d => Number(d.remaining) > 0);
     const result = await client.query(`
       SELECT 
         entity,
