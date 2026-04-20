@@ -162,7 +162,7 @@ export default function TransactionsPage() {
               return (
                 <div
                   key={t.id}
-                  className="grid grid-cols-5 px-4 py-3 border-b border-gray-200 dark:border-slate-800 hover:bg-gray-200 dark:hover:bg-slate-800 transition"
+                  className="grid grid-cols-[1.2fr_1fr_1fr_1fr_0.8fr] px-4 py-3 border-b border-gray-200 dark:border-slate-800 hover:bg-gray-200 dark:hover:bg-slate-800 transition"
                 >
                   {/* NAME */}
                   <div className="font-semibold text-white text-base">
@@ -176,7 +176,10 @@ export default function TransactionsPage() {
                 
                   {/* TYPE */}
                   <div>
-                    <span className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(t.type)}`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs inline-block whitespace-nowrap overflow-hidden text-ellipsis max-w-[140px] ${getTypeStyle(t.type)}`}
+                      title={formatType(t.type)} // optional: shows full text on hover
+                    >
                       {formatType(t.type)}
                     </span>
                   </div>
