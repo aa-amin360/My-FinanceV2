@@ -13,11 +13,8 @@ export async function GET() {
 
   try {
     const result = await client.query(`
-      SELECT 
-        SUM(CASE WHEN type = 'DEBT_TAKEN' THEN amount ELSE 0 END) -
-        SUM(CASE WHEN type = 'DEBT_REPAID' THEN amount ELSE 0 END) AS total
-      FROM transactions
-      WHERE type IN ('DEBT_TAKEN', 'DEBT_REPAID')
+      SELECT COALESCE(SUM(remaining_amount), 0) AS total
+      FROM debts
     `);
 
     const total = Number(result.rows[0]?.total) || 0;
