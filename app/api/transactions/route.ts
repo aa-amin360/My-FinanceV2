@@ -146,7 +146,6 @@ export async function POST(req: Request) {
     let entityId = null;
     
     if (body.entity) {
-      // 1. Check if entity exists
       const existing = await client.query(
         `SELECT id FROM entities WHERE LOWER(name) = LOWER($1) LIMIT 1`,
         [body.entity]
@@ -155,10 +154,9 @@ export async function POST(req: Request) {
       if (existing.rows.length > 0) {
         entityId = existing.rows[0].id;
       } else {
-        // 2. Create new entity
         const created = await client.query(
           `INSERT INTO entities (name, type) VALUES ($1, $2) RETURNING id`,
-          [body.entity, "PERSON"] // or dynamic type later
+          [body.entity, "PERSON"]
         );
     
         entityId = created.rows[0].id;
