@@ -143,6 +143,28 @@ export async function POST(req: Request) {
         throw new Error("Invalid type");
     }
 
+    let entityId = null;
+    
+    if (body.entity) {
+      // 1. Check if entity exists
+      const existing = await client.query(
+        `SELECT id FROM entities WHERE LOWER(name) = LOWER($1) LIMIT 1`,
+        [body.entity]
+      );
+    
+      if (existing.rows.length > 0) {
+        entityId = existing.rows[0].id;
+      } else {
+        // 2. Create new entity
+        const created = await client.query(
+          `INSERT INTO entities (name, type) VALUES ($1, $2) RETURNING id`,
+          [body.entity, "PERSON"] // or dynamic type later
+        );
+    
+        entityId = created.rows[0].id;
+      }
+    }
+
     // =========================
     // INSERT TRANSACTION
     // =========================
