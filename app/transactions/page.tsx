@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { Trash2, Pencil } from "lucide-react";
 
-const [deleteId, setDeleteId] = useState<string | null>(null);
 const formatType = (type: string) =>
   type
     .toLowerCase()
@@ -23,6 +22,7 @@ type Transaction = {
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // =========================
   // LOAD DATA
