@@ -190,6 +190,7 @@ export default function DashboardLayout({
       </main>
 
       {/* ================= RIGHT PANEL ================= */}
+      {/*
       <aside className="hidden lg:block w-80 bg-gray-100 dark:bg-slate-900 p-5">
         <h3 className="text-sm text-gray-500 dark:text-gray-400 mb-4">
           Insights
@@ -199,6 +200,7 @@ export default function DashboardLayout({
           Coming soon...
         </div>
       </aside>
+      */}
 
       {/* ================= FLOATING NAV (MOBILE) ================= */}
       <FloatingNav pathname={pathname} />
