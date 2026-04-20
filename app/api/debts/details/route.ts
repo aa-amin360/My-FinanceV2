@@ -11,8 +11,7 @@ const pool = new Pool({
 export async function GET() {
   const client = await pool.connect();
   
-  try {
-    const debts = result.rows.filter(d => Number(d.remaining) > 0);
+  try {    
     const result = await client.query(`
       SELECT 
         entity,
@@ -23,6 +22,8 @@ export async function GET() {
       WHERE type IN ('DEBT_TAKEN', 'DEBT_REPAID')
       GROUP BY entity
     `);
+
+    const debts = result.rows.filter(d => Number(d.remaining) > 0);
 
     return NextResponse.json({
       success: true,
