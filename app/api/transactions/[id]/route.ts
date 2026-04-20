@@ -70,6 +70,21 @@ export async function DELETE(
           [t.entity_id, amount]
         );
       }
+      // ===== CLEANUP EMPTY RECORDS =====
+            
+      // DEBT CLEANUP
+      await client.query(
+        `DELETE FROM debts
+         WHERE entity_id = $1 AND remaining_amount <= 0`,
+        [t.entity_id]
+      );
+      
+      // RECEIVABLE CLEANUP
+      await client.query(
+        `DELETE FROM receivables
+         WHERE entity_id = $1 AND remaining_amount <= 0`,
+        [t.entity_id]
+      );
     }
 
     // ===== DELETE =====
