@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { Trash2, Pencil } from "lucide-react";
 
+const [deleteId, setDeleteId] = useState<string | null>(null);
 const formatType = (type: string) =>
   type
     .toLowerCase()
@@ -209,7 +210,7 @@ export default function TransactionsPage() {
                   
                     {/* DELETE */}
                     <button
-                      onClick={() => handleDelete(t.id)}
+                      onClick={() => setDeleteId(t.id)}
                       className="p-2 rounded-full hover:bg-red-500/20 text-red-400 hover:text-red-300 transition"
                     >
                       <Trash2 size={16} />
@@ -284,7 +285,7 @@ export default function TransactionsPage() {
           
                       {/* DELETE */}
                       <button
-                        onClick={() => handleDelete(t.id)}
+                        onClick={() => setDeleteId(t.id)}
                         className="p-1 rounded-full text-red-400 hover:text-red-300"
                       >
                         <Trash2 size={14} />
@@ -305,6 +306,41 @@ export default function TransactionsPage() {
           </div>
         )}
       </div>
+
+      {deleteId && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          
+          <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-2xl p-6 w-[320px] text-center shadow-2xl">
+            
+            <h3 className="text-lg font-semibold mb-5">
+              Delete this transaction?
+            </h3>
+      
+            <div className="flex gap-3 justify-center">
+              
+              <button
+                onClick={async () => {
+                  await handleDelete(deleteId);
+                  setDeleteId(null);
+                }}
+                className="px-5 py-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition"
+              >
+                Delete
+              </button>
+      
+              <button
+                onClick={() => setDeleteId(null)}
+                className="px-5 py-2 rounded-full bg-slate-700 text-gray-300 hover:bg-slate-600 transition"
+              >
+                Cancel
+              </button>
+      
+            </div>
+      
+          </div>
+      
+        </div>
+      )}
     </DashboardLayout>
   );
 }
