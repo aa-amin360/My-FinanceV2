@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
+import { Trash2, Pencil } from "lucide-react";
 
 const formatType = (type: string) =>
   type
@@ -121,7 +122,15 @@ export default function TransactionsPage() {
         return "bg-gray-500/20 text-gray-400";
     }
   };
-
+  
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/transactions/${id}`, {
+      method: "DELETE",
+    });
+  
+    loadData();
+  };
+  
   return (
     <DashboardLayout>
       <h1 className="text-2xl font-bold mb-6">Transactions</h1>
@@ -129,11 +138,12 @@ export default function TransactionsPage() {
       <div className="bg-gray-100 dark:bg-slate-900 rounded-2xl overflow-hidden">
 
         {/* HEADER */}
-        <div className="grid grid-cols-4 px-4 py-3 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-slate-800">
+        <div className="grid grid-cols-5 px-4 py-3 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-slate-800">
           <div>Name</div>
           <div>Date</div>
           <div>Type</div>
           <div className="text-right">Amount</div>
+          <div className="text-center">Actions</div>
         </div>
 
         <div className="pb-24 md:pb-0">
@@ -151,7 +161,7 @@ export default function TransactionsPage() {
               return (
                 <div
                   key={t.id}
-                  className="grid grid-cols-4 px-4 py-3 border-b border-gray-200 dark:border-slate-800 hover:bg-gray-200 dark:hover:bg-slate-800 transition"
+                  className="grid grid-cols-5 px-4 py-3 border-b border-gray-200 dark:border-slate-800 hover:bg-gray-200 dark:hover:bg-slate-800 transition"
                 >
                   {/* NAME */}
                   <div className="font-semibold text-white text-base">
@@ -184,8 +194,27 @@ export default function TransactionsPage() {
                       t.type === "DEBT_TAKEN" ||
                       t.type === "RECEIVABLE_RECEIVED"
                       ? "+"
-                      : "-") + Number(t.amount).toFixed(2)}{" "}
+                      : "-") +
+                      Number(t.amount).toLocaleString("en-BD")}{" "}
                     Tk
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex justify-center items-center gap-2">
+  
+                    {/* EDIT */}
+                    <button className="p-2 rounded-full hover:bg-slate-800 text-gray-400 hover:text-white transition">
+                      <Pencil size={16} />
+                    </button>
+                  
+                    {/* DELETE */}
+                    <button
+                      onClick={() => handleDelete(t.id)}
+                      className="p-2 rounded-full hover:bg-red-500/20 text-red-400 hover:text-red-300 transition"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  
                   </div>
                 </div>
               );
@@ -207,19 +236,35 @@ export default function TransactionsPage() {
                   key={t.id}
                   className="bg-gray-100 dark:bg-slate-900 p-4 rounded-xl"
                 >
-                  {/* ROW 1 → NAME + AMOUNT */}
+                  
+                  {/* ROW 1 → NAME + AMOUNT + ACTION */}
                   <div className="flex justify-between items-center">
                     <div className="font-semibold text-base text-gray-900 dark:text-white">
                       {getDisplayName(t)}
                     </div>
-          
-                    <div
-                      className={`font-semibold text-sm ${
-                        isPositive ? "text-green-500" : "text-red-500"
-                      }`}
-                    >
-                      {isPositive ? "+" : "-"}
-                      {amount.toFixed(2)} Tk
+                  
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`font-semibold text-sm ${
+                          isPositive ? "text-green-500" : "text-red-500"
+                        }`}
+                      >
+                        {isPositive ? "+" : "-"}
+                        {Number(amount).toLocaleString("en-BD")} Tk
+                      </div>
+                  
+                      {/* EDIT */}
+                      <button className="p-1 rounded-full text-gray-400 hover:text-white">
+                        <Pencil size={14} />
+                      </button>
+                  
+                      {/* DELETE */}
+                      <button
+                        onClick={() => handleDelete(t.id)}
+                        className="p-1 rounded-full text-red-400 hover:text-red-300"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   </div>
           
