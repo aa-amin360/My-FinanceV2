@@ -283,7 +283,7 @@ function Card({ title, value, color }: any) {
       </p>
 
       {/* VALUE ROW (FIXED) */}
-      <div className="mt-2 flex items-end gap-1 min-w-0">
+      <div className="mt-2 flex items-baseline gap-1">
         
         {/* NUMBER */}
         <span
@@ -293,7 +293,7 @@ function Card({ title, value, color }: any) {
         </span>
 
         {/* TK */}
-        <span className="text-xs sm:text-sm text-gray-400 shrink-0">
+        <span className="text-[12px] text-gray-400 shrink-0">
           Tk
         </span>
 
