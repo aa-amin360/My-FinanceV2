@@ -131,7 +131,7 @@ export default function DashboardLayout({
     };
   
     if (category) body.category_id = category;
-    if (entityId) body.entity_id = entityId;
+    if (entity) body.entity = entity;
   
     const res = await fetch("/api/transactions", {
       method: "POST",
