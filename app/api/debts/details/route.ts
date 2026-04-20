@@ -14,14 +14,14 @@ export async function GET() {
   try {    
     const result = await client.query(`
       SELECT 
-        t.entity,
+        e.name,
         SUM(CASE WHEN t.type = 'DEBT_TAKEN' THEN t.amount ELSE 0 END) AS total,
         SUM(CASE WHEN t.type = 'DEBT_TAKEN' THEN t.amount ELSE 0 END) -
         SUM(CASE WHEN t.type = 'DEBT_REPAID' THEN t.amount ELSE 0 END) AS remaining
       FROM transactions t
+      JOIN entities e ON t.entity_id = e.id
       WHERE t.type IN ('DEBT_TAKEN', 'DEBT_REPAID')
-        AND t.entity IS NOT NULL
-      GROUP BY t.entity
+      GROUP BY e.name
     `);
 
     const debts = result.rows.filter(d => Number(d.remaining) > 0);
