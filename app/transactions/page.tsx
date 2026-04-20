@@ -236,13 +236,12 @@ export default function TransactionsPage() {
                   key={t.id}
                   className="bg-gray-100 dark:bg-slate-900 p-4 rounded-xl"
                 >
-                  
-                  {/* ROW 1 → NAME + AMOUNT + ACTION */}
+                  {/* ROW 1 → NAME + AMOUNT + EDIT */}
                   <div className="flex justify-between items-center">
                     <div className="font-semibold text-base text-gray-900 dark:text-white">
                       {getDisplayName(t)}
                     </div>
-                  
+          
                     <div className="flex items-center gap-2">
                       <div
                         className={`font-semibold text-sm ${
@@ -252,12 +251,37 @@ export default function TransactionsPage() {
                         {isPositive ? "+" : "-"}
                         {Number(amount).toLocaleString("en-BD")} Tk
                       </div>
-                  
+          
                       {/* EDIT */}
                       <button className="p-1 rounded-full text-gray-400 hover:text-white">
                         <Pencil size={14} />
                       </button>
-                  
+                    </div>
+                  </div>
+          
+                  {/* ROW 2 → DATE + TYPE + DELETE */}
+                  <div className="flex justify-between items-center mt-2">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {new Date(t.date).toDateString().slice(4, 10)}
+                    </div>
+          
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${
+                          t.type.includes("INCOME")
+                            ? "bg-green-500/20 text-green-400"
+                            : t.type.includes("EXPENSE")
+                            ? "bg-red-500/20 text-red-400"
+                            : t.type.includes("DEBT")
+                            ? "bg-blue-500/20 text-blue-400"
+                            : t.type.includes("RECEIVABLE")
+                            ? "bg-yellow-500/20 text-yellow-400"
+                            : "bg-gray-500/20 text-gray-400"
+                        }`}
+                      >
+                        {formatType(t.type)}
+                      </span>
+          
                       {/* DELETE */}
                       <button
                         onClick={() => handleDelete(t.id)}
@@ -266,29 +290,6 @@ export default function TransactionsPage() {
                         <Trash2 size={14} />
                       </button>
                     </div>
-                  </div>
-          
-                  {/* ROW 2 → DATE + TYPE */}
-                  <div className="flex justify-between items-center mt-1">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {new Date(t.date).toDateString().slice(4, 10)}
-                    </div>
-          
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        t.type.includes("INCOME")
-                          ? "bg-green-500/20 text-green-400"
-                          : t.type.includes("EXPENSE")
-                          ? "bg-red-500/20 text-red-400"
-                          : t.type.includes("DEBT")
-                          ? "bg-blue-500/20 text-blue-400"
-                          : t.type.includes("RECEIVABLE")
-                          ? "bg-yellow-500/20 text-yellow-400"
-                          : "bg-gray-500/20 text-gray-400"
-                      }`}
-                    >
-                      {formatType(t.type)}
-                    </span>
                   </div>
                 </div>
               );
