@@ -33,9 +33,7 @@ export default function TransactionsPage() {
       .then((data) => setTransactions(data.data || []));
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useRefresh(loadData);
 
   // =========================
   // FAB LISTENER
