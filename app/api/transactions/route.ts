@@ -262,10 +262,11 @@ export async function POST(req: Request) {
           const extra = amountNumber - currentRemaining;
       
           // 1️⃣ Correct repay (only actual debt)
-          await client.query(
+          const repayTx = await client.query(
             `INSERT INTO transactions
              (type, amount, from_account, to_account, entity_id, category_id, date, note)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+             RETURNING id`,
             [
               "DEBT_REPAID",
               repayAmount,
@@ -277,6 +278,8 @@ export async function POST(req: Request) {
               note,
             ]
           );
+          
+          const parentId = repayTx.rows[0].id;
       
           // 2️⃣ Clear debt
           await client.query(
@@ -301,8 +304,8 @@ export async function POST(req: Request) {
       
             await client.query(
               `INSERT INTO transactions
-               (type, amount, from_account, to_account, entity_id, date, note)
-               VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+               (type, amount, from_account, to_account, entity_id, date, note, parent_id)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
               [
                 "RECEIVABLE_GIVEN",
                 extra,
@@ -311,6 +314,7 @@ export async function POST(req: Request) {
                 entity_id,
                 date,
                 "Auto conversion",
+                parentId, // 🔥 LINK
               ]
             );
           }
@@ -390,10 +394,11 @@ export async function POST(req: Request) {
           const extra = amountNumber - currentRemaining;
       
           // 1️⃣ Correct receive (only actual receivable)
-          await client.query(
+          const receiveTx = await client.query(
             `INSERT INTO transactions
              (type, amount, from_account, to_account, entity_id, category_id, date, note)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+             RETURNING id`,
             [
               "RECEIVABLE_RECEIVED",
               receiveAmount,
@@ -405,6 +410,8 @@ export async function POST(req: Request) {
               note,
             ]
           );
+          
+          const parentId = receiveTx.rows[0].id;
       
           // 2️⃣ Clear receivable
           await client.query(
@@ -429,8 +436,8 @@ export async function POST(req: Request) {
       
             await client.query(
               `INSERT INTO transactions
-               (type, amount, from_account, to_account, entity_id, date, note)
-               VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+               (type, amount, from_account, to_account, entity_id, date, note, parent_id)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
               [
                 "DEBT_TAKEN",
                 extra,
@@ -439,6 +446,7 @@ export async function POST(req: Request) {
                 entity_id,
                 date,
                 "Auto conversion",
+                parentId, // 🔥 LINK
               ]
             );
           }
