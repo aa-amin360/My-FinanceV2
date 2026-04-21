@@ -21,6 +21,7 @@ export default function DashboardLayout({
   const [step, setStep] = useState<"ACTION" | "FORM">("ACTION");
   const [action, setAction] = useState("");
   const [entity, setEntity] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // ================= FORM STATE =================
   const [amount, setAmount] = useState("");
@@ -86,8 +87,11 @@ export default function DashboardLayout({
 
   // ================= SUBMIT =================
   const handleSubmit = async () => {
+    if (loading) return;
+  
     setError("");
   
+    // VALIDATION FIRST
     if (!amount || Number(amount) <= 0) {
       setError("Enter a valid amount");
       return;
@@ -105,56 +109,59 @@ export default function DashboardLayout({
       setError("Enter person / entity");
       return;
     }
-
-    // ================= BALANCE CHECK =================
-    const currentBalance = Number(balance); // make sure balance exists in state
+  
     const amountNumber = Number(amount);
-    
-    // Block expense
+  
     if (action === "EXPENSE" && amountNumber > currentBalance) {
       setError(`Not enough balance (You have ${currentBalance} Tk)`);
       return;
     }
-    
-    // Block receivable given (GIVE)
+  
     if (action === "GIVE" && amountNumber > currentBalance) {
       setError(`You only have ${currentBalance} Tk`);
       return;
-    }    
-  
-    const body: any = {
-      type: actionToTypeMap[action],
-      amount: Number(amount),
-      account,
-      date: new Date().toISOString(),
-      note,
-    };
-  
-    if (category) body.category_id = category;
-    if (entity) body.entity = entity;
-  
-    const res = await fetch("/api/transactions", {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
-  
-    const data = await res.json();
-
-    if (res.ok) {
-      // RESET
-      setShowModal(false);
-      setStep("ACTION");
-      setAmount("");
-      setCategory("");
-      setEntity("");
-      setNote("");
-      setError("");
-      setIsDirectFlow(false);
-      
-      window.dispatchEvent(new Event("refreshData"));
     }
+    
+    setLoading(true);
   
-
+    try {
+      const body: any = {
+        type: actionToTypeMap[action],
+        amount: amountNumber,
+        account,
+        date: new Date().toISOString(),
+        note,
+      };
+  
+      if (category) body.category_id = category;
+      if (entity) body.entity = entity;
+  
+      const res = await fetch("/api/transactions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+  
+      if (res.ok) {
+        setShowModal(false);
+        setStep("ACTION");
+        setAmount("");
+        setCategory("");
+        setEntity("");
+        setNote("");
+        setError("");
+        setIsDirectFlow(false);
+  
+        window.dispatchEvent(new Event("refreshData"));
+      }
+  
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -362,9 +369,14 @@ export default function DashboardLayout({
                 {/* SAVE */}
                 <button
                   onClick={handleSubmit}
-                  className="bg-green-500 hover:bg-green-600 active:scale-95 transition py-3 rounded-xl text-black font-semibold"
+                  disabled={loading}
+                  className={`py-3 rounded-xl font-semibold transition ${
+                    loading
+                      ? "bg-gray-500 cursor-not-allowed"
+                      : "bg-green-500 hover:bg-green-600 active:scale-95"
+                  }`}
                 >
-                  Save
+                  {loading ? "Processing..." : "Save"}
                 </button>
       
                 {/* BACK (ONLY MULTI STEP) */}
