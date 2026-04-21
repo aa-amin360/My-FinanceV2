@@ -24,9 +24,7 @@ export default function DebtPage() {
       .then((data) => setDebts(data.data || []));
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useRefresh(loadData);
 
   const formatName = (text: string) => {
     return text
