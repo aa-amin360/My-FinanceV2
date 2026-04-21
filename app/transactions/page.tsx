@@ -124,9 +124,16 @@ export default function TransactionsPage() {
   };
   
   const handleDelete = async (id: string) => {
-    await fetch(`/api/transactions/${id}`, {
+    const res = await fetch(`/api/transactions/${id}`, {
       method: "DELETE",
     });
+  
+    const data = await res.json();
+  
+    if (!res.ok) {
+      alert(data.error);
+      return;
+    }
   
     loadData();
   };
