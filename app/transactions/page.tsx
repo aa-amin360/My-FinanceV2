@@ -130,10 +130,39 @@ export default function TransactionsPage() {
   
     loadData();
   };
+
+  const handleDeleteAll = async () => {
+    const confirmDelete = confirm("Delete all transactions?");
+    if (!confirmDelete) return;
+  
+    try {
+      const res = await fetch("/api/transactions/all", {
+        method: "DELETE",
+      });
+  
+      if (res.ok) {
+        window.dispatchEvent(new Event("refreshData"));
+      } else {
+        alert("Failed to delete transactions");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting transactions");
+    }
+  };
   
   return (
     <DashboardLayout>
-      <h1 className="text-2xl font-bold mb-6">Transactions</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Transactions</h1>
+      
+        <button
+          onClick={handleDeleteAll}
+          className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm hover:bg-red-700 active:scale-95 transition"
+        >
+          Delete All
+        </button>
+      </div>
 
       <div className="bg-gray-100 dark:bg-slate-900 rounded-2xl overflow-hidden">
 
