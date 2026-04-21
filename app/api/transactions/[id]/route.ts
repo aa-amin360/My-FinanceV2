@@ -29,6 +29,13 @@ export async function DELETE(
 
     const t = tx.rows[0];
 
+    if (t.parent_id) {
+      return NextResponse.json(
+        { error: "Cannot delete auto-generated transaction" },
+        { status: 400 }
+      );
+    }
+
     // 🔥 HANDLE LINKED (CHILD) TRANSACTIONS
     const children = await client.query(
       `SELECT * FROM transactions WHERE parent_id = $1`,
