@@ -165,7 +165,7 @@ export default function TransactionsPage() {
                   className="grid grid-cols-[1.2fr_1fr_1fr_1fr_0.8fr] px-4 py-3 border-b border-gray-200 dark:border-slate-800 hover:bg-gray-200 dark:hover:bg-slate-800 transition"
                 >
                   {/* NAME */}
-                  <div className="font-semibold text-white text-base">
+                  <div className="font-semibold text-gray-900 dark:text-white text-base">
                     {getDisplayName(t)}
                   </div>
                 
@@ -207,7 +207,7 @@ export default function TransactionsPage() {
                   <div className="flex justify-center items-center gap-2">
   
                     {/* EDIT */}
-                    <button className="p-2 rounded-full hover:bg-slate-800 text-gray-400 hover:text-white transition">
+                    <button className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-slate-800 text-gray-400 hover:text-white transition">
                       <Pencil size={16} />
                     </button>
                   
@@ -313,7 +313,8 @@ export default function TransactionsPage() {
       {deleteId && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           
-          <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-2xl p-6 w-[320px] text-center shadow-2xl">
+          <div className="bg-white/90 dark:bg-slate-900/80 border border-gray-200 dark:border-slate-700 
+            text-black dark:text-white backdrop-blur-xl rounded-2xl p-6 w-[320px] text-center shadow-2xl">
             
             <h3 className="text-lg font-semibold mb-5">
               Delete this transaction?
@@ -333,7 +334,7 @@ export default function TransactionsPage() {
       
               <button
                 onClick={() => setDeleteId(null)}
-                className="px-5 py-2 rounded-full bg-slate-700 text-gray-300 hover:bg-slate-600 transition"
+                className="px-5 py-2 rounded-full bg-gray-200 dark:bg-slate-700 text-black dark:text-gray-300 hover:bg-slate-600 transition"
               >
                 Cancel
               </button>
