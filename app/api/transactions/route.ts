@@ -263,6 +263,7 @@ export async function POST(req: Request) {
       
           // 2. if extra → convert to receivable
           if (extra > 0) {
+            // 1. update receivable table (existing code)
             await client.query(
               `
               INSERT INTO receivables (entity_id, total_amount, remaining_amount)
@@ -273,6 +274,24 @@ export async function POST(req: Request) {
                 remaining_amount = receivables.remaining_amount + $2
               `,
               [entity_id, extra]
+            );
+          
+            // 2. 🔥 CREATE MIRROR TRANSACTION
+            await client.query(
+              `
+              INSERT INTO transactions
+              (type, amount, from_account, to_account, entity_id, date, note)
+              VALUES ($1,$2,$3,$4,$5,$6,$7)
+              `,
+              [
+                "RECEIVABLE_GIVEN",
+                extra,
+                accountId,        // money from your account
+                receivableId,     // to receivable
+                entity_id,
+                date,
+                "Auto-conversion from overpay",
+              ]
             );
           }
       
@@ -341,6 +360,24 @@ export async function POST(req: Request) {
                 remaining_amount = debts.remaining_amount + $2
               `,
               [entity_id, extra]
+            );
+          
+            // 🔥 CREATE MIRROR TRANSACTION
+            await client.query(
+              `
+              INSERT INTO transactions
+              (type, amount, from_account, to_account, entity_id, date, note)
+              VALUES ($1,$2,$3,$4,$5,$6,$7)
+              `,
+              [
+                "DEBT_TAKEN",
+                extra,
+                debtId,
+                accountId,
+                entity_id,
+                date,
+                "Auto-conversion from over-receive",
+              ]
             );
           }
       
