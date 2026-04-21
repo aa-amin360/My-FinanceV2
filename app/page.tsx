@@ -169,7 +169,7 @@ export default function Home() {
               return (
                 <div
                   key={t.id}
-                  className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 flex justify-between items-center hover:bg-slate-800 transition"
+                  className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 flex justify-between items-center hover:bg-gray-100 dark:hover:bg-slate-800 transition"
                 >
                   {/* LEFT */}
                   <div>
@@ -234,7 +234,8 @@ export default function Home() {
       {deleteId && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           
-          <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-2xl p-6 w-[320px] text-center shadow-2xl">
+          <div className="bg-white/90 dark:bg-slate-900/80 border border-gray-200 dark:border-slate-700 
+            text-black dark:text-white backdrop-blur-xl rounded-2xl p-6 w-[320px] text-center shadow-2xl">
             
             <h3 className="text-lg font-semibold mb-4">
               Delete this transaction?
@@ -254,7 +255,7 @@ export default function Home() {
       
               <button
                 onClick={() => setDeleteId(null)}
-                className="px-5 py-2 rounded-full bg-slate-700 text-gray-300 hover:bg-slate-600 transition"
+                className="px-5 py-2 rounded-full bg-gray-200 dark:bg-slate-700 text-black dark:text-gray-300 hover:bg-slate-600 transition"
               >
                 Cancel
               </button>
