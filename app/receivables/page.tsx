@@ -23,10 +23,8 @@ type Transaction = {
 export default function ReceivablePage() {
   const [data, setData] = useState<Receivable[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [balance, setBalance] = useState(0); // added
 
-  // =========================
-  // LOAD DATA
-  // =========================
   const loadData = () => {
     fetch("/api/receivables/details", { cache: "no-store" })
       .then((res) => res.json())
@@ -39,9 +37,13 @@ export default function ReceivablePage() {
 
   useRefresh(loadData);
 
-  // =========================
-  // FAB LISTENER (NEW)
-  // =========================
+  // added
+  useEffect(() => {
+    fetch("/api/balance")
+      .then((res) => res.json())
+      .then((d) => setBalance(d.balance || 0));
+  }, []);
+
   useEffect(() => {
     const handler = (e: any) => {
       if (e.detail === "RECEIVABLE") {
@@ -52,14 +54,11 @@ export default function ReceivablePage() {
         );
       }
     };
-  
+
     window.addEventListener("openAdd", handler);
     return () => window.removeEventListener("openAdd", handler);
   }, []);
 
-  // =========================
-  // RECEIVE FUNCTION
-  // =========================
   const handleReceive = (entityName: string) => {
     window.dispatchEvent(
       new CustomEvent("openAdd", {
@@ -72,7 +71,7 @@ export default function ReceivablePage() {
   };
 
   return (
-    <DashboardLayout>
+    <DashboardLayout balance={balance}> {/* changed */}
       <h1 className="text-2xl font-bold mb-6">Receivable Details</h1>
 
       {data.map((r) => {
@@ -88,7 +87,6 @@ export default function ReceivablePage() {
             key={r.entity_id}
             className="bg-gray-100 dark:bg-slate-900 p-5 rounded-2xl mb-6"
           >
-            {/* HEADER */}
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">{r.name}</h3>
 
@@ -100,7 +98,6 @@ export default function ReceivablePage() {
               </button>
             </div>
 
-            {/* SUMMARY */}
             <div className="mt-4 flex justify-between text-sm text-gray-600 dark:text-gray-400">
               <span>Total Given:</span>
               <span>{Number(r.total_amount).toFixed(2)} Tk</span>
@@ -113,7 +110,6 @@ export default function ReceivablePage() {
               </span>
             </div>
 
-            {/* TRANSACTIONS */}
             <div className="mt-4 text-sm font-semibold">
               Transactions
             </div>
@@ -154,7 +150,6 @@ export default function ReceivablePage() {
         );
       })}
 
-      {/* EMPTY STATE */}
       {data.length === 0 && (
         <div className="text-center text-gray-400">
           No receivables yet
