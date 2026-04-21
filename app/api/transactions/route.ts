@@ -45,6 +45,19 @@ async function getEntityId(client: any, name: string, type: string) {
   return insert.rows[0].id;
 }
 
+const TYPE_META = {
+  INCOME: { flow: "IN", group: "BALANCE" },
+  EXPENSE: { flow: "OUT", group: "BALANCE" },
+
+  TRANSFER: { flow: "MOVE", group: "BALANCE" },
+
+  DEBT_TAKEN: { flow: "IN", group: "DEBT" },
+  DEBT_REPAID: { flow: "OUT", group: "DEBT" },
+
+  RECEIVABLE_GIVEN: { flow: "OUT", group: "RECEIVABLE" },
+  RECEIVABLE_RECEIVED: { flow: "IN", group: "RECEIVABLE" },
+} as const;
+
 // =========================
 // POST
 // =========================
@@ -90,9 +103,11 @@ export async function POST(req: Request) {
     let entity_id: string | null = null;
 
     if (entity) {
-      if (type.includes("DEBT")) {
+      const meta = TYPE_META[type as keyof typeof TYPE_META];
+      
+      if (meta.group === "DEBT") {
         entity_id = await getEntityId(client, entity, "LIABILITY");
-      } else if (type.includes("RECEIVABLE")) {
+      } else if (meta.group === "RECEIVABLE") {
         entity_id = await getEntityId(client, entity, "ASSET");
       }
     }
@@ -170,7 +185,7 @@ export async function POST(req: Request) {
     const balance = Number(balanceRes.rows[0].balance || 0);
 
     if (
-      ["EXPENSE", "DEBT_REPAID", "RECEIVABLE_GIVEN"].includes(type) &&
+      TYPE_META[type as keyof typeof TYPE_META].flow === "OUT" &&
       amountNumber > balance
     ) {
       await client.query("ROLLBACK");
@@ -222,14 +237,56 @@ export async function POST(req: Request) {
       }
 
       if (type === "DEBT_REPAID") {
-        await client.query(
-          `
-          UPDATE debts
-          SET remaining_amount = remaining_amount - $2
-          WHERE entity_id = $1
-        `,
-          [entity_id, amountNumber]
+        const debtRes = await client.query(
+          `SELECT * FROM debts WHERE entity_id = $1`,
+          [entity_id]
         );
+      
+        const currentRemaining = Number(
+          debtRes.rows[0]?.remaining_amount || 0
+        );
+      
+        if (amountNumber >= currentRemaining) {
+          // ===== FULL CLOSE OR OVERPAY =====
+          const extra = amountNumber - currentRemaining;
+      
+          // 1. set debt to ZERO (do NOT delete)
+          await client.query(
+            `
+            UPDATE debts
+            SET total_amount = 0,
+                remaining_amount = 0
+            WHERE entity_id = $1
+            `,
+            [entity_id]
+          );
+      
+          // 2. if extra → convert to receivable
+          if (extra > 0) {
+            await client.query(
+              `
+              INSERT INTO receivables (entity_id, total_amount, remaining_amount)
+              VALUES ($1, $2, $2)
+              ON CONFLICT (entity_id)
+              DO UPDATE SET
+                total_amount = receivables.total_amount + $2,
+                remaining_amount = receivables.remaining_amount + $2
+              `,
+              [entity_id, extra]
+            );
+          }
+      
+        } else {
+          // ===== NORMAL REPAY =====
+          await client.query(
+            `
+            UPDATE debts
+            SET remaining_amount = remaining_amount - $2
+            WHERE entity_id = $1
+            `,
+            [entity_id, amountNumber]
+          );
+        }
       }
 
       // ---------- RECEIVABLE ----------
@@ -248,14 +305,56 @@ export async function POST(req: Request) {
       }
 
       if (type === "RECEIVABLE_RECEIVED") {
-        await client.query(
-          `
-          UPDATE receivables
-          SET remaining_amount = remaining_amount - $2
-          WHERE entity_id = $1
-        `,
-          [entity_id, amountNumber]
+        const recvRes = await client.query(
+          `SELECT * FROM receivables WHERE entity_id = $1`,
+          [entity_id]
         );
+      
+        const currentRemaining = Number(
+          recvRes.rows[0]?.remaining_amount || 0
+        );
+      
+        if (amountNumber >= currentRemaining) {
+          // ===== FULL CLOSE OR OVER-RECEIVE =====
+          const extra = amountNumber - currentRemaining;
+      
+          // 1. set receivable to ZERO (do NOT delete)
+          await client.query(
+            `
+            UPDATE receivables
+            SET total_amount = 0,
+                remaining_amount = 0
+            WHERE entity_id = $1
+            `,
+            [entity_id]
+          );
+      
+          // 2. if extra → convert to debt
+          if (extra > 0) {
+            await client.query(
+              `
+              INSERT INTO debts (entity_id, total_amount, remaining_amount)
+              VALUES ($1, $2, $2)
+              ON CONFLICT (entity_id)
+              DO UPDATE SET
+                total_amount = debts.total_amount + $2,
+                remaining_amount = debts.remaining_amount + $2
+              `,
+              [entity_id, extra]
+            );
+          }
+      
+        } else {
+          // ===== NORMAL RECEIVE =====
+          await client.query(
+            `
+            UPDATE receivables
+            SET remaining_amount = remaining_amount - $2
+            WHERE entity_id = $1
+            `,
+            [entity_id, amountNumber]
+          );
+        }
       }
     }
 
