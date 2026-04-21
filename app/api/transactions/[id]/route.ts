@@ -29,6 +29,7 @@ export async function DELETE(
 
     const t = tx.rows[0];
 
+    // 🚫 BLOCK: child cannot be deleted directly
     if (t.parent_id) {
       return NextResponse.json(
         { error: "Cannot delete auto-generated transaction" },
@@ -36,16 +37,28 @@ export async function DELETE(
       );
     }
 
+    // 🚫 BLOCK: parent cannot be deleted if it has children
+    const hasChildren = await client.query(
+      `SELECT 1 FROM transactions WHERE parent_id = $1 LIMIT 1`,
+      [t.id]
+    );
+
+    if (hasChildren.rows.length > 0) {
+      return NextResponse.json(
+        { error: "Cannot delete this transaction because it has dependent records" },
+        { status: 400 }
+      );
+    }
 
     // 🔥 HANDLE LINKED (CHILD) TRANSACTIONS
     const children = await client.query(
       `SELECT * FROM transactions WHERE parent_id = $1`,
       [t.id]
     );
-    
+
     for (const child of children.rows) {
       const amt = Number(child.amount);
-    
+
       if (child.type === "RECEIVABLE_GIVEN") {
         await client.query(
           `UPDATE receivables
@@ -55,7 +68,7 @@ export async function DELETE(
           [child.entity_id, amt]
         );
       }
-    
+
       if (child.type === "DEBT_TAKEN") {
         await client.query(
           `UPDATE debts
@@ -65,13 +78,13 @@ export async function DELETE(
           [child.entity_id, amt]
         );
       }
-    
+
       await client.query(
         `DELETE FROM transactions WHERE id = $1`,
         [child.id]
       );
     }
-    
+
     const amount = Number(t.amount);
 
     // ===== REVERSE EFFECT =====
@@ -114,16 +127,15 @@ export async function DELETE(
           [t.entity_id, amount]
         );
       }
+
       // ===== CLEANUP EMPTY RECORDS =====
-            
-      // DEBT CLEANUP
+
       await client.query(
         `DELETE FROM debts
          WHERE entity_id = $1 AND remaining_amount <= 0`,
         [t.entity_id]
       );
-      
-      // RECEIVABLE CLEANUP
+
       await client.query(
         `DELETE FROM receivables
          WHERE entity_id = $1 AND remaining_amount <= 0`,
