@@ -175,7 +175,7 @@ export async function POST(req: Request) {
     const balanceRes = await client.query(`
       SELECT COALESCE(SUM(
         CASE
-          WHEN type IN ('INCOME','DEBT_TAKEN','RECEIVABLE_RECEIVED') THEN amount
+          WHEN type IN ('INCOME','DEBT_TAKEN','RECEIVABLE_RECEIVED','RECEIVABLE_GIVEN') THEN amount
           ELSE -amount
         END
       ), 0) AS balance
