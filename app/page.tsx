@@ -173,11 +173,11 @@ export default function Home() {
                 >
                   {/* LEFT */}
                   <div>
-                    <div className="font-medium">
+                    <div className="font-medium text-gray-900 dark:text-white">
                       {getDisplayName(t)}
                     </div>
       
-                    <div className="text-xs text-gray-400 mt-1">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {new Date(t.date).toDateString()}
                     </div>
                   </div>
