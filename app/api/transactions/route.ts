@@ -199,32 +199,30 @@ export async function POST(req: Request) {
     // INSERT TRANSACTION
     // =========================
 
-    const result = await client.query(
-      let result = null;
-      
-      // ⚠️ ONLY INSERT IF NOT SPLIT CASE
-      if (
-        type !== "DEBT_REPAID" &&
-        type !== "RECEIVABLE_RECEIVED"
-      ) {
-        result = await client.query(
-          `INSERT INTO transactions 
-          (type, amount, from_account, to_account, entity_id, category_id, date, note)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-          RETURNING *`,
-          [
-            type,
-            amountNumber,
-            from_account,
-            to_account,
-            entity_id,
-            category_id || null,
-            date,
-            note,
-          ]
-        );
-      }
-    );
+    let result = null;
+    
+    // ⚠️ ONLY INSERT IF NOT SPLIT CASE
+    if (
+      type !== "DEBT_REPAID" &&
+      type !== "RECEIVABLE_RECEIVED"
+    ) {
+      result = await client.query(
+        `INSERT INTO transactions 
+        (type, amount, from_account, to_account, entity_id, category_id, date, note)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        RETURNING *`,
+        [
+          type,
+          amountNumber,
+          from_account,
+          to_account,
+          entity_id,
+          category_id || null,
+          date,
+          note,
+        ]
+      );
+    }
 
     // =========================
     // STATE SYNC
@@ -256,12 +254,14 @@ export async function POST(req: Request) {
           debtRes.rows[0]?.remaining_amount || 0
         );
       
+        // =========================
+        // 🔥 OVERPAY (SPLIT CASE)
+        // =========================
         if (amountNumber > currentRemaining) {
-          // 🔥 SPLIT HERE
           const repayAmount = currentRemaining;
           const extra = amountNumber - currentRemaining;
       
-          // ===== INSERT CORRECT REPAY =====
+          // 1️⃣ Correct repay (only actual debt)
           await client.query(
             `INSERT INTO transactions
              (type, amount, from_account, to_account, entity_id, category_id, date, note)
@@ -278,7 +278,7 @@ export async function POST(req: Request) {
             ]
           );
       
-          // ===== UPDATE DEBT =====
+          // 2️⃣ Clear debt
           await client.query(
             `UPDATE debts
              SET total_amount = 0,
@@ -287,21 +287,18 @@ export async function POST(req: Request) {
             [entity_id]
           );
       
-          // ===== CREATE RECEIVABLE =====
+          // 3️⃣ Create receivable from extra
           if (extra > 0) {
             await client.query(
-              `
-              INSERT INTO receivables (entity_id, total_amount, remaining_amount)
-              VALUES ($1, $2, $2)
-              ON CONFLICT (entity_id)
-              DO UPDATE SET
-                total_amount = receivables.total_amount + $2,
-                remaining_amount = receivables.remaining_amount + $2
-              `,
+              `INSERT INTO receivables (entity_id, total_amount, remaining_amount)
+               VALUES ($1, $2, $2)
+               ON CONFLICT (entity_id)
+               DO UPDATE SET
+                 total_amount = receivables.total_amount + $2,
+                 remaining_amount = receivables.remaining_amount + $2`,
               [entity_id, extra]
             );
       
-            // 🔥 SECOND TRANSACTION (only extra)
             await client.query(
               `INSERT INTO transactions
                (type, amount, from_account, to_account, entity_id, date, note)
@@ -319,8 +316,44 @@ export async function POST(req: Request) {
           }
       
           await client.query("COMMIT");
-      
           return NextResponse.json({ success: true });
+        }
+      
+        // =========================
+        // ✅ NORMAL REPAY (FIX)
+        // =========================
+        else {
+          // 1️⃣ Insert transaction
+          await client.query(
+            `INSERT INTO transactions
+             (type, amount, from_account, to_account, entity_id, category_id, date, note)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+            [
+              "DEBT_REPAID",
+              amountNumber,
+              from_account,
+              to_account,
+              entity_id,
+              category_id || null,
+              date,
+              note,
+            ]
+          );
+      
+          // 2️⃣ Reduce debt
+          await client.query(
+            `UPDATE debts
+             SET remaining_amount = remaining_amount - $2
+             WHERE entity_id = $1`,
+            [entity_id, amountNumber]
+          );
+      
+          // 3️⃣ Optional safety (auto delete if zero)
+          await client.query(
+            `DELETE FROM debts
+             WHERE entity_id = $1 AND remaining_amount <= 0`,
+            [entity_id]
+          );
         }
       }
 
@@ -340,21 +373,23 @@ export async function POST(req: Request) {
       }
 
       if (type === "RECEIVABLE_RECEIVED") {
-        const recvRes = await client.query(
+        const recRes = await client.query(
           `SELECT * FROM receivables WHERE entity_id = $1`,
           [entity_id]
         );
       
         const currentRemaining = Number(
-          recvRes.rows[0]?.remaining_amount || 0
+          recRes.rows[0]?.remaining_amount || 0
         );
       
+        // =========================
+        // 🔥 OVER-RECEIVED (SPLIT)
+        // =========================
         if (amountNumber > currentRemaining) {
-          // ===== SPLIT =====
           const receiveAmount = currentRemaining;
           const extra = amountNumber - currentRemaining;
       
-          // ===== INSERT CORRECT RECEIVE =====
+          // 1️⃣ Correct receive (only actual receivable)
           await client.query(
             `INSERT INTO transactions
              (type, amount, from_account, to_account, entity_id, category_id, date, note)
@@ -371,32 +406,27 @@ export async function POST(req: Request) {
             ]
           );
       
-          // ===== UPDATE RECEIVABLE =====
+          // 2️⃣ Clear receivable
           await client.query(
-            `
-            UPDATE receivables
-            SET total_amount = 0,
-                remaining_amount = 0
-            WHERE entity_id = $1
-            `,
+            `UPDATE receivables
+             SET total_amount = 0,
+                 remaining_amount = 0
+             WHERE entity_id = $1`,
             [entity_id]
           );
       
-          // ===== CREATE DEBT =====
+          // 3️⃣ Convert extra → DEBT
           if (extra > 0) {
             await client.query(
-              `
-              INSERT INTO debts (entity_id, total_amount, remaining_amount)
-              VALUES ($1, $2, $2)
-              ON CONFLICT (entity_id)
-              DO UPDATE SET
-                total_amount = debts.total_amount + $2,
-                remaining_amount = debts.remaining_amount + $2
-              `,
+              `INSERT INTO debts (entity_id, total_amount, remaining_amount)
+               VALUES ($1, $2, $2)
+               ON CONFLICT (entity_id)
+               DO UPDATE SET
+                 total_amount = debts.total_amount + $2,
+                 remaining_amount = debts.remaining_amount + $2`,
               [entity_id, extra]
             );
       
-            // ===== SECOND TRANSACTION =====
             await client.query(
               `INSERT INTO transactions
                (type, amount, from_account, to_account, entity_id, date, note)
@@ -414,8 +444,44 @@ export async function POST(req: Request) {
           }
       
           await client.query("COMMIT");
-      
           return NextResponse.json({ success: true });
+        }
+      
+        // =========================
+        // ✅ NORMAL RECEIVE
+        // =========================
+        else {
+          // 1️⃣ Insert transaction
+          await client.query(
+            `INSERT INTO transactions
+             (type, amount, from_account, to_account, entity_id, category_id, date, note)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+            [
+              "RECEIVABLE_RECEIVED",
+              amountNumber,
+              from_account,
+              to_account,
+              entity_id,
+              category_id || null,
+              date,
+              note,
+            ]
+          );
+      
+          // 2️⃣ Reduce receivable
+          await client.query(
+            `UPDATE receivables
+             SET remaining_amount = remaining_amount - $2
+             WHERE entity_id = $1`,
+            [entity_id, amountNumber]
+          );
+      
+          // 3️⃣ Auto delete if zero
+          await client.query(
+            `DELETE FROM receivables
+             WHERE entity_id = $1 AND remaining_amount <= 0`,
+            [entity_id]
+          );
         }
       }
     }
@@ -424,7 +490,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      data: result.rows[0],
+      data: result?.rows?.[0] || null,
     });
 
   } catch (err: any) {
