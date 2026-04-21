@@ -28,6 +28,42 @@ export async function DELETE(
     }
 
     const t = tx.rows[0];
+
+    // 🔥 HANDLE LINKED (CHILD) TRANSACTIONS
+    const children = await client.query(
+      `SELECT * FROM transactions WHERE parent_id = $1`,
+      [t.id]
+    );
+    
+    for (const child of children.rows) {
+      const amt = Number(child.amount);
+    
+      if (child.type === "RECEIVABLE_GIVEN") {
+        await client.query(
+          `UPDATE receivables
+           SET total_amount = total_amount - $2,
+               remaining_amount = remaining_amount - $2
+           WHERE entity_id = $1`,
+          [child.entity_id, amt]
+        );
+      }
+    
+      if (child.type === "DEBT_TAKEN") {
+        await client.query(
+          `UPDATE debts
+           SET total_amount = total_amount - $2,
+               remaining_amount = remaining_amount - $2
+           WHERE entity_id = $1`,
+          [child.entity_id, amt]
+        );
+      }
+    
+      await client.query(
+        `DELETE FROM transactions WHERE id = $1`,
+        [child.id]
+      );
+    }
+    
     const amount = Number(t.amount);
 
     // ===== REVERSE EFFECT =====
