@@ -246,24 +246,39 @@ export async function POST(req: Request) {
           debtRes.rows[0]?.remaining_amount || 0
         );
       
-        if (amountNumber >= currentRemaining) {
-          // ===== FULL CLOSE OR OVERPAY =====
+        if (amountNumber > currentRemaining) {
+          // 🔥 SPLIT HERE
+          const repayAmount = currentRemaining;
           const extra = amountNumber - currentRemaining;
       
-          // 1. set debt to ZERO (do NOT delete)
+          // ===== INSERT CORRECT REPAY =====
           await client.query(
-            `
-            UPDATE debts
-            SET total_amount = 0,
-                remaining_amount = 0
-            WHERE entity_id = $1
-            `,
+            `INSERT INTO transactions
+             (type, amount, from_account, to_account, entity_id, category_id, date, note)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+            [
+              "DEBT_REPAID",
+              repayAmount,
+              from_account,
+              to_account,
+              entity_id,
+              category_id || null,
+              date,
+              note,
+            ]
+          );
+      
+          // ===== UPDATE DEBT =====
+          await client.query(
+            `UPDATE debts
+             SET total_amount = 0,
+                 remaining_amount = 0
+             WHERE entity_id = $1`,
             [entity_id]
           );
       
-          // 2. if extra → convert to receivable
+          // ===== CREATE RECEIVABLE =====
           if (extra > 0) {
-            // 1. update receivable table (existing code)
             await client.query(
               `
               INSERT INTO receivables (entity_id, total_amount, remaining_amount)
@@ -275,36 +290,27 @@ export async function POST(req: Request) {
               `,
               [entity_id, extra]
             );
-          
-            // 2. 🔥 CREATE MIRROR TRANSACTION
+      
+            // 🔥 SECOND TRANSACTION (only extra)
             await client.query(
-              `
-              INSERT INTO transactions
-              (type, amount, from_account, to_account, entity_id, date, note)
-              VALUES ($1,$2,$3,$4,$5,$6,$7)
-              `,
+              `INSERT INTO transactions
+               (type, amount, from_account, to_account, entity_id, date, note)
+               VALUES ($1,$2,$3,$4,$5,$6,$7)`,
               [
                 "RECEIVABLE_GIVEN",
                 extra,
-                accountId,        // money from your account
-                receivableId,     // to receivable
+                from_account,
+                receivableId,
                 entity_id,
                 date,
-                "Auto-conversion from overpay",
+                "Auto conversion",
               ]
             );
           }
       
-        } else {
-          // ===== NORMAL REPAY =====
-          await client.query(
-            `
-            UPDATE debts
-            SET remaining_amount = remaining_amount - $2
-            WHERE entity_id = $1
-            `,
-            [entity_id, amountNumber]
-          );
+          await client.query("COMMIT");
+      
+          return NextResponse.json({ success: true });
         }
       }
 
@@ -333,11 +339,29 @@ export async function POST(req: Request) {
           recvRes.rows[0]?.remaining_amount || 0
         );
       
-        if (amountNumber >= currentRemaining) {
-          // ===== FULL CLOSE OR OVER-RECEIVE =====
+        if (amountNumber > currentRemaining) {
+          // ===== SPLIT =====
+          const receiveAmount = currentRemaining;
           const extra = amountNumber - currentRemaining;
       
-          // 1. set receivable to ZERO (do NOT delete)
+          // ===== INSERT CORRECT RECEIVE =====
+          await client.query(
+            `INSERT INTO transactions
+             (type, amount, from_account, to_account, entity_id, category_id, date, note)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+            [
+              "RECEIVABLE_RECEIVED",
+              receiveAmount,
+              from_account,
+              to_account,
+              entity_id,
+              category_id || null,
+              date,
+              note,
+            ]
+          );
+      
+          // ===== UPDATE RECEIVABLE =====
           await client.query(
             `
             UPDATE receivables
@@ -348,7 +372,7 @@ export async function POST(req: Request) {
             [entity_id]
           );
       
-          // 2. if extra → convert to debt
+          // ===== CREATE DEBT =====
           if (extra > 0) {
             await client.query(
               `
@@ -361,36 +385,27 @@ export async function POST(req: Request) {
               `,
               [entity_id, extra]
             );
-          
-            // 🔥 CREATE MIRROR TRANSACTION
+      
+            // ===== SECOND TRANSACTION =====
             await client.query(
-              `
-              INSERT INTO transactions
-              (type, amount, from_account, to_account, entity_id, date, note)
-              VALUES ($1,$2,$3,$4,$5,$6,$7)
-              `,
+              `INSERT INTO transactions
+               (type, amount, from_account, to_account, entity_id, date, note)
+               VALUES ($1,$2,$3,$4,$5,$6,$7)`,
               [
                 "DEBT_TAKEN",
                 extra,
                 debtId,
-                accountId,
+                to_account,
                 entity_id,
                 date,
-                "Auto-conversion from over-receive",
+                "Auto conversion",
               ]
             );
           }
       
-        } else {
-          // ===== NORMAL RECEIVE =====
-          await client.query(
-            `
-            UPDATE receivables
-            SET remaining_amount = remaining_amount - $2
-            WHERE entity_id = $1
-            `,
-            [entity_id, amountNumber]
-          );
+          await client.query("COMMIT");
+      
+          return NextResponse.json({ success: true });
         }
       }
     }
