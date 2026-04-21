@@ -36,9 +36,7 @@ export default function ReceivablePage() {
       .then((d) => setTransactions(d.data || []));
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useRefresh(loadData);
 
   // =========================
   // FAB LISTENER (NEW)
