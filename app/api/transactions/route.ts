@@ -172,7 +172,8 @@ export async function POST(req: Request) {
     // BALANCE CHECK
     // =========================
 
-    const balanceRes = await client.query(`
+    const balanceRes = await client.query(
+      `
       SELECT COALESCE(SUM(
         CASE
           WHEN to_account = $1 THEN amount
@@ -181,7 +182,9 @@ export async function POST(req: Request) {
         END
       ), 0) AS balance
       FROM transactions
-    `);
+      `,
+      [accountId]
+    );
 
     const balance = Number(balanceRes.rows[0].balance || 0);
 
