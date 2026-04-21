@@ -46,7 +46,7 @@ async function getEntityId(client: any, name: string, type: string) {
 }
 
 // =========================
-// POST (FULLY FIXED ENGINE)
+// POST
 // =========================
 
 export async function POST(req: Request) {
@@ -68,14 +68,24 @@ export async function POST(req: Request) {
       direction,
     } = body;
 
-    if (!type || !amount || !account || !date) {
+    const amountNumber = Number(amount);
+
+    if (!type || !amountNumber || !account || !date) {
       throw new Error("Missing required fields");
     }
+
+    // =========================
+    // ACCOUNT IDS
+    // =========================
 
     const accountId = await getAccountId(client, account);
     const savingsId = await getAccountId(client, "Savings");
     const debtId = await getAccountId(client, "Debt");
     const receivableId = await getAccountId(client, "Receivable");
+
+    // =========================
+    // ENTITY
+    // =========================
 
     let entity_id: string | null = null;
 
@@ -87,12 +97,12 @@ export async function POST(req: Request) {
       }
     }
 
-    let from_account: string | null = null;
-    let to_account: string | null = null;
-
     // =========================
     // ACCOUNT FLOW
     // =========================
+
+    let from_account: string | null = null;
+    let to_account: string | null = null;
 
     switch (type) {
       case "INCOME":
@@ -144,6 +154,33 @@ export async function POST(req: Request) {
     }
 
     // =========================
+    // BALANCE CHECK
+    // =========================
+
+    const balanceRes = await client.query(`
+      SELECT COALESCE(SUM(
+        CASE
+          WHEN type IN ('INCOME','DEBT_TAKEN','RECEIVABLE_RECEIVED') THEN amount
+          ELSE -amount
+        END
+      ), 0) AS balance
+      FROM transactions
+    `);
+
+    const balance = Number(balanceRes.rows[0].balance || 0);
+
+    if (
+      ["EXPENSE", "DEBT_REPAID", "RECEIVABLE_GIVEN"].includes(type) &&
+      amountNumber > balance
+    ) {
+      await client.query("ROLLBACK");
+      return NextResponse.json(
+        { error: "Insufficient balance" },
+        { status: 400 }
+      );
+    }
+
+    // =========================
     // INSERT TRANSACTION
     // =========================
 
@@ -154,7 +191,7 @@ export async function POST(req: Request) {
       RETURNING *`,
       [
         type,
-        amount,
+        amountNumber,
         from_account,
         to_account,
         entity_id,
@@ -165,48 +202,60 @@ export async function POST(req: Request) {
     );
 
     // =========================
-    // 🔥 STATE SYNC (THE FIX)
+    // STATE SYNC
     // =========================
 
     if (entity_id) {
       // ---------- DEBT ----------
       if (type === "DEBT_TAKEN") {
-        await client.query(`
+        await client.query(
+          `
           INSERT INTO debts (entity_id, total_amount, remaining_amount)
           VALUES ($1, $2, $2)
           ON CONFLICT (entity_id)
           DO UPDATE SET
             total_amount = debts.total_amount + $2,
             remaining_amount = debts.remaining_amount + $2
-        `, [entity_id, amount]);
+        `,
+          [entity_id, amountNumber]
+        );
       }
 
       if (type === "DEBT_REPAID") {
-        await client.query(`
+        await client.query(
+          `
           UPDATE debts
           SET remaining_amount = remaining_amount - $2
           WHERE entity_id = $1
-        `, [entity_id, amount]);
+        `,
+          [entity_id, amountNumber]
+        );
       }
 
       // ---------- RECEIVABLE ----------
       if (type === "RECEIVABLE_GIVEN") {
-        await client.query(`
+        await client.query(
+          `
           INSERT INTO receivables (entity_id, total_amount, remaining_amount)
           VALUES ($1, $2, $2)
           ON CONFLICT (entity_id)
           DO UPDATE SET
             total_amount = receivables.total_amount + $2,
             remaining_amount = receivables.remaining_amount + $2
-        `, [entity_id, amount]);
+        `,
+          [entity_id, amountNumber]
+        );
       }
 
       if (type === "RECEIVABLE_RECEIVED") {
-        await client.query(`
+        await client.query(
+          `
           UPDATE receivables
           SET remaining_amount = remaining_amount - $2
           WHERE entity_id = $1
-        `, [entity_id, amount]);
+        `,
+          [entity_id, amountNumber]
+        );
       }
     }
 

@@ -130,16 +130,20 @@ export default function ReportsPage() {
       </div>
 
       {/* CHART */}
-      <CashflowChart data={chartData} />
+      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4 mb-6">
+        <CashflowChart data={chartData} />
+      </div>
 
-      <h3 className="text-lg font-semibold mb-3">
-        Donut Chart
-      </h3>
-   
-      <CategoryDonut
-        data={donutData}
-        onSelect={(cat: string) => setSelectedCategory(cat)}
-      />
+      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4 mt-6">
+        <h3 className="text-lg font-semibold mt-4 mb-3">
+          Expense Breakdown
+        </h3>
+     
+        <CategoryDonut
+          data={donutData}
+          onSelect={(cat: string) => setSelectedCategory(cat)}
+        />
+      </div>
     </DashboardLayout>
   );
 }
@@ -166,7 +170,7 @@ function FilterBtn({ label, active, onClick }: any) {
       className={`px-3 py-1 rounded-lg text-sm transition ${
         active
           ? "bg-green-500 text-black"
-          : "bg-gray-200 dark:bg-slate-800"
+          : "bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-300"
       }`}
     >
       {label}
