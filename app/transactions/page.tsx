@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { Trash2, Pencil } from "lucide-react";
+import { useRefresh } from "@/hooks/useRefresh";
 
 const formatType = (type: string) =>
   type
