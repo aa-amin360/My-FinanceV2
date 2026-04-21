@@ -36,18 +36,6 @@ export async function DELETE(
       );
     }
 
-    // BLOCK deleting root if it has children
-    const hasChildren = await client.query(
-      `SELECT 1 FROM transactions WHERE parent_id = $1 LIMIT 1`,
-      [t.id]
-    );
-    
-    if (hasChildren.rows.length > 0) {
-      return NextResponse.json(
-        { error: "Cannot delete this transaction because it has dependent records" },
-        { status: 400 }
-      );
-    }
 
     // 🔥 HANDLE LINKED (CHILD) TRANSACTIONS
     const children = await client.query(
