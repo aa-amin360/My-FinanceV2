@@ -200,20 +200,30 @@ export async function POST(req: Request) {
     // =========================
 
     const result = await client.query(
-      `INSERT INTO transactions 
-      (type, amount, from_account, to_account, entity_id, category_id, date, note)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-      RETURNING *`,
-      [
-        type,
-        amountNumber,
-        from_account,
-        to_account,
-        entity_id,
-        category_id || null,
-        date,
-        note,
-      ]
+      let result = null;
+      
+      // ⚠️ ONLY INSERT IF NOT SPLIT CASE
+      if (
+        type !== "DEBT_REPAID" &&
+        type !== "RECEIVABLE_RECEIVED"
+      ) {
+        result = await client.query(
+          `INSERT INTO transactions 
+          (type, amount, from_account, to_account, entity_id, category_id, date, note)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+          RETURNING *`,
+          [
+            type,
+            amountNumber,
+            from_account,
+            to_account,
+            entity_id,
+            category_id || null,
+            date,
+            note,
+          ]
+        );
+      }
     );
 
     // =========================
