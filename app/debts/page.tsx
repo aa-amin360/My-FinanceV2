@@ -29,8 +29,11 @@ export default function DebtPage() {
   }, []);
 
   const formatName = (text: string) => {
-    if (!text) return "";
-    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+    return text
+      .toLowerCase()
+      .split(" ")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   };
 
   // =========================
