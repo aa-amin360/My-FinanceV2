@@ -7,11 +7,14 @@ import { useEffect, useState } from "react";
 
 export default function DashboardLayout({
   children,
+  balance,
 }: {
   children: React.ReactNode;
+  balance?: number;
 }) {
   const { toggleTheme, theme } = useTheme();
   const pathname = usePathname();
+  const currentBalance = Number(balance || 0);
 
   // ================= MODAL STATE =================
   const [showModal, setShowModal] = useState(false);
@@ -36,9 +39,11 @@ export default function DashboardLayout({
       .then((data) => setCategories(data.data || []));
   }, []);
 
+  
+
   // ================= EVENT HANDLER =================
   useEffect(() => {
-    const handler = (e: any) => {
+    const handler = async (e: any) => {    
       setShowModal(true);
 
       if (typeof e.detail === "string") {
@@ -100,6 +105,22 @@ export default function DashboardLayout({
       setError("Enter person / entity");
       return;
     }
+
+    // ================= BALANCE CHECK =================
+    const currentBalance = Number(balance); // make sure balance exists in state
+    const amountNumber = Number(amount);
+    
+    // Block expense
+    if (action === "EXPENSE" && amountNumber > currentBalance) {
+      setError(`Not enough balance (You have ${currentBalance} Tk)`);
+      return;
+    }
+    
+    // Block receivable given (GIVE)
+    if (action === "GIVE" && amountNumber > currentBalance) {
+      setError(`You only have ${currentBalance} Tk`);
+      return;
+    }    
   
     const body: any = {
       type: actionToTypeMap[action],
@@ -169,6 +190,7 @@ export default function DashboardLayout({
       </main>
 
       {/* ================= RIGHT PANEL ================= */}
+      {/*
       <aside className="hidden lg:block w-80 bg-gray-100 dark:bg-slate-900 p-5">
         <h3 className="text-sm text-gray-500 dark:text-gray-400 mb-4">
           Insights
@@ -178,6 +200,7 @@ export default function DashboardLayout({
           Coming soon...
         </div>
       </aside>
+      */}
 
       {/* ================= FLOATING NAV (MOBILE) ================= */}
       <FloatingNav pathname={pathname} />
