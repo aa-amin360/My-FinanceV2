@@ -28,6 +28,11 @@ export default function DebtPage() {
     loadData();
   }, []);
 
+  const formatName = (text: string) => {
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+
   // =========================
   // REPAY FUNCTION
   // =========================
@@ -55,7 +60,9 @@ export default function DebtPage() {
           >
             {/* LEFT */}
             <div>
-              <div className="font-semibold text-lg">{d.name}</div>
+              <div className="font-semibold text-lg">
+                {formatName(d.name)}
+              </div>
               <div className="text-xs text-gray-500">
                 Tap to view details
               </div>
