@@ -136,7 +136,7 @@ export default function ReportsPage() {
 
       <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4 mt-6">
         <h3 className="text-lg font-semibold mt-4 mb-3">
-          Donut Chart
+          Expense Breakdown
         </h3>
      
         <CategoryDonut
