@@ -5,6 +5,7 @@ import DashboardLayout from "../components/layout/DashboardLayout";
 import CashflowChart from "../components/charts/CashflowChart";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
+import { useRefresh } from "@/hooks/useRefresh";
 
 type Transaction = {
   id: string;
