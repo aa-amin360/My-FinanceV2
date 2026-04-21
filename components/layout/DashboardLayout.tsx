@@ -165,10 +165,10 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="flex min-h-screen bg-white text-black dark:bg-slate-950 dark:text-white">
+    <div className="flex min-h-screen bg-white text-black dark:bg-slate-950 dark:text-white transition-colors duration-300">
       
       {/* ================= SIDEBAR (DESKTOP) ================= */}
-      <aside className="hidden md:flex w-64 bg-gray-100 dark:bg-slate-900 p-5 flex-col gap-6">
+      <aside className="hidden md:flex w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 p-5 flex-col gap-6">
         <div>
           <h1 className="text-green-500 text-xl font-bold">My Finance</h1>
 
@@ -242,7 +242,7 @@ export default function DashboardLayout({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-[340px] bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-2xl p-5 shadow-2xl flex flex-col gap-4 animate-modalIn"
+            className="w-[340px] bg-white/90 dark:bg-slate-900/90 border border-gray-200 dark:border-slate-700 text-black dark:text-white rounded-2xl p-5 shadow-2xl flex flex-col gap-4 animate-modalIn"
           >
             {/* ================= ACTION ================= */}
             {step === "ACTION" && (
@@ -311,14 +311,14 @@ export default function DashboardLayout({
       
                 {/* INPUTS */}
                 <input
-                  className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Enter amount"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                 />
       
                 <select
-                  className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
                   value={account}
                   onChange={(e) => setAccount(e.target.value)}
                 >
@@ -328,7 +328,7 @@ export default function DashboardLayout({
       
                 {(action === "INCOME" || action === "EXPENSE") && (
                   <select
-                    className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                   >
@@ -345,7 +345,7 @@ export default function DashboardLayout({
       
                 {(action === "BORROW" || action === "GIVE") && (
                   <input
-                    className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="Person / Bank"
                     value={entity}
                     onChange={(e) => setEntity(e.target.value)}
@@ -353,7 +353,7 @@ export default function DashboardLayout({
                 )}
       
                 <input
-                  className="p-3 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Add note (optional)"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
@@ -383,7 +383,7 @@ export default function DashboardLayout({
                 {!isDirectFlow && (
                   <button
                     onClick={() => setStep("ACTION")}
-                    className="bg-gray-200 dark:bg-slate-700 py-3 rounded-xl text-gray-800 dark:text-white"
+                    className="bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-black dark:text-white py-3 rounded-xl text-gray-800 dark:text-white"
                   >
                     Back
                   </button>
@@ -435,10 +435,9 @@ function FloatingNav({ pathname }: { pathname: string }) {
     <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full px-4">
       
       <div
-        className="flex justify-around items-center w-full max-w-md mx-auto 
-        px-2 py-2 rounded-full 
-        bg-slate-900/80 backdrop-blur-xl 
-        border border-slate-700 shadow-xl"
+        className="flex justify-around items-center w-full max-w-md mx-auto px-2 py-2 
+        rounded-full bg-white/80 dark:bg-slate-900/80 border border-gray-200 dark:border-slate-700 
+        backdrop-blur-xl shadow-xl"
       >
         {items.map((item) => {
           const active = pathname === item.href;
@@ -450,7 +449,7 @@ function FloatingNav({ pathname }: { pathname: string }) {
                 className={`flex items-center justify-center gap-2 py-2 rounded-full transition-all duration-300 ${
                   active
                     ? "bg-green-500 text-black shadow-lg shadow-green-500/30 px-4 scale-105"
-                    : "text-gray-400 hover:text-white hover:bg-slate-800 w-10 h-10"
+                    : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-800 w-10 h-10"
                 }`}
               >
                 {/* ICON */}
