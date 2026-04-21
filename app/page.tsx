@@ -36,19 +36,7 @@ export default function Home() {
     setReceivable(Number(r.total || 0));
   };
 
-  useEffect(() => {
-    loadData();
-  
-    const handleRefresh = () => {
-      loadData();
-    };
-  
-    window.addEventListener("refreshData", handleRefresh);
-  
-    return () => {
-      window.removeEventListener("refreshData", handleRefresh);
-    };
-  }, []);
+  useRefresh(loadData);
 
   // ================= CALCULATIONS =================
   let income = 0;
