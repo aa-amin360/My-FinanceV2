@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import CashflowChart from "../components/charts/CashflowChart";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { Trash2, Wallet, Landmark } from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
 
 type Transaction = {
@@ -133,12 +133,14 @@ export default function Home() {
         {open && (
           <div className="absolute top-full left-0 w-full mt-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-gray-200 dark:border-slate-800 rounded-2xl shadow-lg overflow-hidden z-50">
       
-            <div className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer">
-              💵 Cash Balance — {Number(balance).toLocaleString("en-BD")} Tk
+            <div className="px-4 py-3 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer">
+              <Wallet size={16} />
+              Cash Balance — {Number(balance).toLocaleString("en-BD")} Tk
             </div>
-      
-            <div className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer">
-              🏦 Bank Balance — {Number(balance).toLocaleString("en-BD")} Tk
+            
+            <div className="px-4 py-3 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer">
+              <Landmark size={16} />
+              Bank Balance — {Number(balance).toLocaleString("en-BD")} Tk
             </div>
       
           </div>
