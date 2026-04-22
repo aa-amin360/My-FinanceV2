@@ -5,6 +5,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CircleDollarSign  } from "lucide-react";
+import { Space_Grotesk } from "next/font/google";
+
+const space = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+});
 
 export default function DashboardLayout({
   children,
@@ -182,7 +188,7 @@ export default function DashboardLayout({
             </div>
           
             {/* TEXT */}
-            <h1 className="text-green-500 text-lg font-semibold tracking-wide">
+            <h1 className={`text-green-500 text-lg font-semibold tracking-wide ${space.className}`}>
               My Finance
             </h1>
           
