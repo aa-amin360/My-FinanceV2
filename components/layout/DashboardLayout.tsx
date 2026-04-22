@@ -4,6 +4,7 @@ import { useTheme } from "../ThemeProvider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { CircleDollarSign  } from "lucide-react";
 
 export default function DashboardLayout({
   children,
@@ -174,15 +175,17 @@ export default function DashboardLayout({
         <div className="flex items-center justify-between mb-6">
           
           <div className="flex items-center gap-3">
-            {/* Logo */}
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-md">
-              <span className="text-black font-bold text-sm">$</span>
+          
+            {/* ICON */}
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-green-400 to-green-600 shadow-md flex items-center justify-center text-black">
+              <CircleDollarSign size={18} />
             </div>
-      
-            {/* App Name */}
+          
+            {/* TEXT */}
             <h1 className="text-green-500 text-lg font-semibold tracking-wide">
               My Finance
             </h1>
+          
           </div>
       
           {/* Theme Toggle */}
