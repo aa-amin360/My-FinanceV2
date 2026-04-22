@@ -115,13 +115,17 @@ export default function Home() {
           </h1>
       
           {/* dropdown arrow */}
-          <span
-            className={`text-lg transition-transform duration-200 ${
-              open ? "rotate-180" : ""
-            }`}
+          <div
+            className={`
+              w-9 h-9 flex items-center justify-center
+              rounded-full border border-black/20 dark:border-white/20
+              bg-white/20 dark:bg-black/20
+              transition-transform duration-200
+              ${open ? "rotate-180" : ""}
+            `}
           >
-            ▼
-          </span>
+            <span className="text-sm">▼</span>
+          </div>
         </div>
       
         {/* DROPDOWN */}
