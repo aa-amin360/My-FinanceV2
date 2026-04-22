@@ -218,7 +218,7 @@ export default function DashboardLayout({
         {/* ===== NAVIGATION ===== */}
         <nav className="flex flex-col gap-2 text-sm">
         
-          <Item label="Dashboard" href="/pages" pathname={pathname} icon={LayoutDashboard} collapsed={collapsed} />
+          <Item label="Dashboard" href="/" pathname={pathname} icon={LayoutDashboard} collapsed={collapsed} />
           <Item label="Transactions" href="/transactions" pathname={pathname} icon={ArrowLeftRight} collapsed={collapsed} />
           <Item label="Categories" href="/categories" pathname={pathname} icon={Tag} collapsed={collapsed} />
           <Item label="Savings" href="/savings" pathname={pathname} icon={Wallet} collapsed={collapsed} />
@@ -472,6 +472,7 @@ import {
   Wallet,
   CreditCard,
   BarChart3,
+  Home,
 } from "lucide-react";
 
 function FloatingNav({ pathname }: { pathname: string }) {
