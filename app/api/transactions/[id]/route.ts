@@ -30,7 +30,7 @@ export async function DELETE(
     const t = tx.rows[0];
 
     // 🚫 BLOCK: child cannot be deleted directly
-    if (t.parent_id) {
+    if (t.parent_id && t.type === "RECEIVABLE_GIVEN") {
       return NextResponse.json(
         { error: "Cannot delete auto-generated transaction" },
         { status: 400 }
