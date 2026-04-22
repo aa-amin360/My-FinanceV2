@@ -18,6 +18,8 @@ type Transaction = {
 export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balance, setBalance] = useState(0);
+  const [cashBalance, setCashBalance] = useState(0);
+  const [bankBalance, setBankBalance] = useState(0);
   const [debt, setDebt] = useState(0);
   const [receivable, setReceivable] = useState(0);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -28,8 +30,10 @@ export default function Home() {
     const tx = await fetch("/api/transactions", { cache: "no-store" }).then((r) => r.json());
     setTransactions(tx.data || []);
 
-    const b = await fetch("/api/balance", { cache: "no-store" }).then((r) => r.json());
+    const b = await fetch("/api/balance", { cache: "no-store" }).then((r) => r.json());    
     setBalance(Number(b.balance || 0));
+    setCashBalance(Number(b.cashBalance || 0));
+    setBankBalance(Number(b.bankBalance || 0));
 
     const d = await fetch("/api/debts", { cache: "no-store" }).then((r) => r.json());
     setDebt(Number(d.total || 0));
@@ -135,12 +139,12 @@ export default function Home() {
       
             <div className="px-4 py-3 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer">
               <Wallet size={16} />
-              Cash Balance — {Number(balance).toLocaleString("en-BD")} Tk
+              Cash Balance — {Number(cashBalance).toLocaleString("en-BD")} Tk
             </div>
             
             <div className="px-4 py-3 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer">
               <Landmark size={16} />
-              Bank Balance — {Number(balance).toLocaleString("en-BD")} Tk
+              Bank Balance — {Number(bankBalance).toLocaleString("en-BD")} Tk
             </div>
       
           </div>
