@@ -178,7 +178,7 @@ export default function DashboardLayout({
           
             {/* ICON */}
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-green-400 to-green-600 shadow-md flex items-center justify-center text-black">
-              <CircleDollarSign size={18} />
+              <CircleDollarSign size={20} />
             </div>
           
             {/* TEXT */}
