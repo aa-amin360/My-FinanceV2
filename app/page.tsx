@@ -21,6 +21,7 @@ export default function Home() {
   const [debt, setDebt] = useState(0);
   const [receivable, setReceivable] = useState(0);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
 
   // ================= LOAD DATA =================
   const loadData = async () => {
@@ -91,18 +92,52 @@ export default function Home() {
   return (
     <DashboardLayout balance={balance}>
       {/* BALANCE */}
-      <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-2xl text-black">
-        <h1
-          className={`font-bold ${
-            balance > 1000000
-              ? "text-2xl"
-              : balance > 100000
-              ? "text-3xl"
-              : "text-4xl"
-          }`}
+      <div className="relative">
+      
+        {/* MAIN CARD */}
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen(!open);
+          }}
+          className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-2xl text-black cursor-pointer flex justify-between items-center"
         >
-          {Number(balance).toLocaleString("en-BD")} Tk
-        </h1>
+          <h1
+            className={`font-bold ${
+              balance > 1000000
+                ? "text-2xl"
+                : balance > 100000
+                ? "text-3xl"
+                : "text-4xl"
+            }`}
+          >
+            {Number(balance).toLocaleString("en-BD")} Tk
+          </h1>
+      
+          {/* dropdown arrow */}
+          <span
+            className={`text-lg transition-transform duration-200 ${
+              open ? "rotate-180" : ""
+            }`}
+          >
+            ▼
+          </span>
+        </div>
+      
+        {/* DROPDOWN */}
+        {open && (
+          <div className="absolute top-full left-0 w-full mt-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-gray-200 dark:border-slate-800 rounded-2xl shadow-lg overflow-hidden z-50">
+      
+            <div className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer">
+              💵 Cash Balance — {Number(balance).toLocaleString("en-BD")} Tk
+            </div>
+      
+            <div className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer">
+              🏦 Bank Balance — {Number(balance).toLocaleString("en-BD")} Tk
+            </div>
+      
+          </div>
+        )}
       </div>
       
       {/* CARDS */}
