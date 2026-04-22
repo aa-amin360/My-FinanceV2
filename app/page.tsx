@@ -120,7 +120,8 @@ export default function Home() {
               w-9 h-9 flex items-center justify-center
               rounded-full border border-black/20 dark:border-white/20
               bg-white/20 dark:bg-black/20
-              transition-transform duration-200
+              shadow-sm hover:shadow-md
+              transition-all duration-200
               ${open ? "rotate-180" : ""}
             `}
           >
