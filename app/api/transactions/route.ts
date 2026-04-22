@@ -45,6 +45,19 @@ async function getEntityId(client: any, name: string, type: string) {
   return insert.rows[0].id;
 }
 
+const TYPE_META = {
+  INCOME: { flow: "IN", group: "BALANCE" },
+  EXPENSE: { flow: "OUT", group: "BALANCE" },
+
+  TRANSFER: { flow: "MOVE", group: "BALANCE" },
+
+  DEBT_TAKEN: { flow: "IN", group: "DEBT" },
+  DEBT_REPAID: { flow: "OUT", group: "DEBT" },
+
+  RECEIVABLE_GIVEN: { flow: "OUT", group: "RECEIVABLE" },
+  RECEIVABLE_RECEIVED: { flow: "IN", group: "RECEIVABLE" },
+} as const;
+
 // =========================
 // POST
 // =========================
@@ -90,9 +103,11 @@ export async function POST(req: Request) {
     let entity_id: string | null = null;
 
     if (entity) {
-      if (type.includes("DEBT")) {
+      const meta = TYPE_META[type as keyof typeof TYPE_META];
+      
+      if (meta.group === "DEBT") {
         entity_id = await getEntityId(client, entity, "LIABILITY");
-      } else if (type.includes("RECEIVABLE")) {
+      } else if (meta.group === "RECEIVABLE") {
         entity_id = await getEntityId(client, entity, "ASSET");
       }
     }
@@ -157,20 +172,24 @@ export async function POST(req: Request) {
     // BALANCE CHECK
     // =========================
 
-    const balanceRes = await client.query(`
+    const balanceRes = await client.query(
+      `
       SELECT COALESCE(SUM(
         CASE
-          WHEN type IN ('INCOME','DEBT_TAKEN','RECEIVABLE_RECEIVED') THEN amount
-          ELSE -amount
+          WHEN to_account = $1 THEN amount
+          WHEN from_account = $1 THEN -amount
+          ELSE 0
         END
       ), 0) AS balance
       FROM transactions
-    `);
+      `,
+      [accountId]
+    );
 
     const balance = Number(balanceRes.rows[0].balance || 0);
 
     if (
-      ["EXPENSE", "DEBT_REPAID", "RECEIVABLE_GIVEN"].includes(type) &&
+      TYPE_META[type as keyof typeof TYPE_META].flow === "OUT" &&
       amountNumber > balance
     ) {
       await client.query("ROLLBACK");
@@ -184,22 +203,30 @@ export async function POST(req: Request) {
     // INSERT TRANSACTION
     // =========================
 
-    const result = await client.query(
-      `INSERT INTO transactions 
-      (type, amount, from_account, to_account, entity_id, category_id, date, note)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-      RETURNING *`,
-      [
-        type,
-        amountNumber,
-        from_account,
-        to_account,
-        entity_id,
-        category_id || null,
-        date,
-        note,
-      ]
-    );
+    let result = null;
+    
+    // ⚠️ ONLY INSERT IF NOT SPLIT CASE
+    if (
+      type !== "DEBT_REPAID" &&
+      type !== "RECEIVABLE_RECEIVED"
+    ) {
+      result = await client.query(
+        `INSERT INTO transactions 
+        (type, amount, from_account, to_account, entity_id, category_id, date, note)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        RETURNING *`,
+        [
+          type,
+          amountNumber,
+          from_account,
+          to_account,
+          entity_id,
+          category_id || null,
+          date,
+          note,
+        ]
+      );
+    }
 
     // =========================
     // STATE SYNC
@@ -222,14 +249,150 @@ export async function POST(req: Request) {
       }
 
       if (type === "DEBT_REPAID") {
-        await client.query(
-          `
-          UPDATE debts
-          SET remaining_amount = remaining_amount - $2
-          WHERE entity_id = $1
-        `,
-          [entity_id, amountNumber]
+        const debtRes = await client.query(
+          `SELECT * FROM debts WHERE entity_id = $1`,
+          [entity_id]
         );
+      
+        const currentRemaining = Number(
+          debtRes.rows[0]?.remaining_amount || 0
+        );
+      
+        // =========================
+        // 🔥 OVERPAY (SPLIT CASE)
+        // =========================
+        if (amountNumber > currentRemaining) {
+          const repayAmount = currentRemaining;
+          const extra = amountNumber - currentRemaining;
+      
+          // 🔍 find DEBT_TAKEN
+          const debtTaken = await client.query(
+            `SELECT id FROM transactions
+             WHERE entity_id = $1 AND type = 'DEBT_TAKEN'
+             ORDER BY date DESC LIMIT 1`,
+            [entity_id]
+          );
+          
+          if (debtTaken.rows.length === 0) {
+            throw new Error("No DEBT_TAKEN found for this entity");
+          }
+          
+          const parentDebtId = debtTaken.rows[0].id;
+          
+          // 1️⃣ Correct repay
+          const repayTx = await client.query(
+            `INSERT INTO transactions
+             (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+             RETURNING id`,
+            [
+              "DEBT_REPAID",
+              repayAmount,
+              from_account,
+              to_account,
+              entity_id,
+              category_id || null,
+              date,
+              note,
+              parentDebtId, // 🔥 FIX
+            ]
+          );
+          
+          const parentId = repayTx.rows[0].id;
+      
+          // 2️⃣ Clear debt
+          await client.query(
+            `UPDATE debts
+             SET total_amount = 0,
+                 remaining_amount = 0
+             WHERE entity_id = $1`,
+            [entity_id]
+          );
+      
+          // 3️⃣ Create receivable from extra
+          if (extra > 0) {
+            await client.query(
+              `INSERT INTO receivables (entity_id, total_amount, remaining_amount)
+               VALUES ($1, $2, $2)
+               ON CONFLICT (entity_id)
+               DO UPDATE SET
+                 total_amount = receivables.total_amount + $2,
+                 remaining_amount = receivables.remaining_amount + $2`,
+              [entity_id, extra]
+            );
+      
+            await client.query(
+              `INSERT INTO transactions
+               (type, amount, from_account, to_account, entity_id, date, note, parent_id)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+              [
+                "RECEIVABLE_GIVEN",
+                extra,
+                from_account,
+                receivableId,
+                entity_id,
+                date,
+                "Auto conversion",
+                parentId, // 🔥 LINK
+              ]
+            );
+          }
+      
+          await client.query("COMMIT");
+          return NextResponse.json({ success: true });
+        }
+      
+        // =========================
+        // ✅ NORMAL REPAY (FIX)
+        // =========================
+        else {          
+          // 🔍 find latest DEBT_TAKEN
+          const debtTaken = await client.query(
+            `SELECT id FROM transactions
+             WHERE entity_id = $1 AND type = 'DEBT_TAKEN'
+             ORDER BY date DESC LIMIT 1`,
+            [entity_id]
+          );
+          
+          if (debtTaken.rows.length === 0) {
+            throw new Error("No DEBT_TAKEN found for this entity");
+          }
+          
+          const parentDebtId = debtTaken.rows[0].id;
+
+          // 1️⃣ Insert transaction
+          await client.query(
+            `INSERT INTO transactions
+             (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+            [
+              "DEBT_REPAID",
+              amountNumber,
+              from_account,
+              to_account,
+              entity_id,
+              category_id || null,
+              date,
+              note,
+              parentDebtId, // 🔥 THIS LINE FIXES EVERYTHING
+            ]
+          );
+      
+          // 2️⃣ Reduce debt
+          await client.query(
+            `UPDATE debts
+             SET remaining_amount = remaining_amount - $2
+             WHERE entity_id = $1`,
+            [entity_id, amountNumber]
+          );
+      
+          // 3️⃣ Optional safety (auto delete if zero)
+          await client.query(
+            `DELETE FROM debts
+             WHERE entity_id = $1 AND remaining_amount <= 0`,
+            [entity_id]
+          );
+        }
       }
 
       // ---------- RECEIVABLE ----------
@@ -248,14 +411,120 @@ export async function POST(req: Request) {
       }
 
       if (type === "RECEIVABLE_RECEIVED") {
-        await client.query(
-          `
-          UPDATE receivables
-          SET remaining_amount = remaining_amount - $2
-          WHERE entity_id = $1
-        `,
-          [entity_id, amountNumber]
+        const recRes = await client.query(
+          `SELECT * FROM receivables WHERE entity_id = $1`,
+          [entity_id]
         );
+      
+        const currentRemaining = Number(
+          recRes.rows[0]?.remaining_amount || 0
+        );
+      
+        // =========================
+        // 🔥 OVER-RECEIVED (SPLIT)
+        // =========================
+        if (amountNumber > currentRemaining) {
+          const receiveAmount = currentRemaining;
+          const extra = amountNumber - currentRemaining;
+      
+          // 1️⃣ Correct receive (only actual receivable)
+          const receiveTx = await client.query(
+            `INSERT INTO transactions
+             (type, amount, from_account, to_account, entity_id, category_id, date, note)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+             RETURNING id`,
+            [
+              "RECEIVABLE_RECEIVED",
+              receiveAmount,
+              from_account,
+              to_account,
+              entity_id,
+              category_id || null,
+              date,
+              note,
+            ]
+          );
+          
+          const parentId = receiveTx.rows[0].id;
+      
+          // 2️⃣ Clear receivable
+          await client.query(
+            `UPDATE receivables
+             SET total_amount = 0,
+                 remaining_amount = 0
+             WHERE entity_id = $1`,
+            [entity_id]
+          );
+      
+          // 3️⃣ Convert extra → DEBT
+          if (extra > 0) {
+            await client.query(
+              `INSERT INTO debts (entity_id, total_amount, remaining_amount)
+               VALUES ($1, $2, $2)
+               ON CONFLICT (entity_id)
+               DO UPDATE SET
+                 total_amount = debts.total_amount + $2,
+                 remaining_amount = debts.remaining_amount + $2`,
+              [entity_id, extra]
+            );
+      
+            await client.query(
+              `INSERT INTO transactions
+               (type, amount, from_account, to_account, entity_id, date, note, parent_id)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+              [
+                "DEBT_TAKEN",
+                extra,
+                debtId,
+                to_account,
+                entity_id,
+                date,
+                "Auto conversion",
+                parentId, // 🔥 LINK
+              ]
+            );
+          }
+      
+          await client.query("COMMIT");
+          return NextResponse.json({ success: true });
+        }
+      
+        // =========================
+        // ✅ NORMAL RECEIVE
+        // =========================
+        else {
+          // 1️⃣ Insert transaction
+          await client.query(
+            `INSERT INTO transactions
+             (type, amount, from_account, to_account, entity_id, category_id, date, note)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+            [
+              "RECEIVABLE_RECEIVED",
+              amountNumber,
+              from_account,
+              to_account,
+              entity_id,
+              category_id || null,
+              date,
+              note,
+            ]
+          );
+      
+          // 2️⃣ Reduce receivable
+          await client.query(
+            `UPDATE receivables
+             SET remaining_amount = remaining_amount - $2
+             WHERE entity_id = $1`,
+            [entity_id, amountNumber]
+          );
+      
+          // 3️⃣ Auto delete if zero
+          await client.query(
+            `DELETE FROM receivables
+             WHERE entity_id = $1 AND remaining_amount <= 0`,
+            [entity_id]
+          );
+        }
       }
     }
 
@@ -263,7 +532,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      data: result.rows[0],
+      data: result?.rows?.[0] || null,
     });
 
   } catch (err: any) {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "../../components/layout/DashboardLayout";
+import { useRefresh } from "@/hooks/useRefresh";
 
 type Debt = {
   entity_id: string;
@@ -24,9 +25,7 @@ export default function DebtPage() {
       .then((data) => setDebts(data.data || []));
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useRefresh(loadData);
 
   const formatName = (text: string) => {
     return text

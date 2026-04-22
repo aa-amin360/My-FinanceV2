@@ -28,10 +28,62 @@ export async function DELETE(
     }
 
     const t = tx.rows[0];
+
+    // 🚫 BLOCK: child cannot be deleted directly
+    if (t.parent_id && t.type === "RECEIVABLE_GIVEN") {
+      return NextResponse.json(
+        { error: "Cannot delete auto-generated transaction" },
+        { status: 400 }
+      );
+    }
+
+    // 🔍 FIND CHILDREN
+    const children = await client.query(
+      `SELECT * FROM transactions WHERE parent_id = $1`,
+      [t.id]
+    );
+
+    // 🚫 BLOCK ONLY ROOT (DEBT_TAKEN)
+    if (children.rows.length > 0 && t.type === "DEBT_TAKEN") {
+      return NextResponse.json(
+        { error: "Cannot delete base debt while dependent records exist" },
+        { status: 400 }
+      );
+    }
+
+    // 🔥 CASCADE DELETE (only for allowed cases like DEBT_REPAID)
+    for (const child of children.rows) {
+      const amt = Number(child.amount);
+
+      if (child.type === "RECEIVABLE_GIVEN") {
+        await client.query(
+          `UPDATE receivables
+           SET total_amount = total_amount - $2,
+               remaining_amount = remaining_amount - $2
+           WHERE entity_id = $1`,
+          [child.entity_id, amt]
+        );
+      }
+
+      if (child.type === "DEBT_TAKEN") {
+        await client.query(
+          `UPDATE debts
+           SET total_amount = total_amount - $2,
+               remaining_amount = remaining_amount - $2
+           WHERE entity_id = $1`,
+          [child.entity_id, amt]
+        );
+      }
+
+      await client.query(
+        `DELETE FROM transactions WHERE id = $1`,
+        [child.id]
+      );
+    }
+
     const amount = Number(t.amount);
 
     // ===== REVERSE EFFECT =====
-
     if (t.entity_id) {
       if (t.type === "DEBT_TAKEN") {
         await client.query(
@@ -70,16 +122,14 @@ export async function DELETE(
           [t.entity_id, amount]
         );
       }
-      // ===== CLEANUP EMPTY RECORDS =====
-            
-      // DEBT CLEANUP
+
+      // ===== CLEANUP =====
       await client.query(
         `DELETE FROM debts
          WHERE entity_id = $1 AND remaining_amount <= 0`,
         [t.entity_id]
       );
-      
-      // RECEIVABLE CLEANUP
+
       await client.query(
         `DELETE FROM receivables
          WHERE entity_id = $1 AND remaining_amount <= 0`,
@@ -87,7 +137,7 @@ export async function DELETE(
       );
     }
 
-    // ===== DELETE =====
+    // ===== DELETE MAIN =====
     await client.query(
       `DELETE FROM transactions WHERE id = $1`,
       [id]
