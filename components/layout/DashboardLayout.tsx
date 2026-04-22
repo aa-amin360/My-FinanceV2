@@ -23,6 +23,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const currentBalance = Number(balance || 0);
 
+  const [collapsed, setCollapsed] = useState(false);
   // ================= MODAL STATE =================
   const [showModal, setShowModal] = useState(false);
   const [step, setStep] = useState<"ACTION" | "FORM">("ACTION");
@@ -175,7 +176,11 @@ export default function DashboardLayout({
     <div className="flex min-h-screen bg-white text-black dark:bg-slate-950 dark:text-white transition-colors duration-300">
       
       {/* ================= SIDEBAR (DESKTOP) ================= */}
-      <aside className="hidden md:flex w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 p-5 flex-col">
+      <aside
+        className={`hidden md:flex ${
+          collapsed ? "w-20" : "w-64"
+        } bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 p-5 flex-col transition-all duration-300`}
+      >
       
         {/* ===== LOGO + BRAND ===== */}
         <div className="flex items-center justify-between mb-6">
@@ -202,18 +207,25 @@ export default function DashboardLayout({
             {theme === "dark" ? "🌙" : "☀️"}
           </button>
         </div>
+
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:scale-105 transition"
+        >
+          {collapsed ? "➡️" : "⬅️"}
+        </button>
       
         {/* ===== NAVIGATION ===== */}
         <nav className="flex flex-col gap-2 text-sm">
-      
-          <Item label="Dashboard" href="/" pathname={pathname} />
-          <Item label="Transactions" href="/transactions" pathname={pathname} />
-          <Item label="Categories" href="/categories" pathname={pathname} />
-          <Item label="Savings" href="/savings" pathname={pathname} />
-          <Item label="Debt" href="/debts" pathname={pathname} />
-          <Item label="Receivable" href="/receivables" pathname={pathname} />
-          <Item label="Reports" href="/reports" pathname={pathname} />
-      
+        
+          <Item label="Dashboard" href="/" pathname={pathname} icon={LayoutDashboard} collapsed={collapsed} />
+          <Item label="Transactions" href="/transactions" pathname={pathname} icon={ArrowLeftRight} collapsed={collapsed} />
+          <Item label="Categories" href="/categories" pathname={pathname} icon={Tag} collapsed={collapsed} />
+          <Item label="Savings" href="/savings" pathname={pathname} icon={Wallet} collapsed={collapsed} />
+          <Item label="Debt" href="/debts" pathname={pathname} icon={CreditCard} collapsed={collapsed} />
+          <Item label="Receivable" href="/receivables" pathname={pathname} icon={Wallet} collapsed={collapsed} />
+          <Item label="Reports" href="/reports" pathname={pathname} icon={BarChart3} collapsed={collapsed} />
+        
         </nav>
       
       </aside>
@@ -276,6 +288,7 @@ export default function DashboardLayout({
               <>
                 {/* HEADER */}
                 <div className="flex items-center justify-between">
+                  
                   <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
                     Select Action
                   </h3>
@@ -426,14 +439,15 @@ export default function DashboardLayout({
 
 // ================= COMPONENTS =================
 
-function Item({ label, href, pathname }: any) {
+function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
   const isActive = pathname === href;
 
   return (
     <Link href={href}>
       <div
         className={`
-          px-4 py-2 rounded-lg transition-all duration-200 cursor-pointer
+          flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200 cursor-pointer
+          ${collapsed ? "justify-center" : ""}
           ${
             isActive
               ? "bg-green-500 text-black font-medium shadow-[0_0_10px_rgba(34,197,94,0.3)]"
@@ -441,19 +455,23 @@ function Item({ label, href, pathname }: any) {
           }
         `}
       >
-        {label}
+        {/* ICON (optional, won’t break if not passed) */}
+        {Icon && <Icon size={18} />}
+
+        {/* TEXT */}
+        {!collapsed && <span>{label}</span>}
       </div>
     </Link>
   );
 }
 
 import {
-  Home,
+  LayoutDashboard,
   ArrowLeftRight,
-  CreditCard,
-  Wallet,
-  BarChart3,
   Tag,
+  Wallet,
+  CreditCard,
+  BarChart3,
 } from "lucide-react";
 
 function FloatingNav({ pathname }: { pathname: string }) {
