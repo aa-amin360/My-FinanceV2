@@ -184,11 +184,11 @@ export default function DashboardLayout({
           
             {/* ICON */}
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-green-400 to-green-600 shadow-md flex items-center justify-center text-black">
-              <CircleDollarSign size={20} />
+              <CircleDollarSign size={30} />
             </div>
           
             {/* TEXT */}
-            <h1 className={`text-green-500 text-lg font-semibold tracking-wide ${space.className}`}>
+            <h1 className={`text-green-500 text-xl font-bold ${space.className}`}>
               My Finance
             </h1>
           
