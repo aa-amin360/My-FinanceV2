@@ -507,3 +507,22 @@ function ActionCard({ label, onClick }: any) {
     </div>
   );
 }
+
+function Item({ label, href, pathname }: any) {
+  const active = pathname === href;
+
+  return (
+    <a
+      href={href}
+      className={`
+        px-4 py-2 rounded-lg transition-all duration-200
+        ${active
+          ? "bg-green-500 text-black font-medium shadow-[0_0_10px_rgba(34,197,94,0.3)]"
+          : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-black dark:hover:text-white"
+        }
+      `}
+    >
+      {label}
+    </a>
+  );
+}
