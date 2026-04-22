@@ -265,11 +265,25 @@ export async function POST(req: Request) {
           const repayAmount = currentRemaining;
           const extra = amountNumber - currentRemaining;
       
-          // 1️⃣ Correct repay (only actual debt)
+          // 🔍 find DEBT_TAKEN
+          const debtTaken = await client.query(
+            `SELECT id FROM transactions
+             WHERE entity_id = $1 AND type = 'DEBT_TAKEN'
+             ORDER BY date DESC LIMIT 1`,
+            [entity_id]
+          );
+          
+          if (debtTaken.rows.length === 0) {
+            throw new Error("No DEBT_TAKEN found for this entity");
+          }
+          
+          const parentDebtId = debtTaken.rows[0].id;
+          
+          // 1️⃣ Correct repay
           const repayTx = await client.query(
             `INSERT INTO transactions
-             (type, amount, from_account, to_account, entity_id, category_id, date, note)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+             (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
              RETURNING id`,
             [
               "DEBT_REPAID",
@@ -280,6 +294,7 @@ export async function POST(req: Request) {
               category_id || null,
               date,
               note,
+              parentDebtId, // 🔥 FIX
             ]
           );
           
@@ -330,12 +345,26 @@ export async function POST(req: Request) {
         // =========================
         // ✅ NORMAL REPAY (FIX)
         // =========================
-        else {
+        else {          
+          // 🔍 find latest DEBT_TAKEN
+          const debtTaken = await client.query(
+            `SELECT id FROM transactions
+             WHERE entity_id = $1 AND type = 'DEBT_TAKEN'
+             ORDER BY date DESC LIMIT 1`,
+            [entity_id]
+          );
+          
+          if (debtTaken.rows.length === 0) {
+            throw new Error("No DEBT_TAKEN found for this entity");
+          }
+          
+          const parentDebtId = debtTaken.rows[0].id;
+
           // 1️⃣ Insert transaction
           await client.query(
             `INSERT INTO transactions
-             (type, amount, from_account, to_account, entity_id, category_id, date, note)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+             (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
             [
               "DEBT_REPAID",
               amountNumber,
@@ -345,6 +374,7 @@ export async function POST(req: Request) {
               category_id || null,
               date,
               note,
+              parentDebtId, // 🔥 THIS LINE FIXES EVERYTHING
             ]
           );
       
