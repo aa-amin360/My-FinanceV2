@@ -168,19 +168,35 @@ export default function DashboardLayout({
     <div className="flex min-h-screen bg-white text-black dark:bg-slate-950 dark:text-white transition-colors duration-300">
       
       {/* ================= SIDEBAR (DESKTOP) ================= */}
-      <aside className="hidden md:flex w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 p-5 flex-col gap-6">
-        <div>
-          <h1 className="text-green-500 text-xl font-bold">My Finance</h1>
-
+      <aside className="hidden md:flex w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 p-5 flex-col">
+      
+        {/* ===== LOGO + BRAND ===== */}
+        <div className="flex items-center justify-between mb-6">
+          
+          <div className="flex items-center gap-3">
+            {/* Logo */}
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-md">
+              <span className="text-black font-bold text-sm">$</span>
+            </div>
+      
+            {/* App Name */}
+            <h1 className="text-green-500 text-lg font-semibold tracking-wide">
+              My Finance
+            </h1>
+          </div>
+      
+          {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="mt-4 w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:scale-105 transition"
+            className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:scale-105 transition"
           >
             {theme === "dark" ? "🌙" : "☀️"}
           </button>
         </div>
-
-        <nav className="flex flex-col gap-3 text-sm">
+      
+        {/* ===== NAVIGATION ===== */}
+        <nav className="flex flex-col gap-2 text-sm">
+      
           <Item label="Dashboard" href="/" pathname={pathname} />
           <Item label="Transactions" href="/transactions" pathname={pathname} />
           <Item label="Categories" href="/categories" pathname={pathname} />
@@ -188,7 +204,9 @@ export default function DashboardLayout({
           <Item label="Debt" href="/debts" pathname={pathname} />
           <Item label="Receivable" href="/receivables" pathname={pathname} />
           <Item label="Reports" href="/reports" pathname={pathname} />
+      
         </nav>
+      
       </aside>
 
       {/* ================= MAIN ================= */}
@@ -404,7 +422,16 @@ function Item({ label, href, pathname }: any) {
 
   return (
     <Link href={href}>
-      <div className={isActive ? "bg-green-500 text-black px-3 py-2 rounded" : "px-3 py-2"}>
+      <div
+        className={`
+          px-4 py-2 rounded-lg transition-all duration-200 cursor-pointer
+          ${
+            isActive
+              ? "bg-green-500 text-black font-medium shadow-[0_0_10px_rgba(34,197,94,0.3)]"
+              : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-black dark:hover:text-white"
+          }
+        `}
+      >
         {label}
       </div>
     </Link>

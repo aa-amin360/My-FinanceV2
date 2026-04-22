@@ -23,6 +23,8 @@ export async function GET() {
     `);
 
     let balance = 0;
+    let cashBalance = 0;
+    let bankBalance = 0;
 
     for (const row of result.rows) {
       const amount = Number(row.amount) || 0;
@@ -39,21 +41,35 @@ export async function GET() {
       // =========================
       // CORE LOGIC
       // =========================
-
-      // Money comes INTO wallet
-      if (to === "cash" || to === "bank") {
+     
+      // ===== CASH =====
+      if (to === "cash") {
+        cashBalance += amount;
         balance += amount;
       }
-
-      // Money goes OUT of wallet
-      if (from === "cash" || from === "bank") {
+      
+      if (from === "cash") {
+        cashBalance -= amount;
+        balance -= amount;
+      }
+      
+      // ===== BANK =====
+      if (to === "bank") {
+        bankBalance += amount;
+        balance += amount;
+      }
+      
+      if (from === "bank") {
+        bankBalance -= amount;
         balance -= amount;
       }
     }
 
     return NextResponse.json({
       success: true,
-      balance: balance,
+      balance,
+      cashBalance,
+      bankBalance,
     });
 
   } catch (err: any) {

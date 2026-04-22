@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import CashflowChart from "../components/charts/CashflowChart";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { Trash2, Wallet, Landmark } from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
 
 type Transaction = {
@@ -18,17 +18,22 @@ type Transaction = {
 export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balance, setBalance] = useState(0);
+  const [cashBalance, setCashBalance] = useState(0);
+  const [bankBalance, setBankBalance] = useState(0);
   const [debt, setDebt] = useState(0);
   const [receivable, setReceivable] = useState(0);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
 
   // ================= LOAD DATA =================
   const loadData = async () => {
     const tx = await fetch("/api/transactions", { cache: "no-store" }).then((r) => r.json());
     setTransactions(tx.data || []);
 
-    const b = await fetch("/api/balance", { cache: "no-store" }).then((r) => r.json());
+    const b = await fetch("/api/balance", { cache: "no-store" }).then((r) => r.json());    
     setBalance(Number(b.balance || 0));
+    setCashBalance(Number(b.cashBalance || 0));
+    setBankBalance(Number(b.bankBalance || 0));
 
     const d = await fetch("/api/debts", { cache: "no-store" }).then((r) => r.json());
     setDebt(Number(d.total || 0));
@@ -90,19 +95,69 @@ export default function Home() {
 
   return (
     <DashboardLayout balance={balance}>
+
+      {/* 🔥 OVERLAY */}
+      {open && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-lg z-40"
+          onClick={() => setOpen(false)}
+        />
+      )}
+      
       {/* BALANCE */}
-      <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-2xl text-black">
-        <h1
-          className={`font-bold ${
-            balance > 1000000
-              ? "text-2xl"
-              : balance > 100000
-              ? "text-3xl"
-              : "text-4xl"
-          }`}
+      <div className="relative z-50">
+      
+        {/* MAIN CARD */}
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen(!open);
+          }}
+          className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-2xl text-black cursor-pointer flex justify-between items-center"
         >
-          {Number(balance).toLocaleString("en-BD")} Tk
-        </h1>
+          <h1
+            className={`font-bold ${
+              balance > 1000000
+                ? "text-2xl"
+                : balance > 100000
+                ? "text-3xl"
+                : "text-4xl"
+            }`}
+          >
+            {Number(balance).toLocaleString("en-BD")} Tk
+          </h1>
+      
+          {/* dropdown arrow */}
+          <div
+            className={`
+              w-9 h-9 flex items-center justify-center
+              rounded-full border border-black/20 dark:border-white/20
+              bg-white/20 dark:bg-black/20
+              shadow-sm hover:shadow-md
+              transition-all duration-200
+              ${open ? "rotate-180" : ""}
+            `}
+          >
+            <span className="text-sm">▼</span>
+          </div>
+        </div>
+      
+        {/* DROPDOWN */}
+        {open && (
+          <div className="absolute top-full left-0 w-full mt-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-gray-200 dark:border-slate-800 rounded-2xl shadow-lg overflow-hidden z-50">
+      
+            <div className="px-4 py-3 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer">
+              <Wallet size={16} />
+              Cash Balance — {Number(cashBalance).toLocaleString("en-BD")} Tk
+            </div>
+            
+            <div className="px-4 py-3 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer">
+              <Landmark size={16} />
+              Bank Balance — {Number(bankBalance).toLocaleString("en-BD")} Tk
+            </div>
+      
+          </div>
+        )}
       </div>
       
       {/* CARDS */}

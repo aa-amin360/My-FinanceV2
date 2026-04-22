@@ -11,5 +11,5 @@ export function useRefresh(callback: () => void) {
     return () => {
       window.removeEventListener("refreshData", handler);
     };
-  }, []);
+  }, [callback]);
 }
