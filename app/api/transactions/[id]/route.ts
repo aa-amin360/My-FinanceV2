@@ -37,25 +37,21 @@ export async function DELETE(
       );
     }
 
-    // 🚫 BLOCK: parent cannot be deleted if it has children
-    const hasChildren = await client.query(
-      `SELECT 1 FROM transactions WHERE parent_id = $1 LIMIT 1`,
-      [t.id]
-    );
-
-    if (hasChildren.rows.length > 0) {
-      return NextResponse.json(
-        { error: "Cannot delete this transaction because it has dependent records" },
-        { status: 400 }
-      );
-    }
-
-    // 🔥 HANDLE LINKED (CHILD) TRANSACTIONS
+    // 🔍 FIND CHILDREN
     const children = await client.query(
       `SELECT * FROM transactions WHERE parent_id = $1`,
       [t.id]
     );
 
+    // 🚫 BLOCK ONLY ROOT (DEBT_TAKEN)
+    if (children.rows.length > 0 && t.type === "DEBT_TAKEN") {
+      return NextResponse.json(
+        { error: "Cannot delete base debt while dependent records exist" },
+        { status: 400 }
+      );
+    }
+
+    // 🔥 CASCADE DELETE (only for allowed cases like DEBT_REPAID)
     for (const child of children.rows) {
       const amt = Number(child.amount);
 
@@ -88,7 +84,6 @@ export async function DELETE(
     const amount = Number(t.amount);
 
     // ===== REVERSE EFFECT =====
-
     if (t.entity_id) {
       if (t.type === "DEBT_TAKEN") {
         await client.query(
@@ -128,8 +123,7 @@ export async function DELETE(
         );
       }
 
-      // ===== CLEANUP EMPTY RECORDS =====
-
+      // ===== CLEANUP =====
       await client.query(
         `DELETE FROM debts
          WHERE entity_id = $1 AND remaining_amount <= 0`,
@@ -143,7 +137,7 @@ export async function DELETE(
       );
     }
 
-    // ===== DELETE =====
+    // ===== DELETE MAIN =====
     await client.query(
       `DELETE FROM transactions WHERE id = $1`,
       [id]
