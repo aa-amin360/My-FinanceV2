@@ -95,8 +95,17 @@ export default function Home() {
 
   return (
     <DashboardLayout balance={balance}>
+
+      {/* 🔥 OVERLAY */}
+      {open && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-lg z-40"
+          onClick={() => setOpen(false)}
+        />
+      )}
+      
       {/* BALANCE */}
-      <div className="relative">
+      <div className="relative z-50">
       
         {/* MAIN CARD */}
         <div
