@@ -180,41 +180,54 @@ export default function DashboardLayout({
         className={`hidden md:flex ${
           collapsed ? "w-24 items-center" : "w-64"
         } bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 
-        p-4 flex-col justify-between transition-all duration-300`}
+        p-4 flex-col h-screen transition-all duration-300`}
       >
       <div className="flex flex-col w-full">
 
         {/* ===== LOGO + BRAND ===== */}
-        <div className="flex items-center justify-between mb-6">
+        <div className={`flex items-center ${collapsed ? "justify-center w-full" : "justify-between"} mb-6`}>
           
-          <div className={`flex items-center ${collapsed ? "justify-center w-full" : "gap-3"}`}>
-          
+          <div className="flex items-center gap-3">
+            
             {/* ICON */}
             <div className="w-9 h-9 rounded-xl bg-green-500 flex items-center justify-center text-black">
-              <CircleDollarSign size={30} />
+              <CircleDollarSign size={20} />
             </div>
-          
+        
             {/* TEXT */}
             {!collapsed && (
               <h1 className="text-green-500 text-lg font-semibold tracking-wide">
                 My Finance
               </h1>
             )}
-          
           </div>
-      
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:scale-105 transition"
-          >
-            {theme === "dark" ? "🌙" : "☀️"}
-          </button>
+        
+          {/* THEME BUTTON */}
+          {!collapsed ? (
+            <button
+              onClick={toggleTheme}
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700"
+            >
+              {theme === "dark" ? "🌙" : "☀️"}
+            </button>
+          ) : (
+            <button
+              onClick={toggleTheme}
+              className="absolute top-16 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700"
+            >
+              {theme === "dark" ? "🌙" : "☀️"}
+            </button>
+          )}
         </div>
       
         {/* ===== NAVIGATION ===== */}
-        <nav className={`flex flex-col items-center ${ collapsed ? "gap-5 mt-6" : "gap-2 mt-6" } text-sm flex-1 overflow-y-auto`}>
-        
+        <nav
+          className={`
+            flex flex-col w-full
+            ${collapsed ? "items-center gap-5 mt-6" : "gap-2 mt-6"}
+            text-sm flex-1 overflow-y-auto
+          `}
+        >
           <Item label="Dashboard" href="/" pathname={pathname} icon={LayoutDashboard} collapsed={collapsed} />
           <Item label="Transactions" href="/transactions" pathname={pathname} icon={ArrowLeftRight} collapsed={collapsed} />
           <Item label="Categories" href="/categories" pathname={pathname} icon={Tag} collapsed={collapsed} />
@@ -225,12 +238,15 @@ export default function DashboardLayout({
         
         </nav>
 
-        <div className="w-full flex justify-center mt-6 shrink-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700">
+        <div className="w-full flex justify-center mt-auto pb-4">
           <button
             onClick={() => setCollapsed(!collapsed)}
             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition text-sm"
           >
-            <ArrowLeft size={22} />
+            <ArrowLeft
+              size={18}
+              className={`transition-transform ${collapsed ? "rotate-180" : ""}`}
+            />
         
             {!collapsed && <span>Collapse</span>}
           </button>
@@ -457,10 +473,10 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
     <Link href={href}>
       <div
         className={`
-          group flex items-center gap-3 px-3 py-3 rounded-lg 
-          transition-all duration-200 cursor-pointer
-          group-hover:scale-110
-          ${collapsed ? "justify-center px-0" : ""}
+          group flex items-center
+          ${collapsed ? "justify-center w-full" : "gap-3 px-3"}
+          py-2 rounded-lg cursor-pointer
+          transition-all duration-200
           ${
             isActive
               ? "bg-green-500 text-black font-medium shadow-[0_0_10px_rgba(34,197,94,0.3)]"
@@ -468,10 +484,10 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
           }
         `}
       >
-        {/* ICON (optional, won’t break if not passed) */}
+        {/* ICON */}
         {Icon && (
           <Icon
-            size={collapsed ? 22 : 18}
+            size={collapsed ? 20 : 16} // 👈 smaller icons
             className="transition-transform duration-200 group-hover:scale-110"
           />
         )}
@@ -490,7 +506,7 @@ import {
   Wallet,
   CreditCard,
   BarChart3,
-  Home,
+  Home,  
   ArrowLeft,
   HandCoins,
 } from "lucide-react";
