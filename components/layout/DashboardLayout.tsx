@@ -472,7 +472,7 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
         {/* ICON (optional, won’t break if not passed) */}
         {Icon && (
           <Icon
-            size={collapsed ? 28 : 18}
+            size={collapsed ? 22 : 18}
             className="transition-transform duration-200 group-hover:scale-110"
           />
         )}
