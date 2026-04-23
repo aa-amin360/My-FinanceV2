@@ -29,7 +29,16 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const currentBalance = Number(balance || 0);
 
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("sidebar-collapsed") === "true";
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("sidebar-collapsed", String(collapsed));
+  }, [collapsed]);
 
   // ================= MODAL STATE =================
   const [showModal, setShowModal] = useState(false);
@@ -185,7 +194,7 @@ export default function DashboardLayout({
       {/* ================= SIDEBAR (DESKTOP) ================= */}
       <aside
         className={`hidden md:flex ${
-          collapsed ? "w-20" : "w-56"
+          collapsed ? "w-16" : "w-56"
         } h-full bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 flex-col transition-all duration-300`}
       >
         
@@ -486,7 +495,7 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
           }
         `}
       >
-        <Icon size={collapsed ? 22 : 18} />
+        <Icon size={collapsed ? 20 : 18} />
         {!collapsed && <span>{label}</span>}
       </div>
     </Link>
