@@ -498,7 +498,7 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
             : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-black dark:hover:text-white"
         }`}
       >
-        <Icon size={collapsed ? 22 : 18} />
+        <Icon size={collapsed ? 20 : 18} />
         {!collapsed && <span>{label}</span>}
       </div>
     </Link>
