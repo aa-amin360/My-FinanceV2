@@ -218,7 +218,11 @@ export default function DashboardLayout({
             collapsed ? "px-1" : "px-2"
           }`}
         >
-          <nav className="flex flex-col items-stretch">
+          <nav
+            className={`flex flex-col items-stretch ${
+              collapsed ? "gap-3 mt-2" : "gap-2 mt-2"
+            }`}
+          >
             <Item icon={LayoutDashboard} label="Dashboard" href="/" pathname={pathname} collapsed={collapsed} />
             <Item icon={ArrowLeftRight} label="Transactions" href="/transactions" pathname={pathname} collapsed={collapsed} />
             <Item icon={Tag} label="Categories" href="/categories" pathname={pathname} collapsed={collapsed} />
