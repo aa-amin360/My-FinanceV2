@@ -12,6 +12,19 @@ const space = Space_Grotesk({
   weight: ["500", "600", "700"],
 });
 
+import {
+  LayoutDashboard,
+  ArrowLeftRight,
+  Tag,
+  Wallet,
+  CreditCard,
+  BarChart3,
+  PanelLeftClose,
+  PanelRightClose,
+  CircleDollarSign,
+  Home,
+} from "lucide-react";
+
 export default function DashboardLayout({
   children,
   balance,
@@ -23,7 +36,17 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const currentBalance = Number(balance || 0);
 
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("sidebar-collapsed") === "true";
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("sidebar-collapsed", String(collapsed));
+  }, [collapsed]);
+
   // ================= MODAL STATE =================
   const [showModal, setShowModal] = useState(false);
   const [step, setStep] = useState<"ACTION" | "FORM">("ACTION");
@@ -173,33 +196,74 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="flex min-h-screen bg-white text-black dark:bg-slate-950 dark:text-white transition-colors duration-300">
+    <div className="flex h-screen overflow-hidden bg-white text-black dark:bg-slate-950 dark:text-white transition-colors duration-300">
       
       {/* ================= SIDEBAR (DESKTOP) ================= */}
       <aside
         className={`hidden md:flex ${
-          collapsed ? "w-24 items-center" : "w-64"
-        } bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 
-        p-4 flex-col h-screen transition-all duration-300`}
+          collapsed ? "w-15" : "w-56"
+        } h-full bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 flex-col transition-all duration-300`}
       >
-      <div className="flex flex-col w-full">
-
-        {/* ===== LOGO + BRAND ===== */}
-        <div className={`flex items-center ${collapsed ? "justify-center w-full" : "justify-between"} mb-6`}>
-          
-          <div className="flex items-center gap-3">
-            
-            {/* ICON */}
-            <div className="w-9 h-9 rounded-xl bg-green-500 flex items-center justify-center text-black">
-              <CircleDollarSign size={20} />
-            </div>
         
-            {/* TEXT */}
-            {!collapsed && (
-              <h1 className="text-green-500 text-lg font-semibold tracking-wide">
-                My Finance
-              </h1>
-            )}
+        {/* ================= TOP ================= */}
+        <div className="p-4 flex items-center justify-between">
+          
+          {/* TITLE */}
+          {!collapsed && (
+            <h1 className="text-sm font-semibold text-gray-400 tracking-widest">
+              MENU
+            </h1>
+          )}
+      
+          {/* COLLAPSE BUTTON */}
+          <button 
+            onClick={() => setCollapsed(!collapsed)} 
+            className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition" 
+            > 
+              {collapsed ? ( 
+                <PanelRightClose size={18} /> 
+              ) : ( 
+                <PanelLeftClose size={18} />
+            )} 
+          </button>
+        </div>
+      
+        {/* ================= NAV ================= */}
+        <div
+          className={`flex-1 overflow-y-auto ${
+            collapsed ? "px-1" : "px-2"
+          }`}
+        >
+          <nav
+            className={`flex flex-col items-stretch ${
+              collapsed ? "gap-3 mt-2" : "gap-2 mt-2"
+            }`}
+          >
+            <Item icon={LayoutDashboard} label="Dashboard" href="/" pathname={pathname} collapsed={collapsed} />
+            <Item icon={ArrowLeftRight} label="Transactions" href="/transactions" pathname={pathname} collapsed={collapsed} />
+            <Item icon={Tag} label="Categories" href="/categories" pathname={pathname} collapsed={collapsed} />
+            <Item icon={Wallet} label="Savings" href="/savings" pathname={pathname} collapsed={collapsed} />
+            <Item icon={CreditCard} label="Debt" href="/debts" pathname={pathname} collapsed={collapsed} />
+            <Item icon={Wallet} label="Receivable" href="/receivables" pathname={pathname} collapsed={collapsed} />
+            <Item icon={BarChart3} label="Reports" href="/reports" pathname={pathname} collapsed={collapsed} />
+          </nav>
+        </div>
+      </aside>
+
+      {/* ================= RIGHT SIDE ================= */}
+      <div className="flex flex-col flex-1 h-full">
+      
+        {/* ================= HEADER ================= */}
+        <div className="h-16 shrink-0 flex items-center justify-between px-6 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800">
+          
+          {/* LEFT: APP NAME */}
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-green-500 flex items-center justify-center text-black font-bold">
+              $
+            </div>
+            <h1 className="text-lg font-semibold text-green-500 tracking-wide">
+              My Finance
+            </h1>
           </div>
         
           {/* THEME BUTTON */}
@@ -220,28 +284,10 @@ export default function DashboardLayout({
           )}
         </div>
       
-        {/* ===== NAVIGATION ===== */}
-        <nav
-          className={`
-            flex flex-col w-full
-            ${collapsed ? "items-center gap-5 mt-6" : "gap-2 mt-6"}
-            text-sm flex-1 overflow-y-auto
-          `}
-        >
-          <Item label="Dashboard" href="/" pathname={pathname} icon={LayoutDashboard} collapsed={collapsed} />
-          <Item label="Transactions" href="/transactions" pathname={pathname} icon={ArrowLeftRight} collapsed={collapsed} />
-          <Item label="Categories" href="/categories" pathname={pathname} icon={Tag} collapsed={collapsed} />
-          <Item label="Savings" href="/savings" pathname={pathname} icon={Wallet} collapsed={collapsed} />
-          <Item label="Debt" href="/debts" pathname={pathname} icon={CreditCard} collapsed={collapsed} />
-          <Item label="Receivable" href="/receivables" pathname={pathname} icon={HandCoins} collapsed={collapsed} />
-          <Item label="Reports" href="/reports" pathname={pathname} icon={BarChart3} collapsed={collapsed} />
-        
-        </nav>
-
-        <div className="w-full flex justify-center mt-auto pb-4">
+          {/* RIGHT: THEME TOGGLE */}
           <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition text-sm"
+            onClick={toggleTheme}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 hover:scale-105 transition"
           >
             <ArrowLeft
               size={18}
@@ -251,16 +297,13 @@ export default function DashboardLayout({
             {!collapsed && <span>Collapse</span>}
           </button>
         </div>
-
-      </div>
-
       
-      </aside>
-
-      {/* ================= MAIN ================= */}
-      <main className="flex-1 p-6 pb-28 md:pb-6">
-        {children}
-      </main>
+        {/* ================= MAIN ================= */}
+        <main className="flex-1 overflow-y-auto p-6">
+          {children}
+        </main>
+      
+      </div>
 
       {/* ================= RIGHT PANEL ================= */}
       {/*
@@ -464,8 +507,7 @@ export default function DashboardLayout({
   );
 }
 
-// ================= COMPONENTS =================
-
+// ================= COMPONENTS ================= //
 function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
   const isActive = pathname === href;
 
@@ -473,43 +515,23 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
     <Link href={href}>
       <div
         className={`
-          group flex items-center
+          flex items-center
           ${collapsed ? "justify-center w-full" : "gap-3 px-3"}
           py-2 rounded-lg cursor-pointer
           transition-all duration-200
           ${
             isActive
-              ? "bg-green-500 text-black font-medium shadow-[0_0_10px_rgba(34,197,94,0.3)]"
+              ? "bg-green-500 text-black font-medium"
               : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-black dark:hover:text-white"
           }
         `}
       >
-        {/* ICON */}
-        {Icon && (
-          <Icon
-            size={collapsed ? 20 : 16} // 👈 smaller icons
-            className="transition-transform duration-200 group-hover:scale-110"
-          />
-        )}
-
-        {/* TEXT */}
+        <Icon size={collapsed ? 20 : 18} />
         {!collapsed && <span>{label}</span>}
       </div>
     </Link>
-  );
+  );  
 }
-
-import {
-  LayoutDashboard,
-  ArrowLeftRight,
-  Tag,
-  Wallet,
-  CreditCard,
-  BarChart3,
-  Home,  
-  ArrowLeft,
-  HandCoins,
-} from "lucide-react";
 
 function FloatingNav({ pathname }: { pathname: string }) {
   // ================= NAV ITEMS =================
