@@ -475,14 +475,15 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
     <Link href={href}>
       <div
         className={`
-          flex items-center
-          ${collapsed ? "justify-center w-auto" : "gap-3 px-3"}
-          py-2 cursor-pointer transition-all duration-200
+          relative flex items-center
+          ${collapsed ? "justify-center w-full h-14" : "gap-3 px-3 py-2"}
+          cursor-pointer transition-all duration-200
+
           ${
             isActive
               ? collapsed
-                ? "bg-green-500 text-black w-18 h-12 flex items-center justify-center rounded-2xl shadow-md scale-105"
-                : "bg-green-500 text-black font-medium px-4 py-2 rounded-xl shadow-[0_0_12px_rgba(34,197,94,0.25)]"
+                ? "bg-green-500/90 text-black before:absolute before:left-0 before:top-0 before:h-full before:w-1 before:bg-green-400 before:rounded-r"
+                : "bg-green-500 text-black rounded-xl font-medium"
               : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-black dark:hover:text-white rounded-xl"
           }
         `}
