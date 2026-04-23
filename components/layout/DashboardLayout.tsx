@@ -4,6 +4,13 @@ import { useTheme } from "../ThemeProvider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { CircleDollarSign  } from "lucide-react";
+import { Space_Grotesk } from "next/font/google";
+
+const space = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+});
 
 import {
   LayoutDashboard,
@@ -258,13 +265,36 @@ export default function DashboardLayout({
               My Finance
             </h1>
           </div>
+        
+          {/* THEME BUTTON */}
+          {!collapsed ? (
+            <button
+              onClick={toggleTheme}
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700"
+            >
+              {theme === "dark" ? "🌙" : "☀️"}
+            </button>
+          ) : (
+            <button
+              onClick={toggleTheme}
+              className="absolute top-16 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700"
+            >
+              {theme === "dark" ? "🌙" : "☀️"}
+            </button>
+          )}
+        </div>
       
           {/* RIGHT: THEME TOGGLE */}
           <button
             onClick={toggleTheme}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 hover:scale-105 transition"
           >
-            {theme === "dark" ? "🌙" : "☀️"}
+            <ArrowLeft
+              size={18}
+              className={`transition-transform ${collapsed ? "rotate-180" : ""}`}
+            />
+        
+            {!collapsed && <span>Collapse</span>}
           </button>
         </div>
       
@@ -328,6 +358,7 @@ export default function DashboardLayout({
               <>
                 {/* HEADER */}
                 <div className="flex items-center justify-between">
+                  
                   <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
                     Select Action
                   </h3>
@@ -535,7 +566,7 @@ function FloatingNav({ pathname }: { pathname: string }) {
                 }`}
               >
                 {/* ICON */}
-                <Icon size={16} />
+                <Icon size={20} />
 
                 {/* LABEL (ONLY ACTIVE) */}
                 <span
