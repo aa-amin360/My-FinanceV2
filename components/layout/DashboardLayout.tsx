@@ -176,47 +176,30 @@ export default function DashboardLayout({
     <div className="flex min-h-screen bg-white text-black dark:bg-slate-950 dark:text-white transition-colors duration-300">
       
       {/* ================= SIDEBAR (DESKTOP) ================= */}
-        <aside
-          className={`hidden md:flex ${
-            collapsed ? "w-24 items-center" : "w-64"
-          } bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 p-4 flex-col transition-all duration-300`}
-        >
-      
+      <aside
+        className={`hidden md:flex ${
+          collapsed ? "w-24 items-center" : "w-64"
+        } bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 
+        p-4 flex-col justify-between transition-all duration-300`}
+      >
+      <div className="flex flex-col w-full">
+
         {/* ===== LOGO + BRAND ===== */}
         <div className="flex items-center justify-between mb-6">
           
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
           
-            <div className={`flex items-center ${collapsed ? "justify-center w-full" : "gap-3"}`}>
-              <div className="w-9 h-9 rounded-xl bg-green-500 flex items-center justify-center text-black">
-                <CircleDollarSign size={30} />
-              </div>
-          
-              {!collapsed && (
-                <h1 className="text-green-500 text-lg font-semibold">
-                  My Finance
-                </h1>
-              )}
+            {/* ICON */}
+            <div className="w-9 h-9 rounded-xl bg-green-500 flex items-center justify-center text-black">
+              <CircleDollarSign size={30} />
             </div>
           
-            {!collapsed && (
-              <button
-                onClick={() => setCollapsed(true)}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700"
-              >
-                ←
-              </button>
-            )}
-          </div>
+            {/* TEXT */}
+            <h1 className="text-green-500 text-lg font-semibold tracking-wide">
+              My Finance
+            </h1>
           
-          {collapsed && (
-            <button
-              onClick={() => setCollapsed(false)}
-              className="mt-4 w-9 h-9 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700"
-            >
-              →
-            </button>
-          )}
+          </div>
       
           {/* Theme Toggle */}
           <button
@@ -239,6 +222,20 @@ export default function DashboardLayout({
           <Item label="Reports" href="/reports" pathname={pathname} icon={BarChart3} collapsed={collapsed} />
         
         </nav>
+
+        <div className="w-full flex justify-center mt-4">
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition text-sm"
+          >
+            <ArrowLeft size={22} />
+        
+            {!collapsed && <span>Collapse</span>}
+          </button>
+        </div>
+
+      </div>
+
       
       </aside>
 
@@ -492,6 +489,7 @@ import {
   CreditCard,
   BarChart3,
   Home,
+  ArrowLeft
 } from "lucide-react";
 
 function FloatingNav({ pathname }: { pathname: string }) {
@@ -527,7 +525,7 @@ function FloatingNav({ pathname }: { pathname: string }) {
                 }`}
               >
                 {/* ICON */}
-                <Icon size={16} />
+                <Icon size={20} />
 
                 {/* LABEL (ONLY ACTIVE) */}
                 <span
