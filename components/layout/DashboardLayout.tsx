@@ -182,12 +182,12 @@ export default function DashboardLayout({
         } bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 
         p-4 flex-col justify-between transition-all duration-300`}
       >
-      <div className="flex flex-col w-full h-full justify-between">
+      <div className="flex flex-col w-full">
 
         {/* ===== LOGO + BRAND ===== */}
         <div className="flex items-center justify-between mb-6">
           
-          <div className="flex items-center gap-3">
+          <div className={`flex items-center ${collapsed ? "justify-center w-full" : "gap-3"}`}>
           
             {/* ICON */}
             <div className="w-9 h-9 rounded-xl bg-green-500 flex items-center justify-center text-black">
@@ -195,9 +195,11 @@ export default function DashboardLayout({
             </div>
           
             {/* TEXT */}
-            <h1 className="text-green-500 text-lg font-semibold tracking-wide">
-              My Finance
-            </h1>
+            {!collapsed && (
+              <h1 className="text-green-500 text-lg font-semibold tracking-wide">
+                My Finance
+              </h1>
+            )}
           
           </div>
       
@@ -211,7 +213,7 @@ export default function DashboardLayout({
         </div>
       
         {/* ===== NAVIGATION ===== */}
-        <nav className={`flex flex-col items-center ${collapsed ? "gap-5 mt-6" : "gap-2"} text-sm`}>
+        <nav className={`flex flex-col items-center ${ collapsed ? "gap-5 mt-6" : "gap-2 mt-6" } text-sm flex-1 overflow-y-auto`}>
         
           <Item label="Dashboard" href="/" pathname={pathname} icon={LayoutDashboard} collapsed={collapsed} />
           <Item label="Transactions" href="/transactions" pathname={pathname} icon={ArrowLeftRight} collapsed={collapsed} />
@@ -223,7 +225,7 @@ export default function DashboardLayout({
         
         </nav>
 
-        <div className="w-full flex justify-center mt-4">
+        <div className="w-full flex justify-center mt-6 shrink-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700">
           <button
             onClick={() => setCollapsed(!collapsed)}
             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition text-sm"
