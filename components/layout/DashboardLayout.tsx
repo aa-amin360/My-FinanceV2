@@ -5,6 +5,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import {
+  LayoutDashboard,
+  ArrowLeftRight,
+  Tag,
+  Wallet,
+  CreditCard,
+  BarChart3,
+  PanelLeftClose,
+  PanelRightClose,
+  CircleDollarSign,
+} from "lucide-react";
+
 export default function DashboardLayout({
   children,
   balance,
@@ -15,6 +27,8 @@ export default function DashboardLayout({
   const { toggleTheme, theme } = useTheme();
   const pathname = usePathname();
   const currentBalance = Number(balance || 0);
+
+  const [collapsed, setCollapsed] = useState(false);
 
   // ================= MODAL STATE =================
   const [showModal, setShowModal] = useState(false);
@@ -168,45 +182,81 @@ export default function DashboardLayout({
     <div className="flex min-h-screen bg-white text-black dark:bg-slate-950 dark:text-white transition-colors duration-300">
       
       {/* ================= SIDEBAR (DESKTOP) ================= */}
-      <aside className="hidden md:flex w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 p-5 flex-col">
-      
-        {/* ===== LOGO + BRAND ===== */}
-        <div className="flex items-center justify-between mb-6">
-          
+      <aside
+        className={`hidden md:flex ${
+          collapsed ? "w-20" : "w-64"
+        } h-screen bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 flex-col transition-all duration-300`}
+      >
+        {/* ================= TOP ================= */}
+        <div
+          className={`p-4 flex items-center ${
+            collapsed ? "justify-center" : "justify-between"
+          }`}
+        >
           <div className="flex items-center gap-3">
-            {/* Logo */}
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-md">
-              <span className="text-black font-bold text-sm">$</span>
+            {/* LOGO */}
+            <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center text-black">
+              <CircleDollarSign size={20} />
             </div>
       
-            {/* App Name */}
-            <h1 className="text-green-500 text-lg font-semibold tracking-wide">
-              My Finance
-            </h1>
+            {/* TEXT */}
+            {!collapsed && (
+              <h1 className="text-green-500 text-lg font-semibold tracking-wide">
+                My Finance
+              </h1>
+            )}
           </div>
       
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:scale-105 transition"
-          >
-            {theme === "dark" ? "🌙" : "☀️"}
-          </button>
+          {/* THEME */}
+          {!collapsed && (
+            <button
+              onClick={toggleTheme}
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700"
+            >
+              {theme === "dark" ? "🌙" : "☀️"}
+            </button>
+          )}
         </div>
       
-        {/* ===== NAVIGATION ===== */}
-        <nav className="flex flex-col gap-2 text-sm">
+        {/* ================= COLLAPSED THEME ================= */}
+        {collapsed && (
+          <div className="flex justify-center mb-4">
+            <button
+              onClick={toggleTheme}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700"
+            >
+              {theme === "dark" ? "🌙" : "☀️"}
+            </button>
+          </div>
+        )}
       
-          <Item label="Dashboard" href="/" pathname={pathname} />
-          <Item label="Transactions" href="/transactions" pathname={pathname} />
-          <Item label="Categories" href="/categories" pathname={pathname} />
-          <Item label="Savings" href="/savings" pathname={pathname} />
-          <Item label="Debt" href="/debts" pathname={pathname} />
-          <Item label="Receivable" href="/receivables" pathname={pathname} />
-          <Item label="Reports" href="/reports" pathname={pathname} />
+        {/* ================= NAV ================= */}
+        <div className="flex-1 overflow-y-auto px-2">
+          <nav
+            className={`flex flex-col ${
+              collapsed ? "items-center gap-5 mt-4" : "gap-2 mt-4"
+            }`}
+          >
+            <Item icon={LayoutDashboard} label="Dashboard" href="/" pathname={pathname} collapsed={collapsed} />
+            <Item icon={ArrowLeftRight} label="Transactions" href="/transactions" pathname={pathname} collapsed={collapsed} />
+            <Item icon={Tag} label="Categories" href="/categories" pathname={pathname} collapsed={collapsed} />
+            <Item icon={Wallet} label="Savings" href="/savings" pathname={pathname} collapsed={collapsed} />
+            <Item icon={CreditCard} label="Debt" href="/debts" pathname={pathname} collapsed={collapsed} />
+            <Item icon={Wallet} label="Receivable" href="/receivables" pathname={pathname} collapsed={collapsed} />
+            <Item icon={BarChart3} label="Reports" href="/reports" pathname={pathname} collapsed={collapsed} />
+          </nav>
+        </div>
       
-        </nav>
-      
+        {/* ================= BOTTOM ================= */}
+        <div className="p-3 flex justify-center">
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition text-sm"
+          >
+            {collapsed ? <PanelRightClose size={18} /> : <PanelLeftClose size={18} />}
+            {!collapsed && <span>Collapse</span>}
+          </button>
+        </div>
       </aside>
 
       {/* ================= MAIN ================= */}
@@ -415,16 +465,18 @@ export default function DashboardLayout({
   );
 }
 
-// ================= COMPONENTS =================
-
-function Item({ label, href, pathname }: any) {
+// ================= COMPONENTS ================= //
+function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
   const isActive = pathname === href;
 
   return (
     <Link href={href}>
       <div
         className={`
-          px-4 py-2 rounded-lg transition-all duration-200 cursor-pointer
+          flex items-center
+          ${collapsed ? "justify-center w-full" : "gap-3 px-3"}
+          py-2 rounded-lg cursor-pointer
+          transition-all duration-200
           ${
             isActive
               ? "bg-green-500 text-black font-medium shadow-[0_0_10px_rgba(34,197,94,0.3)]"
@@ -432,20 +484,13 @@ function Item({ label, href, pathname }: any) {
           }
         `}
       >
-        {label}
+        <Icon size={collapsed ? 22 : 18} />
+
+        {!collapsed && <span>{label}</span>}
       </div>
     </Link>
   );
 }
-
-import {
-  Home,
-  ArrowLeftRight,
-  CreditCard,
-  Wallet,
-  BarChart3,
-  Tag,
-} from "lucide-react";
 
 function FloatingNav({ pathname }: { pathname: string }) {
   // ================= NAV ITEMS =================
