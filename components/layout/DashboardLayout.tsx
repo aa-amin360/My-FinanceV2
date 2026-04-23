@@ -194,7 +194,7 @@ export default function DashboardLayout({
       {/* ================= SIDEBAR (DESKTOP) ================= */}
       <aside
         className={`hidden md:flex ${
-          collapsed ? "w-14" : "w-56"
+          collapsed ? "w-15" : "w-56"
         } h-full bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 flex-col transition-all duration-300`}
       >
         
@@ -209,15 +209,15 @@ export default function DashboardLayout({
           )}
       
           {/* COLLAPSE BUTTON */}
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="w-9 h-full flex items-center justify-center rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition"
-          >
-            {collapsed ? (
-              <PanelRightClose size={18} />
-            ) : (
-              <PanelLeftClose size={18} />
-            )}
+          <button 
+            onClick={() => setCollapsed(!collapsed)} 
+            className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition" 
+            > 
+              {collapsed ? ( 
+                <PanelRightClose size={18} /> 
+              ) : ( 
+                <PanelLeftClose size={18} />
+            )} 
           </button>
         </div>
       
