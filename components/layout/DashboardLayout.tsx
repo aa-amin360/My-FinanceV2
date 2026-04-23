@@ -203,9 +203,9 @@ export default function DashboardLayout({
           
           {/* TITLE */}
           {!collapsed && (
-            <h2 className="text-sm font-semibold text-gray-400 tracking-widest">
+            <h1 className="text-sm font-semibold text-gray-400 tracking-widest">
               MENU
-            </h2>
+            </h1>
           )}
       
           {/* COLLAPSE BUTTON */}
