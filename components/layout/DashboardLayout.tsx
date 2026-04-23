@@ -213,10 +213,14 @@ export default function DashboardLayout({
         </div>
       
         {/* ================= NAV ================= */}
-        <div className="flex-1 overflow-y-auto px-2">
+        <div
+          className={`flex-1 overflow-y-auto ${
+            collapsed ? "px-1" : "px-2"
+          }`}
+        >
           <nav
             className={`flex flex-col ${
-              collapsed ? "items-center gap-6 mt-4" : "gap-2 mt-4"
+              collapsed ? "items-center gap-4 mt-3" : "gap-2 mt-4"
             }`}
           >
             <Item icon={LayoutDashboard} label="Dashboard" href="/" pathname={pathname} collapsed={collapsed} />
@@ -472,7 +476,7 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
       <div
         className={`
           flex items-center
-          ${collapsed ? "justify-center w-full" : "gap-3 px-3"}
+          ${collapsed ? "justify-center w-auto" : "gap-3 px-3"}
           py-2 cursor-pointer transition-all duration-200
           ${
             isActive
