@@ -180,62 +180,43 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="flex min-h-screen bg-white text-black dark:bg-slate-950 dark:text-white transition-colors duration-300">
+    <div className="flex h-screen overflow-hidden bg-white text-black dark:bg-slate-950 dark:text-white transition-colors duration-300">
       
       {/* ================= SIDEBAR (DESKTOP) ================= */}
       <aside
         className={`hidden md:flex ${
-          collapsed ? "w-20" : "w-64"
-        } h-screen bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 flex-col transition-all duration-300`}
+          collapsed ? "w-20" : "w-56"
+        } h-full bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 flex-col transition-all duration-300`}
       >
+        
         {/* ================= TOP ================= */}
-        <div
-          className={`p-4 flex items-center ${
-            collapsed ? "justify-center" : "justify-between"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            {/* LOGO */}
-            <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center text-black">
-              <CircleDollarSign size={20} />
-            </div>
-      
-            {/* TEXT */}
-            {!collapsed && (
-              <h1 className="text-green-500 text-lg font-semibold tracking-wide">
-                My Finance
-              </h1>
-            )}
-          </div>
-      
-          {/* THEME */}
+        <div className="p-4 flex items-center justify-between">
+          
+          {/* TITLE */}
           {!collapsed && (
-            <button
-              onClick={toggleTheme}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700"
-            >
-              {theme === "dark" ? "🌙" : "☀️"}
-            </button>
+            <h2 className="text-sm font-semibold text-gray-400 tracking-widest">
+              MENU
+            </h2>
           )}
-        </div>
       
-        {/* ================= COLLAPSED THEME ================= */}
-        {collapsed && (
-          <div className="flex justify-center mb-4">
-            <button
-              onClick={toggleTheme}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700"
-            >
-              {theme === "dark" ? "🌙" : "☀️"}
-            </button>
-          </div>
-        )}
+          {/* COLLAPSE BUTTON */}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition"
+          >
+            {collapsed ? (
+              <PanelRightClose size={18} />
+            ) : (
+              <PanelLeftClose size={18} />
+            )}
+          </button>
+        </div>
       
         {/* ================= NAV ================= */}
         <div className="flex-1 overflow-y-auto px-2">
           <nav
             className={`flex flex-col ${
-              collapsed ? "items-center gap-5 mt-4" : "gap-2 mt-4"
+              collapsed ? "items-center gap-6 mt-4" : "gap-2 mt-4"
             }`}
           >
             <Item icon={LayoutDashboard} label="Dashboard" href="/" pathname={pathname} collapsed={collapsed} />
@@ -247,21 +228,31 @@ export default function DashboardLayout({
             <Item icon={BarChart3} label="Reports" href="/reports" pathname={pathname} collapsed={collapsed} />
           </nav>
         </div>
-      
-        {/* ================= BOTTOM ================= */}
-        <div className="p-3 flex justify-center">
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition text-sm"
-          >
-            {collapsed ? <PanelRightClose size={18} /> : <PanelLeftClose size={18} />}
-            {!collapsed && <span>Collapse</span>}
-          </button>
-        </div>
       </aside>
 
+      <div className="w-full h-16 flex items-center justify-between px-6 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800">
+        
+        {/* LEFT: APP NAME */}
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-green-500 flex items-center justify-center text-black font-bold">
+            $
+          </div>
+          <h1 className="text-lg font-semibold text-green-500 tracking-wide">
+            My Finance
+          </h1>
+        </div>
+      
+        {/* RIGHT: THEME TOGGLE */}
+        <button
+          onClick={toggleTheme}
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700"
+        >
+          {theme === "dark" ? "🌙" : "☀️"}
+        </button>
+      </div>
+
       {/* ================= MAIN ================= */}
-      <main className="flex-1 p-6 pb-28 md:pb-6">
+      <main className="flex-1 overflow-y-auto p-6">
         {children}
       </main>
 
@@ -480,13 +471,12 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
           transition-all duration-200
           ${
             isActive
-              ? "bg-green-500 text-black font-medium shadow-[0_0_10px_rgba(34,197,94,0.3)]"
+              ? "bg-green-500 text-black font-medium"
               : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-black dark:hover:text-white"
           }
         `}
       >
         <Icon size={collapsed ? 22 : 18} />
-
         {!collapsed && <span>{label}</span>}
       </div>
     </Link>
