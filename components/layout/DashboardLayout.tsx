@@ -486,7 +486,7 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
         {!collapsed && <span>{label}</span>}
       </div>
     </Link>
-  );
+  );  
 }
 
 function FloatingNav({ pathname }: { pathname: string }) {
