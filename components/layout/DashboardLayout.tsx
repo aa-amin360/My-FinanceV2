@@ -226,14 +226,12 @@ export default function DashboardLayout({
             )}
           </button>
         </div>
-      
+        
         {/* ================= NAV ================= */}
-        <div className="flex-1 overflow-y-auto px-2">
-          <nav
-            className={`flex flex-col ${
-              collapsed ? "items-center gap-6 mt-4" : "gap-2 mt-4"
-            }`}
-          >
+        <div
+          className={`flex-1 overflow-y-auto ${collapsed ? "px-1" : "px-2"}`}
+        >
+          <nav className="flex flex-col items-stretch">
             <Item icon={LayoutDashboard} label="Dashboard" href="/" pathname={pathname} collapsed={collapsed} />
             <Item icon={ArrowLeftRight} label="Transactions" href="/transactions" pathname={pathname} collapsed={collapsed} />
             <Item icon={Tag} label="Categories" href="/categories" pathname={pathname} collapsed={collapsed} />
@@ -242,7 +240,7 @@ export default function DashboardLayout({
             <Item icon={Wallet} label="Receivable" href="/receivables" pathname={pathname} collapsed={collapsed} />
             <Item icon={BarChart3} label="Reports" href="/reports" pathname={pathname} collapsed={collapsed} />
           </nav>
-        </div>
+        </div>        
       </aside>
 
       {/* ================= RIGHT SIDE ================= */}
@@ -488,23 +486,19 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
   return (
     <Link href={href}>
       <div
-        className={`
-          flex items-center
-          ${collapsed ? "justify-center w-full" : "gap-3 px-3"}
-          py-2 rounded-lg cursor-pointer
-          transition-all duration-200
-          ${
-            isActive
-              ? "bg-green-500 text-black font-medium"
-              : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-black dark:hover:text-white"
-          }
-        `}
+        className={`flex items-center ${
+          collapsed ? "justify-center w-full" : "gap-3 px-3"
+        } py-2 rounded-lg cursor-pointer transition-all duration-200 ${
+          isActive
+            ? "bg-green-500 text-black font-medium"
+            : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-black dark:hover:text-white"
+        }`}
       >
-        <Icon size={collapsed ? 20 : 18} />
+        <Icon size={collapsed ? 22 : 18} />
         {!collapsed && <span>{label}</span>}
       </div>
     </Link>
-  );  
+  );
 }
 
 function FloatingNav({ pathname }: { pathname: string }) {
