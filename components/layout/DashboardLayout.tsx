@@ -194,7 +194,7 @@ export default function DashboardLayout({
       {/* ================= SIDEBAR (DESKTOP) ================= */}
       <aside
         className={`hidden md:flex ${
-          collapsed ? "w-16" : "w-56"
+          collapsed ? "w-14" : "w-56"
         } h-full bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 flex-col transition-all duration-300`}
       >
         
