@@ -182,7 +182,7 @@ export default function DashboardLayout({
         } bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 
         p-4 flex-col justify-between transition-all duration-300`}
       >
-      <div className="flex flex-col w-full">
+      <div className="flex flex-col w-full h-full justify-between">
 
         {/* ===== LOGO + BRAND ===== */}
         <div className="flex items-center justify-between mb-6">
@@ -211,14 +211,14 @@ export default function DashboardLayout({
         </div>
       
         {/* ===== NAVIGATION ===== */}
-        <nav className={`flex flex-col ${collapsed ? "gap-4 mt-6" : "gap-2"} text-sm`}>
+        <nav className={`flex flex-col items-center ${collapsed ? "gap-5 mt-6" : "gap-2"} text-sm`}>
         
           <Item label="Dashboard" href="/" pathname={pathname} icon={LayoutDashboard} collapsed={collapsed} />
           <Item label="Transactions" href="/transactions" pathname={pathname} icon={ArrowLeftRight} collapsed={collapsed} />
           <Item label="Categories" href="/categories" pathname={pathname} icon={Tag} collapsed={collapsed} />
           <Item label="Savings" href="/savings" pathname={pathname} icon={Wallet} collapsed={collapsed} />
           <Item label="Debt" href="/debts" pathname={pathname} icon={CreditCard} collapsed={collapsed} />
-          <Item label="Receivable" href="/receivables" pathname={pathname} icon={Wallet} collapsed={collapsed} />
+          <Item label="Receivable" href="/receivables" pathname={pathname} icon={HandCoins} collapsed={collapsed} />
           <Item label="Reports" href="/reports" pathname={pathname} icon={BarChart3} collapsed={collapsed} />
         
         </nav>
@@ -457,7 +457,7 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
         className={`
           group flex items-center gap-3 px-3 py-3 rounded-lg 
           transition-all duration-200 cursor-pointer
-          hover:scale-110
+          group-hover:scale-110
           ${collapsed ? "justify-center px-0" : ""}
           ${
             isActive
@@ -490,6 +490,7 @@ import {
   BarChart3,
   Home,
   ArrowLeft,
+  HandCoins,
 } from "lucide-react";
 
 function FloatingNav({ pathname }: { pathname: string }) {
