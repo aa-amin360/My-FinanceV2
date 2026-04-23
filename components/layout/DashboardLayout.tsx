@@ -230,31 +230,37 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      <div className="w-full h-16 flex items-center justify-between px-6 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800">
-        
-        {/* LEFT: APP NAME */}
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-green-500 flex items-center justify-center text-black font-bold">
-            $
+      {/* ================= RIGHT SIDE ================= */}
+      <div className="flex flex-col flex-1 h-full">
+      
+        {/* ================= HEADER ================= */}
+        <div className="h-16 shrink-0 flex items-center justify-between px-6 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800">
+          
+          {/* LEFT: APP NAME */}
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-green-500 flex items-center justify-center text-black font-bold">
+              $
+            </div>
+            <h1 className="text-lg font-semibold text-green-500 tracking-wide">
+              My Finance
+            </h1>
           </div>
-          <h1 className="text-lg font-semibold text-green-500 tracking-wide">
-            My Finance
-          </h1>
+      
+          {/* RIGHT: THEME TOGGLE */}
+          <button
+            onClick={toggleTheme}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 hover:scale-105 transition"
+          >
+            {theme === "dark" ? "🌙" : "☀️"}
+          </button>
         </div>
       
-        {/* RIGHT: THEME TOGGLE */}
-        <button
-          onClick={toggleTheme}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700"
-        >
-          {theme === "dark" ? "🌙" : "☀️"}
-        </button>
+        {/* ================= MAIN ================= */}
+        <main className="flex-1 overflow-y-auto p-6">
+          {children}
+        </main>
+      
       </div>
-
-      {/* ================= MAIN ================= */}
-      <main className="flex-1 overflow-y-auto p-6">
-        {children}
-      </main>
 
       {/* ================= RIGHT PANEL ================= */}
       {/*
