@@ -211,7 +211,7 @@ export default function DashboardLayout({
           {/* COLLAPSE BUTTON */}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition"
+            className="w-9 h-full flex items-center justify-center rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition"
           >
             {collapsed ? (
               <PanelRightClose size={18} />
