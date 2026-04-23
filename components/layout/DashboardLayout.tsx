@@ -206,103 +206,84 @@ export default function DashboardLayout({
       >
         
         {/* ================= TOP ================= */}
-        <div className="p-4 flex items-center justify-between">
-          
-          {/* TITLE */}
-          {!collapsed && (
-            <h1 className="text-sm font-semibold text-gray-400 tracking-widest">
-              MENU
-            </h1>
-          )}
-      
-          {/* COLLAPSE BUTTON */}
-          <button
-            onClick={toggleTheme}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 hover:scale-105 transition"
-          >
-            <ArrowLeft
-              size={18}
-              className={`transition-transform ${collapsed ? "rotate-180" : ""}`}
-            />
-          
-            {!collapsed && <span>Collapse</span>}
-          </button>
-        </div>
-      
-        {/* ================= NAV ================= */}
-        <div
-          className={`flex-1 overflow-y-auto ${
-            collapsed ? "px-1" : "px-2"
-          }`}
+        <aside
+          className={`hidden md:flex ${
+            collapsed ? "w-20" : "w-56"
+          } h-full bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 flex-col transition-all duration-300`}
         >
-          <nav
-            className={`flex flex-col items-stretch ${
-              collapsed ? "gap-3 mt-2" : "gap-2 mt-2"
-            }`}
-          >
-            <Item icon={LayoutDashboard} label="Dashboard" href="/" pathname={pathname} collapsed={collapsed} />
-            <Item icon={ArrowLeftRight} label="Transactions" href="/transactions" pathname={pathname} collapsed={collapsed} />
-            <Item icon={Tag} label="Categories" href="/categories" pathname={pathname} collapsed={collapsed} />
-            <Item icon={Wallet} label="Savings" href="/savings" pathname={pathname} collapsed={collapsed} />
-            <Item icon={CreditCard} label="Debt" href="/debts" pathname={pathname} collapsed={collapsed} />
-            <Item icon={Wallet} label="Receivable" href="/receivables" pathname={pathname} collapsed={collapsed} />
-            <Item icon={BarChart3} label="Reports" href="/reports" pathname={pathname} collapsed={collapsed} />
-          </nav>
-        </div>
-      </aside>
-
-      {/* ================= RIGHT SIDE ================= */}
-      <div className="flex flex-col flex-1 h-full">
-      
-        {/* ================= HEADER ================= */}
-        <div className="h-16 shrink-0 flex items-center justify-between px-6 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800">
           
-          {/* LEFT: APP NAME */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-green-500 flex items-center justify-center text-black font-bold">
-              $
-            </div>
-            <h1 className="text-lg font-semibold text-green-500 tracking-wide">
-              My Finance
-            </h1>
+          {/* ================= TOP ================= */}
+          <div className="p-4 flex items-center justify-between">
+            
+            {/* TITLE */}
+            {!collapsed && (
+              <h2 className="text-sm font-semibold text-gray-400 tracking-widest">
+                MENU
+              </h2>
+            )}
+        
+            {/* COLLAPSE BUTTON */}
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition"
+            >
+              {collapsed ? (
+                <PanelRightClose size={18} />
+              ) : (
+                <PanelLeftClose size={18} />
+              )}
+            </button>
           </div>
         
-          {/* THEME BUTTON */}
-          {!collapsed ? (
-            <button
-              onClick={toggleTheme}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700"
+          {/* ================= NAV ================= */}
+          <div className="flex-1 overflow-y-auto px-2">
+            <nav
+              className={`flex flex-col ${
+                collapsed ? "items-center gap-6 mt-4" : "gap-2 mt-4"
+              }`}
             >
-              {theme === "dark" ? "🌙" : "☀️"}
-            </button>
-          ) : (
-            <button
-              onClick={toggleTheme}
-              className="absolute top-16 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700"
-            >
-              {theme === "dark" ? "🌙" : "☀️"}
-            </button>
-          )}
-        </div>
-      
-          {/* RIGHT: THEME TOGGLE */}
-          <button
-            onClick={toggleTheme}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 hover:scale-105 transition"
-          >
-            <ArrowLeft
-              size={18}
-              className={`transition-transform ${collapsed ? "rotate-180" : ""}`}
-            />
+              <Item icon={LayoutDashboard} label="Dashboard" href="/" pathname={pathname} collapsed={collapsed} />
+              <Item icon={ArrowLeftRight} label="Transactions" href="/transactions" pathname={pathname} collapsed={collapsed} />
+              <Item icon={Tag} label="Categories" href="/categories" pathname={pathname} collapsed={collapsed} />
+              <Item icon={Wallet} label="Savings" href="/savings" pathname={pathname} collapsed={collapsed} />
+              <Item icon={CreditCard} label="Debt" href="/debts" pathname={pathname} collapsed={collapsed} />
+              <Item icon={Wallet} label="Receivable" href="/receivables" pathname={pathname} collapsed={collapsed} />
+              <Item icon={BarChart3} label="Reports" href="/reports" pathname={pathname} collapsed={collapsed} />
+            </nav>
+          </div>
+        </aside>
+
+        {/* ================= RIGHT SIDE ================= */}
+        <div className="flex flex-col flex-1 h-full">
         
-            {!collapsed && <span>Collapse</span>}
-          </button>
+          {/* ================= HEADER ================= */}
+          <div className="h-16 shrink-0 flex items-center justify-between px-6 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800">
+            
+            {/* LEFT: APP NAME */}
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-green-500 flex items-center justify-center text-black font-bold">
+                $
+              </div>
+              <h1 className="text-lg font-semibold text-green-500 tracking-wide">
+                My Finance
+              </h1>
+            </div>
+        
+            {/* RIGHT: THEME TOGGLE */}
+            <button
+              onClick={toggleTheme}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 hover:scale-105 transition"
+            >
+              {theme === "dark" ? "🌙" : "☀️"}
+            </button>
+          </div>
+        
+          {/* ================= MAIN ================= */}
+          <main className="flex-1 overflow-y-auto p-6">
+            {children}
+          </main>
+        
         </div>
-      
-        {/* ================= MAIN ================= */}
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
       
       </div>
 
