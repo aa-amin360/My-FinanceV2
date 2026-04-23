@@ -489,7 +489,7 @@ import {
   CreditCard,
   BarChart3,
   Home,
-  ArrowLeft
+  ArrowLeft,
 } from "lucide-react";
 
 function FloatingNav({ pathname }: { pathname: string }) {
