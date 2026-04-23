@@ -200,7 +200,7 @@ export default function DashboardLayout({
       {/* ================= SIDEBAR (DESKTOP) ================= */}
       <aside
         className={`hidden md:flex ${
-          collapsed ? "w-20" : "w-56"
+          collapsed ? "w-16" : "w-56"
         } h-full bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 flex-col transition-all duration-300`}
       >
         
@@ -231,7 +231,11 @@ export default function DashboardLayout({
         <div
           className={`flex-1 overflow-y-auto ${collapsed ? "px-1" : "px-2"}`}
         >
-          <nav className="flex flex-col items-stretch">
+          <nav
+            className={`flex flex-col items-stretch ${
+              collapsed ? "gap-3 mt-2" : "gap-2 mt-2"
+            }`}
+          >
             <Item icon={LayoutDashboard} label="Dashboard" href="/" pathname={pathname} collapsed={collapsed} />
             <Item icon={ArrowLeftRight} label="Transactions" href="/transactions" pathname={pathname} collapsed={collapsed} />
             <Item icon={Tag} label="Categories" href="/categories" pathname={pathname} collapsed={collapsed} />
