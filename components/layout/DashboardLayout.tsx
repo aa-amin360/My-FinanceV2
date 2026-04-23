@@ -15,6 +15,7 @@ import {
   PanelLeftClose,
   PanelRightClose,
   CircleDollarSign,
+  Home,
 } from "lucide-react";
 
 export default function DashboardLayout({
