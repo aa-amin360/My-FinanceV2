@@ -39,7 +39,7 @@ export default function CashflowChart({ data }: Props) {
   const axisColor = isDark ? "#94a3b8" : "#475569";
 
   return (
-    <div className="bg-transparent rounded-2xl p-4 border border-gray-200 dark:border-slate-800 dark:shadow-[0_0_20px_rgba(34,197,94,0.1)]">
+    <div className="bg-transparent rounded-2xl p-4 border border-gray-200 dark:border-slate-800 dark:shadow-[0_0_20px_rgba(34,197,94,0.1)] transition">
       <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-2">
         Balance
       </h3>
