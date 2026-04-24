@@ -27,6 +27,8 @@ import {
 export default function DashboardLayout({
   children,
   balance,
+  cashBalance,
+  bankBalance,
 }: {
   children: React.ReactNode;
   balance?: number;
