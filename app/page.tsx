@@ -94,8 +94,7 @@ export default function Home() {
   };
 
   return (
-    <DashboardLayout balance={balance}>
-
+    <DashboardLayout>
       {/* 🔥 OVERLAY */}
       {open && (
         <div

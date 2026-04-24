@@ -26,14 +26,15 @@ import {
 
 export default function DashboardLayout({
   children,
-  balance,
 }: {
   children: React.ReactNode;
-  balance?: number;
 }) {
   const { toggleTheme, theme } = useTheme();
   const pathname = usePathname();
-  const currentBalance = Number(balance || 0);
+  const [cashBalance, setCashBalance] = useState(0);
+  const [bankBalance, setBankBalance] = useState(0);
+  const currentCash = cashBalance;
+  const currentBank = bankBalance;
 
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
@@ -45,6 +46,23 @@ export default function DashboardLayout({
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", String(collapsed));
   }, [collapsed]);
+
+
+  useEffect(() => {
+    const loadBalance = async () => {
+      const res = await fetch("/api/balance");
+      const data = await res.json();
+  
+      setCashBalance(Number(data.cashBalance || 0));
+      setBankBalance(Number(data.bankBalance || 0));
+    };
+  
+    loadBalance();
+  
+    window.addEventListener("refreshData", loadBalance);
+    return () => window.removeEventListener("refreshData", loadBalance);
+  }, []);
+  
 
   // ================= MODAL STATE =================
   const [showModal, setShowModal] = useState(false);
@@ -63,14 +81,32 @@ export default function DashboardLayout({
   const [error, setError] = useState("");
   const [isDirectFlow, setIsDirectFlow] = useState(false);
 
+  const resetForm = () => {
+    setAmount("");
+    setCategory("");
+    setEntity("");
+    setNote("");
+    setError("");
+    setAction("");
+    setAccount("Cash");
+  }; 
+
+  const closeModal = () => {
+    setShowModal(false);
+    setIsDirectFlow(false);
+    setStep("ACTION");
+  
+    resetForm();
+  
+    window.dispatchEvent(new Event("refreshData"));
+  };
+
   // ================= LOAD CATEGORIES =================
   useEffect(() => {
     fetch("/api/categories")
       .then((res) => res.json())
       .then((data) => setCategories(data.data || []));
-  }, []);
-
-  
+  }, []);  
 
   // ================= EVENT HANDLER =================
   useEffect(() => {
@@ -142,13 +178,16 @@ export default function DashboardLayout({
   
     const amountNumber = Number(amount);
   
-    if (action === "EXPENSE" && amountNumber > currentBalance) {
-      setError(`Not enough balance (You have ${currentBalance} Tk)`);
+    const selectedBalance =
+      account === "Cash" ? currentCash : currentBank;
+    
+    if (action === "EXPENSE" && amountNumber > selectedBalance) {
+      setError(`Not enough balance (You have ${selectedBalance} Tk)`);
       return;
     }
-  
-    if (action === "GIVE" && amountNumber > currentBalance) {
-      setError(`You only have ${currentBalance} Tk`);
+    
+    if (action === "GIVE" && amountNumber > selectedBalance) {
+      setError(`You only have ${selectedBalance} Tk`);
       return;
     }
     
@@ -191,7 +230,7 @@ export default function DashboardLayout({
       console.error(err);
     } finally {
       setLoading(false);
-    }
+    }    
   };
 
   return (
@@ -318,11 +357,7 @@ export default function DashboardLayout({
       {showModal && (
         <div
           className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center"
-          onClick={() => {
-            setShowModal(false);
-            setIsDirectFlow(false);
-            setStep("ACTION");
-          }}
+          onClick={closeModal}
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -339,10 +374,7 @@ export default function DashboardLayout({
                   </h3>
       
                   <button
-                    onClick={() => {
-                      setShowModal(false);
-                      setIsDirectFlow(false);
-                    }}
+                    onClick={closeModal}
                     className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-700 transition"
                   >
                     ✕
@@ -359,10 +391,7 @@ export default function DashboardLayout({
       
                 {/* CANCEL */}
                 <button
-                  onClick={() => {
-                    setShowModal(false);
-                    setIsDirectFlow(false);
-                  }}
+                  onClick={closeModal}
                   className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition"
                 >
                   Cancel
@@ -383,11 +412,7 @@ export default function DashboardLayout({
                   </h3>
       
                   <button
-                    onClick={() => {
-                      setShowModal(false);
-                      setIsDirectFlow(false);
-                      setStep("ACTION");
-                    }}
+                    onClick={closeModal}
                     className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-700 transition"
                   >
                     ✕
