@@ -357,12 +357,12 @@ function Card({ title, value, type }: any) {
     <div className={`${bg} p-4 sm:p-5 rounded-2xl min-w-0`}>
       
       {/* TITLE */}
-      <p className={`${text} text-sm sm:text-base`}>
+      <p className={`text-xs sm:text-sm font-medium tracking-wider uppercase ${text} opacity-90`}>
         {title}
       </p>
 
       {/* VALUE ROW (UNCHANGED) */}
-      <div className="mt-2 flex items-baseline gap-1">
+      <div className="mt-3 flex items-baseline gap-1">
         
         {/* NUMBER */}
         <span
