@@ -131,7 +131,7 @@ export default function ReportsPage() {
         </div>
 
         {/* GRAPH */}
-        <div className="bg-slate-900 rounded-2xl p-5">
+        <div className="bg-transparent rounded-2xl p-5">
           <h3 className="mb-4 text-sm text-gray-400">Balance Trend</h3>
           <CashflowChart data={chartData} />
         </div>
