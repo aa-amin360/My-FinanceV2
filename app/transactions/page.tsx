@@ -133,7 +133,11 @@ export default function TransactionsPage() {
   };
   
   return (
-    <DashboardLayout>
+    <DashboardLayout 
+      balance={balance}
+      cashBalance={cashBalance}
+      bankBalance={bankBalance}
+    />
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Transactions</h1>
       
