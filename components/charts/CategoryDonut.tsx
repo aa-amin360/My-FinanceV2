@@ -28,7 +28,15 @@ export default function CategoryDonut({ data, onSelect }: any) {
             ))}
           </Pie>
 
-          <Tooltip />
+          <Tooltip
+            contentStyle={{
+              background: "#020617",
+              border: "1px solid #1e293b",
+              borderRadius: "8px",
+              fontSize: "12px",
+              color: "#ffffff",
+            }}
+          />
         </PieChart>
       </ResponsiveContainer>
     </div>
