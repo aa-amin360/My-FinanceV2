@@ -119,11 +119,7 @@ export default function ReportsPage() {
           {/* DONUT */}
           <div className="md:col-span-2 bg-slate-900 rounded-2xl p-5">
             <h3 className="mb-4 text-sm text-gray-400">Expense Breakdown</h3>
-
-            <CategoryDonut
-              data={donutData}
-              onSelect={(cat: string) => setSelectedCategory(cat)}
-            />            
+            <CategoryDonut data={donutData} />
           </div>
 
           {/* STATS */}
