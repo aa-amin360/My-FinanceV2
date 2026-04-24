@@ -81,6 +81,14 @@ export default function DashboardLayout({
   const [error, setError] = useState("");
   const [isDirectFlow, setIsDirectFlow] = useState(false);
 
+  const closeModal = () => {
+    setShowModal(false);
+    setIsDirectFlow(false);
+    setStep("ACTION");  
+
+    window.dispatchEvent(new Event("refreshData"));
+  };  
+
   // ================= LOAD CATEGORIES =================
   useEffect(() => {
     fetch("/api/categories")
@@ -210,16 +218,7 @@ export default function DashboardLayout({
       console.error(err);
     } finally {
       setLoading(false);
-    }
-
-    const closeModal = () => {
-      setShowModal(false);
-      setIsDirectFlow(false);
-      setStep("ACTION");
-    
-      window.dispatchEvent(new Event("refreshData"));
-    };
-    
+    }    
   };
 
   return (
