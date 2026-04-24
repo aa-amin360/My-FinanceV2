@@ -26,19 +26,15 @@ import {
 
 export default function DashboardLayout({
   children,
-  balance,
-  cashBalance,
-  bankBalance,
 }: {
   children: React.ReactNode;
-  balance?: number;
-  cashBalance?: number;
-  bankBalance?: number;
 }) {
   const { toggleTheme, theme } = useTheme();
   const pathname = usePathname();
-  const currentCash = Number(cashBalance || 0);
-  const currentBank = Number(bankBalance || 0);
+  const [cashBalance, setCashBalance] = useState(0);
+  const [bankBalance, setBankBalance] = useState(0);
+  const currentCash = cashBalance;
+  const currentBank = bankBalance;
 
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
@@ -50,6 +46,23 @@ export default function DashboardLayout({
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", String(collapsed));
   }, [collapsed]);
+
+
+  useEffect(() => {
+    const loadBalance = async () => {
+      const res = await fetch("/api/balance");
+      const data = await res.json();
+  
+      setCashBalance(Number(data.cashBalance || 0));
+      setBankBalance(Number(data.bankBalance || 0));
+    };
+  
+    loadBalance();
+  
+    window.addEventListener("refreshData", loadBalance);
+    return () => window.removeEventListener("refreshData", loadBalance);
+  }, []);
+  
 
   // ================= MODAL STATE =================
   const [showModal, setShowModal] = useState(false);
@@ -73,9 +86,7 @@ export default function DashboardLayout({
     fetch("/api/categories")
       .then((res) => res.json())
       .then((data) => setCategories(data.data || []));
-  }, []);
-
-  
+  }, []);  
 
   // ================= EVENT HANDLER =================
   useEffect(() => {
