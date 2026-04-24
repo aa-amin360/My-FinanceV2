@@ -211,6 +211,15 @@ export default function DashboardLayout({
     } finally {
       setLoading(false);
     }
+
+    const closeModal = () => {
+      setShowModal(false);
+      setIsDirectFlow(false);
+      setStep("ACTION");
+    
+      window.dispatchEvent(new Event("refreshData"));
+    };
+    
   };
 
   return (
@@ -337,11 +346,7 @@ export default function DashboardLayout({
       {showModal && (
         <div
           className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center"
-          onClick={() => {
-            setShowModal(false);
-            setIsDirectFlow(false);
-            setStep("ACTION");
-          }}
+          onClick={closeModal}
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -358,10 +363,7 @@ export default function DashboardLayout({
                   </h3>
       
                   <button
-                    onClick={() => {
-                      setShowModal(false);
-                      setIsDirectFlow(false);
-                    }}
+                    onClick={closeModal}
                     className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-700 transition"
                   >
                     ✕
@@ -378,10 +380,7 @@ export default function DashboardLayout({
       
                 {/* CANCEL */}
                 <button
-                  onClick={() => {
-                    setShowModal(false);
-                    setIsDirectFlow(false);
-                  }}
+                  onClick={closeModal}
                   className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition"
                 >
                   Cancel
@@ -402,11 +401,7 @@ export default function DashboardLayout({
                   </h3>
       
                   <button
-                    onClick={() => {
-                      setShowModal(false);
-                      setIsDirectFlow(false);
-                      setStep("ACTION");
-                    }}
+                    onClick={closeModal}
                     className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-700 transition"
                   >
                     ✕
