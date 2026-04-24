@@ -24,6 +24,8 @@ type Transaction = {
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [confirmAll, setConfirmAll] = useState(false);
 
   // =========================
   // LOAD DATA
@@ -131,7 +133,8 @@ export default function TransactionsPage() {
     const data = await res.json();
   
     if (!res.ok) {
-      alert(data.error);
+      setDeleteId(null); // close delete modal
+      setErrorMessage(data.error || "Cannot delete transaction");
       return;
     }
   
@@ -139,9 +142,6 @@ export default function TransactionsPage() {
   };
 
   const handleDeleteAll = async () => {
-    const confirmDelete = confirm("Delete all transactions?");
-    if (!confirmDelete) return;
-  
     try {
       const res = await fetch("/api/transactions/all", {
         method: "DELETE",
@@ -149,12 +149,15 @@ export default function TransactionsPage() {
   
       if (res.ok) {
         window.dispatchEvent(new Event("refreshData"));
+        setConfirmAll(false);
       } else {
-        alert("Failed to delete transactions");
+        setErrorMessage("Failed to delete transactions");
+        setConfirmAll(false);
       }
     } catch (err) {
       console.error(err);
-      alert("Error deleting transactions");
+      setErrorMessage("Error deleting transactions");
+      setConfirmAll(false);
     }
   };
   
@@ -164,7 +167,7 @@ export default function TransactionsPage() {
         <h1 className="text-2xl font-bold">Transactions</h1>
       
         <button
-          onClick={handleDeleteAll}
+          onClick={() => setConfirmAll(true)}
           className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm hover:bg-red-700 active:scale-95 transition"
         >
           Delete All
@@ -380,6 +383,66 @@ export default function TransactionsPage() {
       
         </div>
       )}
+
+      {confirmAll && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          
+          <div className="bg-white/90 dark:bg-slate-900/80 border border-gray-200 dark:border-slate-700 
+            text-black dark:text-white backdrop-blur-xl rounded-2xl p-6 w-[320px] text-center shadow-2xl">
+            
+            <h3 className="text-lg font-semibold mb-4 text-red-400">
+              Delete All Transactions?
+            </h3>
+      
+            <p className="text-sm text-gray-500 mb-5">
+              This will remove all transaction records permanently.
+            </p>
+      
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={handleDeleteAll}
+                className="px-5 py-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition"
+              >
+                Delete All
+              </button>
+      
+              <button
+                onClick={() => setConfirmAll(false)}
+                className="px-5 py-2 rounded-full bg-gray-200 dark:bg-slate-700 text-black dark:text-gray-300 hover:bg-slate-600 transition"
+              >
+                Cancel
+              </button>
+            </div>
+      
+          </div>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          
+          <div className="bg-white/90 dark:bg-slate-900/80 border border-gray-200 dark:border-slate-700 
+            text-black dark:text-white backdrop-blur-xl rounded-2xl p-6 w-[320px] text-center shadow-2xl">
+            
+            <h3 className="text-lg font-semibold mb-3 text-red-400">
+              Action Not Allowed
+            </h3>
+      
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-5">
+              {errorMessage}
+            </p>
+      
+            <button
+              onClick={() => setErrorMessage(null)}
+              className="px-5 py-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition"
+            >
+              OK
+            </button>
+      
+          </div>
+        </div>
+      )}      
+      
     </DashboardLayout>
   );
 }
