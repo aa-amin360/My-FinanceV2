@@ -161,19 +161,20 @@ export default function Home() {
       </div>
       
       {/* CARDS */}
-      <div className="grid grid-cols-2 gap-4 mt-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
         <Card title="Income" value={income} color="text-green-500" />
+        
         <Card title="Expenses" value={expense} color="text-red-500" />
-      
-        <Link href="/debts">
+        
+        <Link href="/debts" className="block">
           <Card title="Debt" value={debt} color="text-cyan-400" />
         </Link>
-      
-        <Link href="/receivables">
+        
+        <Link href="/receivables" className="block">
           <Card title="Receivable" value={receivable} color="text-yellow-400" />
         </Link>
       </div>
-
+      
       {/* CHART */}
       <div className="mt-6">
         <CashflowChart data={chartData} />
