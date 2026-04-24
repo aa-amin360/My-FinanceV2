@@ -117,13 +117,13 @@ export default function ReportsPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
           {/* DONUT */}
-          <div className="md:col-span-2 bg-slate-900 rounded-2xl p-5">
+          <div className="order-2 md:order-1 md:col-span-2 bg-slate-900 rounded-2xl p-5">
             <h3 className="mb-4 text-sm text-gray-400">Expense Breakdown</h3>
             <CategoryDonut data={donutData} />
           </div>
 
           {/* STATS */}
-          <div className="flex flex-col gap-4">
+          <div className="order-1 md:order-2 flex flex-col gap-4">
             <Box label="Total Income" value={income} color="text-green-400" />
             <Box label="Total Expense" value={expense} color="text-red-400" />
           </div>
