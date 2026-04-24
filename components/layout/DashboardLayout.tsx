@@ -81,13 +81,25 @@ export default function DashboardLayout({
   const [error, setError] = useState("");
   const [isDirectFlow, setIsDirectFlow] = useState(false);
 
+  const resetForm = () => {
+    setAmount("");
+    setCategory("");
+    setEntity("");
+    setNote("");
+    setError("");
+    setAction("");
+    setAccount("Cash");
+  }; 
+
   const closeModal = () => {
     setShowModal(false);
     setIsDirectFlow(false);
-    setStep("ACTION");  
-
+    setStep("ACTION");
+  
+    resetForm();
+  
     window.dispatchEvent(new Event("refreshData"));
-  };  
+  };
 
   // ================= LOAD CATEGORIES =================
   useEffect(() => {
