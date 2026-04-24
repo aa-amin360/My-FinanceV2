@@ -123,7 +123,7 @@ export default function ReportsPage() {
           </div>
 
           {/* STATS */}
-          <div className="order-1 md:order-2 flex flex-col gap-4">
+          <div className="order-1 md:order-2 grid grid-cols-2 md:flex md:flex-col gap-4">
             <Box label="Total Income" value={income} color="text-green-400" />
             <Box label="Total Expense" value={expense} color="text-red-400" />
           </div>
