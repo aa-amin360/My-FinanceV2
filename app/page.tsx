@@ -162,16 +162,16 @@ export default function Home() {
       
       {/* CARDS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-        <Card title="Income" value={income} color="text-green-500" />
-        
-        <Card title="Expenses" value={expense} color="text-red-500" />
-        
+        <Card title="Income" value={income} type="income" />
+      
+        <Card title="Expenses" value={expense} type="expense" />
+      
         <Link href="/debts" className="block">
-          <Card title="Debt" value={debt} color="text-cyan-400" />
+          <Card title="Debt" value={debt} type="debt" />
         </Link>
-        
+      
         <Link href="/receivables" className="block">
-          <Card title="Receivable" value={receivable} color="text-yellow-400" />
+          <Card title="Receivable" value={receivable} type="receivable" />
         </Link>
       </div>
       
@@ -317,18 +317,51 @@ export default function Home() {
 
 // ================= COMPONENT =================
 
-function Card({ title, value, color }: any) {
+const getCardStyle = (type: string) => {
+  switch (type) {
+    case "income":
+      return {
+        text: "text-green-500",
+        bg: "bg-green-500/10",
+      };
+    case "expense":
+      return {
+        text: "text-red-500",
+        bg: "bg-red-500/10",
+      };
+    case "debt":
+      return {
+        text: "text-cyan-400",
+        bg: "bg-cyan-400/10",
+      };
+    case "receivable":
+      return {
+        text: "text-yellow-400",
+        bg: "bg-yellow-400/10",
+      };
+    default:
+      return {
+        text: "text-gray-400",
+        bg: "bg-gray-100 dark:bg-slate-900",
+      };
+  }
+};
+
+function Card({ title, value, type }: any) {
   const formatted = Number(value).toLocaleString("en-BD");
 
+  // 🎯 color logic lives here now
+  const { text, bg } = getCardStyle(type);
+
   return (
-    <div className="bg-gray-100 dark:bg-slate-900 p-4 sm:p-5 rounded-2xl min-w-0">
+    <div className={`${bg} p-4 sm:p-5 rounded-2xl min-w-0`}>
       
       {/* TITLE */}
-      <p className={`${color} text-sm sm:text-base`}>
+      <p className={`${text} text-sm sm:text-base`}>
         {title}
       </p>
 
-      {/* VALUE ROW (FIXED) */}
+      {/* VALUE ROW (UNCHANGED) */}
       <div className="mt-2 flex items-baseline gap-1">
         
         {/* NUMBER */}
