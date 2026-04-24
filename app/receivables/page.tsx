@@ -71,7 +71,7 @@ export default function ReceivablePage() {
   };
 
   return (
-    <DashboardLayout balance={balance}> {/* changed */}
+    <DashboardLayout>
       <h1 className="text-2xl font-bold mb-6">Receivable Details</h1>
 
       {data.map((r) => {
