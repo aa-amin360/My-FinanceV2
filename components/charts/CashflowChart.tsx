@@ -36,7 +36,7 @@ export default function CashflowChart({ data }: Props) {
     return () => observer.disconnect();
   }, []);
 
-  const axisColor = isDark ? "#64748b" : "#475569";
+  const axisColor = isDark ? "#94a3b8" : "#475569";
 
   return (
     <div className="bg-transparent rounded-2xl p-4 border border-gray-200 dark:border-slate-800">
