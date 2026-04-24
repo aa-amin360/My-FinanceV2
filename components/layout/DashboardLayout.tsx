@@ -30,10 +30,13 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
   balance?: number;
+  cashBalance?: number;
+  bankBalance?: number;
 }) {
   const { toggleTheme, theme } = useTheme();
   const pathname = usePathname();
-  const currentBalance = Number(balance || 0);
+  const currentCash = Number(cashBalance || 0);
+  const currentBank = Number(bankBalance || 0);
 
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
@@ -142,13 +145,16 @@ export default function DashboardLayout({
   
     const amountNumber = Number(amount);
   
-    if (action === "EXPENSE" && amountNumber > currentBalance) {
-      setError(`Not enough balance (You have ${currentBalance} Tk)`);
+    const selectedBalance =
+      account === "Cash" ? currentCash : currentBank;
+    
+    if (action === "EXPENSE" && amountNumber > selectedBalance) {
+      setError(`Not enough balance (You have ${selectedBalance} Tk)`);
       return;
     }
-  
-    if (action === "GIVE" && amountNumber > currentBalance) {
-      setError(`You only have ${currentBalance} Tk`);
+    
+    if (action === "GIVE" && amountNumber > selectedBalance) {
+      setError(`You only have ${selectedBalance} Tk`);
       return;
     }
     
