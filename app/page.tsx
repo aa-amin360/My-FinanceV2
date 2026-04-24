@@ -94,7 +94,11 @@ export default function Home() {
   };
 
   return (
-    <DashboardLayout balance={balance}>
+    <DashboardLayout 
+      balance={balance}
+      cashBalance={cashBalance}
+      bankBalance={bankBalance}
+    />
 
       {/* 🔥 OVERLAY */}
       {open && (
