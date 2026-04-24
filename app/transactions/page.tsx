@@ -37,35 +37,6 @@ export default function TransactionsPage() {
   };
 
   useRefresh(loadData);
-
-  // =========================
-  // FAB LISTENER
-  // =========================
-  useEffect(() => {
-    const handler = (e: any) => {
-      if (e.detail === "TRANSACTION") {
-        const type = prompt("Enter type (INCOME / EXPENSE)");
-        const amount = prompt("Enter amount");
-
-        if (!type || !amount) return;
-
-        fetch("/api/transactions", {
-          method: "POST",
-          body: JSON.stringify({
-            type: type.toUpperCase(),
-            amount: Number(amount),
-            account: "Cash",
-            date: new Date().toISOString(),
-            note: "Quick Transaction",
-          }),
-        }).then(() => loadData());
-      }
-    };
-
-    window.addEventListener("openAdd", handler);
-    return () => window.removeEventListener("openAdd", handler);
-  }, []);
-
   
   // =========================
   // NAME RESOLVER (CORE FIX)
