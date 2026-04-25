@@ -116,10 +116,13 @@ export default function ReportsPage() {
         {/* TOP GRID */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-          {/* DONUT */}
           <div className="order-2 md:order-1 md:col-span-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
             <h3 className="mb-4 text-sm text-gray-400">Expense Breakdown</h3>
-            <CategoryDonut data={donutData} />
+          
+            <div className="bg-gray-50 dark:bg-slate-800/40 border border-gray-200 dark:border-slate-700 rounded-xl p-3">
+              <CategoryDonut data={donutData} />
+            </div>
+          
           </div>
 
           {/* STATS */}
