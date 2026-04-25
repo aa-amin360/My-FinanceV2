@@ -39,7 +39,7 @@ export default function CashflowChart({ data }: Props) {
   const axisColor = isDark ? "#94a3b8" : "#475569";
 
   return (
-    <div className="bg-gray-50 dark:bg-slate-800/40 border border-gray-200 dark:border-slate-700 rounded-xl p-3">
+    <div className="bg-gray-50 dark:bg-slate-800/40 rounded-xl p-3">
       <ResponsiveContainer width="100%" height={220}>
         <AreaChart data={data}>
           {/* GRADIENT */}
