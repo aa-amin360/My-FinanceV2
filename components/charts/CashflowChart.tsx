@@ -40,10 +40,6 @@ export default function CashflowChart({ data }: Props) {
 
   return (
     <div className="bg-gray-50 dark:bg-slate-800/40 border border-gray-200 dark:border-slate-700 rounded-xl p-3">
-      <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-        Balance
-      </h3>
-
       <ResponsiveContainer width="100%" height={220}>
         <AreaChart data={data}>
           {/* GRADIENT */}
