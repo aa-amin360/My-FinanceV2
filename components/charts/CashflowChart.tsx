@@ -44,6 +44,7 @@ export default function CashflowChart({ data }: Props) {
         <AreaChart
           data={data}
           margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+          style={{ overflow: "visible" }}
         >
           {/* GRADIENT */}
           <defs>
@@ -101,8 +102,7 @@ export default function CashflowChart({ data }: Props) {
             strokeWidth={2}
             fill="url(#balanceGradient)"
             dot={false}
-            activeDot={{ r: 4 }}
-            style={{ overflow: "visible" }}
+            activeDot={{ r: 4 }}            
           />
         </AreaChart>
       </ResponsiveContainer>
