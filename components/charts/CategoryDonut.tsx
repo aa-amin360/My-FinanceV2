@@ -34,7 +34,13 @@ export default function CategoryDonut({ data, onSelect }: any) {
               border: "1px solid #1e293b",
               borderRadius: "8px",
               fontSize: "12px",
+            }}
+            labelStyle={{
               color: "#ffffff",
+              fontWeight: 500,
+            }}
+            itemStyle={{
+              color: "#22c55e",
             }}
           />
         </PieChart>
