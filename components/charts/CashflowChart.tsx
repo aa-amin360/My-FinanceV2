@@ -41,7 +41,10 @@ export default function CashflowChart({ data }: Props) {
   return (
     <div className="w-full h-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data}>
+        <AreaChart
+          data={data}
+          margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+        >
           {/* GRADIENT */}
           <defs>
             <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
@@ -65,6 +68,7 @@ export default function CashflowChart({ data }: Props) {
             fontSize={12}
             tickLine={false}
             axisLine={false}
+            tickMargin={8}
           />
 
           <YAxis
@@ -72,6 +76,7 @@ export default function CashflowChart({ data }: Props) {
             fontSize={12}
             tickLine={false}
             axisLine={false}
+            tickMargin={8}
           />
 
           {/* TOOLTIP */}
@@ -95,8 +100,7 @@ export default function CashflowChart({ data }: Props) {
             stroke="#22c55e"
             strokeWidth={2}
             fill="url(#balanceGradient)"
-            dot={{ r: 3 }}
-            activeDot={{ r: 5 }}
+            style={{ overflow: "visible" }}
           />
         </AreaChart>
       </ResponsiveContainer>
