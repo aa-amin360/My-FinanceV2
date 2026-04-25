@@ -120,7 +120,7 @@ export default function ReportsPage() {
             <h3 className="mb-4 text-sm text-gray-400">Expense Breakdown</h3>
           
             <div className="bg-gray-50 dark:bg-slate-800/40 border border-gray-200 dark:border-slate-700 rounded-xl p-3">
-              <CategoryDonut data={donutData} />
+              <CategoryDonut data={donutData} />              
             </div>
           
           </div>
