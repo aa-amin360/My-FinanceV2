@@ -100,6 +100,8 @@ export default function CashflowChart({ data }: Props) {
             stroke="#22c55e"
             strokeWidth={2}
             fill="url(#balanceGradient)"
+            dot={false}
+            activeDot={{ r: 4 }}
             style={{ overflow: "visible" }}
           />
         </AreaChart>
