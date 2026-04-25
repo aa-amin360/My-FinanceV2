@@ -117,7 +117,7 @@ export default function ReportsPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
           {/* DONUT */}
-          <div className="order-2 md:order-1 md:col-span-2 bg-slate-900 rounded-2xl p-5">
+          <div className="order-2 md:order-1 md:col-span-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
             <h3 className="mb-4 text-sm text-gray-400">Expense Breakdown</h3>
             <CategoryDonut data={donutData} />
           </div>
@@ -131,11 +131,12 @@ export default function ReportsPage() {
         </div>
 
         {/* GRAPH */}
-        <div className="bg-transparent rounded-2xl p-5">
-          <h3 className="mb-4 text-sm text-gray-400">Balance Trend</h3>
-          <CashflowChart data={chartData} />
+        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
+          <div className="bg-slate-800/50 rounded-xl p-3">
+            <CashflowChart data={chartData} />
+          </div>
         </div>
-
+        
       </div>
     </DashboardLayout>
   );
@@ -144,7 +145,7 @@ export default function ReportsPage() {
 // ================= COMPONENTS =================
 function Box({ label, value, color }: any) {
   return (
-    <div className="bg-slate-900 p-4 rounded-2xl">
+    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 p-4 rounded-2xl">
       <p className="text-gray-400 text-sm">{label}</p>
       <p className={`text-xl font-semibold ${color}`}>
         {Number(value).toLocaleString()}
