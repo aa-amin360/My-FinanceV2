@@ -40,7 +40,7 @@ export default function CashflowChart({ data }: Props) {
 
   return (
     <div className="rounded-xl p-3 w-full h-full">
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data}>
           {/* GRADIENT */}
           <defs>
