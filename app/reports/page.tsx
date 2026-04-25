@@ -132,9 +132,7 @@ export default function ReportsPage() {
 
         {/* GRAPH */}
         <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
-          <div className="bg-slate-800/50 rounded-xl p-3">
-            <CashflowChart data={chartData} />
-          </div>
+          <CashflowChart data={chartData} />
         </div>
         
       </div>
@@ -161,7 +159,7 @@ function FilterBtn({ label, active, onClick }: any) {
       className={`px-3 py-1 rounded-lg text-sm transition ${
         active
           ? "bg-green-500 text-black"
-          : "bg-slate-800 text-gray-300"
+          : "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300"
       }`}
     >
       {label}
