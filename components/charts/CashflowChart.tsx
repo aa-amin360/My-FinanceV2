@@ -36,16 +36,16 @@ export default function CashflowChart({ data }: Props) {
     return () => observer.disconnect();
   }, []);
 
-  const axisColor = isDark ? "#64748b" : "#475569";
+  const axisColor = isDark ? "#94a3b8" : "#475569";
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-gray-200 dark:border-slate-800">
-      <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-        Balance
-      </h3>
-
-      <ResponsiveContainer width="100%" height={220}>
-        <AreaChart data={data}>
+    <div className="w-full h-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart
+          data={data}
+          margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+          style={{ overflow: "visible" }}
+        >
           {/* GRADIENT */}
           <defs>
             <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
@@ -69,6 +69,7 @@ export default function CashflowChart({ data }: Props) {
             fontSize={12}
             tickLine={false}
             axisLine={false}
+            tickMargin={8}
           />
 
           <YAxis
@@ -76,6 +77,7 @@ export default function CashflowChart({ data }: Props) {
             fontSize={12}
             tickLine={false}
             axisLine={false}
+            tickMargin={8}
           />
 
           {/* TOOLTIP */}
@@ -100,7 +102,7 @@ export default function CashflowChart({ data }: Props) {
             strokeWidth={2}
             fill="url(#balanceGradient)"
             dot={{ r: 3 }}
-            activeDot={{ r: 5 }}
+            activeDot={{ r: 4 }}            
           />
         </AreaChart>
       </ResponsiveContainer>

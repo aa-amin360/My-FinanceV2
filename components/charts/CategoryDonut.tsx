@@ -12,7 +12,7 @@ const COLORS = ["#22c55e", "#ef4444", "#3b82f6", "#eab308", "#a855f7"];
 
 export default function CategoryDonut({ data, onSelect }: any) {
   return (
-    <div className="bg-gray-100 dark:bg-slate-900 p-4 rounded-2xl">
+    <div className="p-4 rounded-2xl">
       <ResponsiveContainer width="100%" height={250}>
         <PieChart>
           <Pie
@@ -28,7 +28,21 @@ export default function CategoryDonut({ data, onSelect }: any) {
             ))}
           </Pie>
 
-          <Tooltip />
+          <Tooltip
+            contentStyle={{
+              background: "#020617",
+              border: "1px solid #1e293b",
+              borderRadius: "8px",
+              fontSize: "12px",
+            }}
+            labelStyle={{
+              color: "#ffffff",
+              fontWeight: 500,
+            }}
+            itemStyle={{
+              color: "#22c55e",
+            }}
+          />
         </PieChart>
       </ResponsiveContainer>
     </div>

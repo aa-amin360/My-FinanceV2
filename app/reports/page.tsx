@@ -10,155 +10,151 @@ type Transaction = {
   type: string;
   amount: string;
   date: string;
+  category_name?: string;
 };
 
 export default function ReportsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [filter, setFilter] = useState<"MONTH" | "YEAR" | "ALL">("ALL");
+  const [range, setRange] = useState<"ALL" | "YEAR" | "MONTH">("MONTH");
 
+  // ================= FETCH =================
   useEffect(() => {
     fetch("/api/transactions")
       .then((res) => res.json())
       .then((data) => setTransactions(data.data || []));
   }, []);
 
-  // =========================
-  // FILTER LOGIC
-  // =========================
-
+  // ================= FILTER =================
   const now = new Date();
 
   const filteredTx = transactions.filter((t) => {
     const date = new Date(t.date);
 
-    if (filter === "MONTH") {
+    if (range === "MONTH") {
       return (
         date.getMonth() === now.getMonth() &&
         date.getFullYear() === now.getFullYear()
       );
     }
 
-    if (filter === "YEAR") {
+    if (range === "YEAR") {
       return date.getFullYear() === now.getFullYear();
     }
 
-    return true; // ALL
+    return true;
   });
 
-  // =========================
-  // CALCULATIONS
-  // =========================
-
+  // ================= CALCULATIONS =================
   let income = 0;
   let expense = 0;
 
-  const chartData = transactions
-  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-  .map((t, index, arr) => {
-    const isPositive =
-      t.type === "INCOME" ||
-      t.type === "DEBT_TAKEN" ||
-      t.type === "RECEIVABLE_RECEIVED";
-
+  filteredTx.forEach((t) => {
     const amount = Number(t.amount);
 
-    const prev = index === 0 ? 0 : (arr[index - 1] as any).balance || 0;
-
-    const balance = isPositive ? prev + amount : prev - amount;
-
-    (t as any).balance = balance;
-
-    return {
-      date: new Date(t.date).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
-      balance,
-    };
+    if (t.type === "INCOME") income += amount;
+    if (t.type === "EXPENSE") expense += amount;
   });
-  
-  const savings = income - expense;
 
+  // ================= DONUT =================
   const categoryMap: Record<string, number> = {};
 
-    filteredTx.forEach((t: any) => {
-      if (t.type !== "EXPENSE") return;
-    
-      const category = t.category_name || "Other";
+  filteredTx.forEach((t) => {
+    if (t.type !== "EXPENSE") return;
+
+    const category = t.category_name || "Other";
+    const amount = Number(t.amount);
+
+    categoryMap[category] = (categoryMap[category] || 0) + amount;
+  });
+
+  const donutData = Object.keys(categoryMap).map((key) => ({
+    name: key,
+    value: categoryMap[key],
+  }));
+
+  // ================= CHART =================
+  const chartData = filteredTx
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .map((t, index, arr) => {
+      const isPositive =
+        t.type === "INCOME" ||
+        t.type === "DEBT_TAKEN" ||
+        t.type === "RECEIVABLE_RECEIVED";
+
       const amount = Number(t.amount);
-    
-      if (!categoryMap[category]) categoryMap[category] = 0;
-      categoryMap[category] += amount;
+
+      const prev = index === 0 ? 0 : (arr[index - 1] as any).balance || 0;
+      const balance = isPositive ? prev + amount : prev - amount;
+
+      (t as any).balance = balance;
+
+      return {
+        date: new Date(t.date).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+        balance,
+      };
     });
-    
-    const donutData = Object.keys(categoryMap).map((key) => ({
-      name: key,
-      value: categoryMap[key],
-    }));
 
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
+  // ================= UI =================
   return (
     <DashboardLayout>
-      <h1 className="text-2xl font-bold mb-4">Reports</h1>
+      <div className="flex flex-col gap-6">
 
-      {/* FILTERS */}
-      <div className="flex gap-2 mb-6">
-        <FilterBtn
-          label="This Month"
-          active={filter === "MONTH"}
-          onClick={() => setFilter("MONTH")}
-        />
-        <FilterBtn
-          label="This Year"
-          active={filter === "YEAR"}
-          onClick={() => setFilter("YEAR")}
-        />
-        <FilterBtn
-          label="All"
-          active={filter === "ALL"}
-          onClick={() => setFilter("ALL")}
-        />
-      </div>
+        {/* HEADER */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">Reports</h1>
 
-      {/* SUMMARY */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <Box label="Total Income" value={income} color="text-green-500" />
-        <Box label="Total Expense" value={expense} color="text-red-500" />
-        <Box label="Net Savings" value={savings} color="text-blue-500" />
-        <Box label="Transactions" value={filteredTx.length} color="text-gray-500" />
-      </div>
+          <div className="flex gap-2">
+            <FilterBtn label="All" active={range === "ALL"} onClick={() => setRange("ALL")} />
+            <FilterBtn label="This Year" active={range === "YEAR"} onClick={() => setRange("YEAR")} />
+            <FilterBtn label="This Month" active={range === "MONTH"} onClick={() => setRange("MONTH")} />
+          </div>
+        </div>
 
-      {/* CHART */}
-      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4 mb-6">
-        <CashflowChart data={chartData} />
-      </div>
+        {/* TOP GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4 mt-6">
-        <h3 className="text-lg font-semibold mt-4 mb-3">
-          Expense Breakdown
-        </h3>
-     
-        <CategoryDonut
-          data={donutData}
-          onSelect={(cat: string) => setSelectedCategory(cat)}
-        />
+          <div className="order-2 md:order-1 md:col-span-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
+            <h3 className="mb-4 text-sm text-gray-400">Expense Breakdown</h3>
+          
+            <div className="bg-gray-50 dark:bg-slate-800/40 border border-gray-200 dark:border-slate-700 rounded-xl p-3">
+              <CategoryDonut data={donutData} />              
+            </div>
+          
+          </div>
+
+          {/* STATS */}
+          <div className="order-1 md:order-2 grid grid-cols-2 md:flex md:flex-col gap-4">
+            <Box label="Total Income" value={income} color="text-green-400" />
+            <Box label="Total Expense" value={expense} color="text-red-400" />
+          </div>
+
+        </div>
+
+        {/* GRAPH */}
+        <div className="mt-6 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
+          <h3 className="mb-4 text-sm text-gray-400">Balance</h3>
+        
+          <div className="bg-gray-50 dark:bg-slate-800/40 border border-gray-200 dark:border-slate-700 rounded-xl p-2 h-[260px]">
+            <CashflowChart data={chartData} />
+          </div>
+        </div>
+        
       </div>
     </DashboardLayout>
   );
 }
 
-// =========================
-// COMPONENTS
-// =========================
-
+// ================= COMPONENTS =================
 function Box({ label, value, color }: any) {
   return (
-    <div className="bg-gray-100 dark:bg-slate-900 p-5 rounded-2xl">
-      <p className="text-sm text-gray-500">{label}</p>
-      <h2 className={`text-2xl font-bold mt-2 ${color}`}>
-        {value.toFixed ? value.toFixed(2) : value}
-      </h2>
+    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 p-4 rounded-2xl">
+      <p className="text-gray-400 text-sm">{label}</p>
+      <p className={`text-xl font-semibold ${color}`}>
+        {Number(value).toLocaleString()}
+      </p>
     </div>
   );
 }
@@ -170,7 +166,7 @@ function FilterBtn({ label, active, onClick }: any) {
       className={`px-3 py-1 rounded-lg text-sm transition ${
         active
           ? "bg-green-500 text-black"
-          : "bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-300"
+          : "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300"
       }`}
     >
       {label}
