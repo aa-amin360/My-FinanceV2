@@ -24,22 +24,28 @@ export default function ReceivableDetailPage() {
   // LOAD DATA
   // =========================
   const loadData = async () => {
-    const res = await fetch("/api/transactions", { cache: "no-store" });
-    const data = await res.json();
-
-    const filtered = (data.data || []).filter(
+    // 1. load receivable list
+    const res1 = await fetch("/api/receivables/details", { cache: "no-store" });
+    const receivableData = await res1.json();
+  
+    const entity = (receivableData.data || []).find(
+      (e: any) => e.entity_id === id
+    );
+  
+    setName(entity?.name || "");
+  
+    // 2. load transactions
+    const res2 = await fetch("/api/transactions", { cache: "no-store" });
+    const txData = await res2.json();
+  
+    const filtered = (txData.data || []).filter(
       (t: Transaction) =>
         t.entity_id === id &&
         (t.type === "RECEIVABLE_GIVEN" ||
           t.type === "RECEIVABLE_RECEIVED")
     );
-
+  
     setTransactions(filtered);
-
-    // extract name (first transaction)
-    if (filtered.length > 0) {
-      setName(filtered[0].note || "Unknown");
-    }
   };
 
   useRefresh(loadData);
@@ -68,6 +74,8 @@ export default function ReceivableDetailPage() {
   // RECEIVE ACTION
   // =========================
   const handleReceive = () => {
+    if (!name) return;
+  
     window.dispatchEvent(
       new CustomEvent("openAdd", {
         detail: {
