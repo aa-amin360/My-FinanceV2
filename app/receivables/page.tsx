@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { useRefresh } from "@/hooks/useRefresh";
 
@@ -11,54 +12,35 @@ type Receivable = {
   remaining_amount: string;
 };
 
-type Transaction = {
-  id: string;
-  type: string;
-  amount: string;
-  date: string;
-  note: string | null;
-  entity_id: string | null;
-};
-
 export default function ReceivablePage() {
   const [data, setData] = useState<Receivable[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [balance, setBalance] = useState(0); // added
+  const router = useRouter();
 
+  // =========================
+  // LOAD DATA
+  // =========================
   const loadData = () => {
     fetch("/api/receivables/details", { cache: "no-store" })
       .then((res) => res.json())
       .then((d) => setData(d.data || []));
-
-    fetch("/api/transactions", { cache: "no-store" })
-      .then((res) => res.json())
-      .then((d) => setTransactions(d.data || []));
   };
 
   useRefresh(loadData);
 
-  // added
-  useEffect(() => {
-    fetch("/api/balance")
-      .then((res) => res.json())
-      .then((d) => setBalance(d.balance || 0));
-  }, []);
+  // =========================
+  // FORMAT NAME
+  // =========================
+  const formatName = (text: string) => {
+    return text
+      .toLowerCase()
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
 
-  useEffect(() => {
-    const handler = (e: any) => {
-      if (e.detail === "RECEIVABLE") {
-        window.dispatchEvent(
-          new CustomEvent("openAdd", {
-            detail: "RECEIVABLE",
-          })
-        );
-      }
-    };
-
-    window.addEventListener("openAdd", handler);
-    return () => window.removeEventListener("openAdd", handler);
-  }, []);
-
+  // =========================
+  // RECEIVE ACTION
+  // =========================
   const handleReceive = (entityName: string) => {
     window.dispatchEvent(
       new CustomEvent("openAdd", {
@@ -72,86 +54,49 @@ export default function ReceivablePage() {
 
   return (
     <DashboardLayout>
-      <h1 className="text-2xl font-bold mb-6">Receivable Details</h1>
+      <h1 className="text-2xl font-bold mb-6">Receivables</h1>
 
-      {data.map((r) => {
-        const personTx = transactions.filter(
-          (t) =>
-            t.entity_id === r.entity_id &&
-            (t.type === "RECEIVABLE_GIVEN" ||
-              t.type === "RECEIVABLE_RECEIVED")
-        );
-
-        return (
+      <div className="flex flex-col gap-4">
+        {data.map((r) => (
           <div
             key={r.entity_id}
-            className="bg-gray-100 dark:bg-slate-900 p-5 rounded-2xl mb-6"
+            className="bg-gray-100 dark:bg-slate-900 p-5 rounded-2xl flex justify-between items-center hover:bg-gray-200 dark:hover:bg-slate-800 transition cursor-pointer"
+            onClick={() => router.push(`/receivables/${r.entity_id}`)}
           >
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">{r.name}</h3>
+            {/* LEFT */}
+            <div>
+              <div className="font-semibold text-lg">
+                {formatName(r.name)}
+              </div>
+              <div className="text-xs text-gray-500">
+                Tap to view details
+              </div>
+            </div>
 
+            {/* RIGHT */}
+            <div className="text-right flex items-center gap-4">
+              <div className="text-yellow-500 font-semibold text-lg">
+                {Number(r.remaining_amount).toFixed(0)} Tk
+              </div>
+
+              {/* RECEIVE BUTTON */}
               <button
-                onClick={() => handleReceive(r.name)}
+                onClick={(e) => {
+                  e.stopPropagation(); // prevent navigation
+                  handleReceive(r.name);
+                }}
                 className="px-3 py-1 rounded bg-blue-500 text-black text-sm"
               >
                 Receive
               </button>
             </div>
-
-            <div className="mt-4 flex justify-between text-sm text-gray-600 dark:text-gray-400">
-              <span>Total Given:</span>
-              <span>{Number(r.total_amount).toFixed(2)} Tk</span>
-            </div>
-
-            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-              <span>Remaining:</span>
-              <span className="font-semibold text-yellow-500">
-                {Number(r.remaining_amount).toFixed(2)} Tk
-              </span>
-            </div>
-
-            <div className="mt-4 text-sm font-semibold">
-              Transactions
-            </div>
-
-            <div className="mt-2 flex flex-col gap-2">
-              {personTx.map((t) => {
-                const amount = Number(t.amount);
-
-                return (
-                  <div
-                    key={t.id}
-                    className="flex justify-between p-3 rounded-xl bg-gray-200 dark:bg-slate-800"
-                  >
-                    <div>
-                      <div className="text-sm">
-                        {t.type.replace("_", " ")}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {new Date(t.date).toDateString()}
-                      </div>
-                    </div>
-
-                    <div
-                      className={`font-semibold ${
-                        t.type === "RECEIVABLE_RECEIVED"
-                          ? "text-green-500"
-                          : "text-red-500"
-                      }`}
-                    >
-                      {t.type === "RECEIVABLE_RECEIVED" ? "+" : "-"}
-                      {amount.toFixed(2)} Tk
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
-        );
-      })}
+        ))}
+      </div>
 
+      {/* EMPTY STATE */}
       {data.length === 0 && (
-        <div className="text-center text-gray-400">
+        <div className="text-center text-gray-400 mt-10">
           No receivables yet
         </div>
       )}
