@@ -510,7 +510,8 @@ export default function DashboardLayout({
 
 // ================= COMPONENTS ================= //
 function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
-  const isActive = pathname === href;
+  const isActive =
+    pathname === href || pathname.startsWith(href + "/");
 
   return (
     <Link href={href}>
@@ -550,14 +551,14 @@ function FloatingNav({ pathname }: { pathname: string }) {
         backdrop-blur-xl shadow-xl"
       >
         {items.map((item) => {
-          const active = pathname === item.href;
+          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
           const Icon = item.icon;
 
           return (
             <Link key={item.href} href={item.href}>
               <div
                 className={`flex items-center justify-center gap-2 py-2 rounded-full transition-all duration-300 ${
-                  active
+                  isActive
                     ? "bg-green-500 text-black shadow-lg shadow-green-500/30 px-4 scale-105"
                     : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-800 w-10 h-10"
                 }`}
@@ -568,7 +569,7 @@ function FloatingNav({ pathname }: { pathname: string }) {
                 {/* LABEL (ONLY ACTIVE) */}
                 <span
                   className={`text-sm whitespace-nowrap transition-all duration-300 ${
-                    active ? "block font-semibold ml-1" : "hidden"
+                    isActive ? "block font-semibold ml-1" : "hidden"
                   }`}
                 >
                   {item.label}
