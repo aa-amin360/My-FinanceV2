@@ -550,7 +550,7 @@ function FloatingNav({ pathname }: { pathname: string }) {
         backdrop-blur-xl shadow-xl"
       >
         {items.map((item) => {
-          const active = pathname === item.href;
+          const isActive = pathname === href || pathname.startsWith(href + "/");
           const Icon = item.icon;
 
           return (
