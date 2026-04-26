@@ -104,7 +104,7 @@ export default function ReceivableDetailPage() {
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => router.push("/receivables")}
-          className="p-2 rounded-lg bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 transition"
+          className="p-2 rounded-lg bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 transition active:scale-95"
         >
           <ArrowLeft size={18} />
         </button>
