@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import DashboardLayout from "../../../components/layout/DashboardLayout";
 import { useRefresh } from "@/hooks/useRefresh";
+import { ArrowLeft } from "lucide-react";
 
 type Transaction = {
   id: string;
@@ -15,6 +16,7 @@ type Transaction = {
 };
 
 export default function ReceivableDetailPage() {
+  const router = useRouter();
   const { id } = useParams();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -99,7 +101,16 @@ export default function ReceivableDetailPage() {
 
   return (
     <DashboardLayout>
-      <h1 className="text-2xl font-bold mb-6">Receivable Details</h1>
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          onClick={() => router.push("/receivables")}
+          className="p-2 rounded-lg bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 transition"
+        >
+          <ArrowLeft size={18} />
+        </button>
+      
+        <h1 className="text-2xl font-bold">Receivable Details</h1>
+      </div>
 
       {/* SUMMARY CARD */}
       <div className="bg-gray-100 dark:bg-slate-900 p-5 rounded-2xl mb-6">
