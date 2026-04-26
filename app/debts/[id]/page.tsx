@@ -26,20 +26,27 @@ export default function DebtDetailPage() {
   // LOAD DATA
   // =========================
   const loadData = async () => {
-    const res = await fetch("/api/transactions", { cache: "no-store" });
-    const data = await res.json();
-
-    const filtered = (data.data || []).filter(
+    // 1. Get correct entity name
+    const res1 = await fetch("/api/debts/details", { cache: "no-store" });
+    const debtData = await res1.json();
+  
+    const entity = (debtData.data || []).find(
+      (d: any) => d.entity_id === id
+    );
+  
+    setName(entity?.name || "");
+  
+    // 2. Load transactions
+    const res2 = await fetch("/api/transactions", { cache: "no-store" });
+    const txData = await res2.json();
+  
+    const filtered = (txData.data || []).filter(
       (t: Transaction) =>
         t.entity_id === id &&
         (t.type === "DEBT_TAKEN" || t.type === "DEBT_REPAID")
     );
-
+  
     setTransactions(filtered);
-
-    if (filtered.length > 0) {
-      setName(filtered[0].note || "Unknown");
-    }
   };
 
   useRefresh(loadData);
