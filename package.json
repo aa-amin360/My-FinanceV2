@@ -12,7 +12,9 @@
     "react-dom": "18.2.0",
     "pg": "^8.11.3",
     "recharts": "^2.10.3",
-    "lucide-react": "^0.468.0"
+    "lucide-react": "^0.468.0",
+    "id": "nextauth-add",
+    "next-auth": "^4.24.7"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
