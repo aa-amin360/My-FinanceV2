@@ -28,21 +28,21 @@ async function getAccountId(client: any, name: string) {
   return res.rows[0].id;
 }
 
-async function getEntityId(client: any, name: string, type: string) {
+async function getEntityId(client: any, name: string, type: string, userId: string) {
   const clean = name.trim().toLowerCase();
 
   const res = await client.query(
-    `SELECT id FROM entities WHERE LOWER(name) = $1 LIMIT 1`,
-    [clean]
+    `SELECT id FROM entities WHERE LOWER(name) = $1 AND user_id = $2 LIMIT 1`,
+    [clean, userId]
   );
 
   if (res.rows.length > 0) return res.rows[0].id;
 
   const insert = await client.query(
-    `INSERT INTO entities (name, type)
-     VALUES ($1, $2)
+    `INSERT INTO entities (name, type, user_id)
+     VALUES ($1, $2, $3)
      RETURNING id`,
-    [clean, type]
+    [clean, type, userId]
   );
 
   return insert.rows[0].id;
@@ -66,6 +66,14 @@ const TYPE_META = {
 // =========================
 
 export async function POST(req: Request) {
+  const session = await getServerSession(authOptions);
+  
+  if (!session || !session.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  
+  const userId = session.user.email;
+  
   const client = await pool.connect();
 
   try {
@@ -109,9 +117,9 @@ export async function POST(req: Request) {
       const meta = TYPE_META[type as keyof typeof TYPE_META];
       
       if (meta.group === "DEBT") {
-        entity_id = await getEntityId(client, entity, "LIABILITY");
+        entity_id = await getEntityId(client, entity, "LIABILITY", userId);
       } else if (meta.group === "RECEIVABLE") {
-        entity_id = await getEntityId(client, entity, "ASSET");
+        entity_id = await getEntityId(client, entity, "ASSET", userId);
       }
     }
 
@@ -185,8 +193,9 @@ export async function POST(req: Request) {
         END
       ), 0) AS balance
       FROM transactions
+      WHERE user_id = $2
       `,
-      [accountId]
+      [accountId, userId]
     );
 
     const balance = Number(balanceRes.rows[0].balance || 0);
@@ -216,7 +225,7 @@ export async function POST(req: Request) {
       result = await client.query(
         `INSERT INTO transactions 
         (type, amount, from_account, to_account, entity_id, category_id, date, note, user_id)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
         RETURNING *`,
         [
           type,
@@ -227,6 +236,7 @@ export async function POST(req: Request) {
           category_id || null,
           date,
           note,
+          userId,
         ]
       );
     }
@@ -240,21 +250,21 @@ export async function POST(req: Request) {
       if (type === "DEBT_TAKEN") {
         await client.query(
           `
-          INSERT INTO debts (entity_id, total_amount, remaining_amount)
-          VALUES ($1, $2, $2)
-          ON CONFLICT (entity_id)
+          INSERT INTO debts (entity_id, total_amount, remaining_amount, user_id)
+          VALUES ($1, $2, $2, $3)
+          ON CONFLICT (entity_id, user_id)
           DO UPDATE SET
             total_amount = debts.total_amount + $2,
             remaining_amount = debts.remaining_amount + $2
         `,
-          [entity_id, amountNumber]
+          [entity_id, amountNumber, userId]
         );
       }
 
       if (type === "DEBT_REPAID") {
         const debtRes = await client.query(
-          `SELECT * FROM debts WHERE entity_id = $1`,
-          [entity_id]
+          `SELECT * FROM debts WHERE entity_id = $1 AND user_id = $2`,
+          [entity_id, userId]
         );
       
         const currentRemaining = Number(
@@ -271,9 +281,9 @@ export async function POST(req: Request) {
           // 🔍 find DEBT_TAKEN
           const debtTaken = await client.query(
             `SELECT id FROM transactions
-             WHERE entity_id = $1 AND type = 'DEBT_TAKEN'
+             WHERE entity_id = $1 AND type = 'DEBT_TAKEN' AND user_id = $2
              ORDER BY date DESC LIMIT 1`,
-            [entity_id]
+            [entity_id, userId]
           );
           
           if (debtTaken.rows.length === 0) {
@@ -285,8 +295,8 @@ export async function POST(req: Request) {
           // 1️⃣ Correct repay
           const repayTx = await client.query(
             `INSERT INTO transactions
-             (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+             (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id, user_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
              RETURNING id`,
             [
               "DEBT_REPAID",
@@ -297,7 +307,8 @@ export async function POST(req: Request) {
               category_id || null,
               date,
               note,
-              parentDebtId, // 🔥 FIX
+              parentDebtId,
+              userId, 
             ]
           );
           
@@ -308,26 +319,26 @@ export async function POST(req: Request) {
             `UPDATE debts
              SET total_amount = 0,
                  remaining_amount = 0
-             WHERE entity_id = $1`,
-            [entity_id]
+             WHERE entity_id = $1 AND user_id = $2`,
+            [entity_id, userId]
           );
       
           // 3️⃣ Create receivable from extra
           if (extra > 0) {
             await client.query(
-              `INSERT INTO receivables (entity_id, total_amount, remaining_amount)
-               VALUES ($1, $2, $2)
-               ON CONFLICT (entity_id)
+              `INSERT INTO receivables (entity_id, total_amount, remaining_amount, user_id)
+               VALUES ($1, $2, $2, $3)
+               ON CONFLICT (entity_id, user_id)
                DO UPDATE SET
                  total_amount = receivables.total_amount + $2,
                  remaining_amount = receivables.remaining_amount + $2`,
-              [entity_id, extra]
+              [entity_id, extra, userId]
             );
       
             await client.query(
               `INSERT INTO transactions
-               (type, amount, from_account, to_account, entity_id, date, note, parent_id)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+               (type, amount, from_account, to_account, entity_id, date, note, parent_id, user_id)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
               [
                 "RECEIVABLE_GIVEN",
                 extra,
@@ -336,7 +347,8 @@ export async function POST(req: Request) {
                 entity_id,
                 date,
                 "Auto conversion",
-                parentId, // 🔥 LINK
+                parentId,
+                userId,
               ]
             );
           }
@@ -352,9 +364,9 @@ export async function POST(req: Request) {
           // 🔍 find latest DEBT_TAKEN
           const debtTaken = await client.query(
             `SELECT id FROM transactions
-             WHERE entity_id = $1 AND type = 'DEBT_TAKEN'
+             WHERE entity_id = $1 AND type = 'DEBT_TAKEN' AND user_id = $2
              ORDER BY date DESC LIMIT 1`,
-            [entity_id]
+            [entity_id, userId]
           );
           
           if (debtTaken.rows.length === 0) {
@@ -366,8 +378,8 @@ export async function POST(req: Request) {
           // 1️⃣ Insert transaction
           await client.query(
             `INSERT INTO transactions
-             (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+             (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id, user_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
             [
               "DEBT_REPAID",
               amountNumber,
@@ -377,7 +389,8 @@ export async function POST(req: Request) {
               category_id || null,
               date,
               note,
-              parentDebtId, // 🔥 THIS LINE FIXES EVERYTHING
+              parentDebtId,
+              userId,
             ]
           );
       
@@ -385,15 +398,15 @@ export async function POST(req: Request) {
           await client.query(
             `UPDATE debts
              SET remaining_amount = remaining_amount - $2
-             WHERE entity_id = $1`,
-            [entity_id, amountNumber]
+             WHERE entity_id = $1 AND user_id = $2`,
+            [entity_id, amountNumber, userId]
           );
       
           // 3️⃣ Optional safety (auto delete if zero)
           await client.query(
             `DELETE FROM debts
-             WHERE entity_id = $1 AND remaining_amount <= 0`,
-            [entity_id]
+             WHERE entity_id = $1 AND user_id = $2 AND remaining_amount <= 0`,
+            [entity_id, userId]
           );
         }
       }
@@ -402,21 +415,21 @@ export async function POST(req: Request) {
       if (type === "RECEIVABLE_GIVEN") {
         await client.query(
           `
-          INSERT INTO receivables (entity_id, total_amount, remaining_amount)
-          VALUES ($1, $2, $2)
-          ON CONFLICT (entity_id)
+          INSERT INTO receivables (entity_id, total_amount, remaining_amount, user_id)
+          VALUES ($1, $2, $2, $3)
+          ON CONFLICT (entity_id, user_id)
           DO UPDATE SET
             total_amount = receivables.total_amount + $2,
             remaining_amount = receivables.remaining_amount + $2
         `,
-          [entity_id, amountNumber]
+          [entity_id, amountNumber, userId]
         );
       }
 
       if (type === "RECEIVABLE_RECEIVED") {
         const recRes = await client.query(
-          `SELECT * FROM receivables WHERE entity_id = $1`,
-          [entity_id]
+          `SELECT * FROM receivables WHERE entity_id = $1 AND user_id = $2`,
+          [entity_id, userId]
         );
       
         const currentRemaining = Number(
@@ -433,8 +446,8 @@ export async function POST(req: Request) {
           // 1️⃣ Correct receive (only actual receivable)
           const receiveTx = await client.query(
             `INSERT INTO transactions
-             (type, amount, from_account, to_account, entity_id, category_id, date, note)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+             (type, amount, from_account, to_account, entity_id, category_id, date, note, user_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
              RETURNING id`,
             [
               "RECEIVABLE_RECEIVED",
@@ -445,6 +458,7 @@ export async function POST(req: Request) {
               category_id || null,
               date,
               note,
+              userId,
             ]
           );
           
@@ -455,26 +469,26 @@ export async function POST(req: Request) {
             `UPDATE receivables
              SET total_amount = 0,
                  remaining_amount = 0
-             WHERE entity_id = $1`,
-            [entity_id]
+             WHERE entity_id = $1 AND user_id = $2`,
+            [entity_id, userId]
           );
       
           // 3️⃣ Convert extra → DEBT
           if (extra > 0) {
             await client.query(
-              `INSERT INTO debts (entity_id, total_amount, remaining_amount)
-               VALUES ($1, $2, $2)
-               ON CONFLICT (entity_id)
+              `INSERT INTO debts (entity_id, total_amount, remaining_amount, user_id)
+               VALUES ($1, $2, $2, $3)
+               ON CONFLICT (entity_id, user_id)
                DO UPDATE SET
                  total_amount = debts.total_amount + $2,
                  remaining_amount = debts.remaining_amount + $2`,
-              [entity_id, extra]
+              [entity_id, extra, userId]
             );
       
             await client.query(
               `INSERT INTO transactions
-               (type, amount, from_account, to_account, entity_id, date, note, parent_id)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+               (type, amount, from_account, to_account, entity_id, date, note, parent_id, user_id)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
               [
                 "DEBT_TAKEN",
                 extra,
@@ -483,7 +497,8 @@ export async function POST(req: Request) {
                 entity_id,
                 date,
                 "Auto conversion",
-                parentId, // 🔥 LINK
+                parentId,
+                userId,
               ]
             );
           }
@@ -499,8 +514,8 @@ export async function POST(req: Request) {
           // 1️⃣ Insert transaction
           await client.query(
             `INSERT INTO transactions
-             (type, amount, from_account, to_account, entity_id, category_id, date, note)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+             (type, amount, from_account, to_account, entity_id, category_id, date, note, user_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
             [
               "RECEIVABLE_RECEIVED",
               amountNumber,
@@ -510,6 +525,7 @@ export async function POST(req: Request) {
               category_id || null,
               date,
               note,
+              userId,
             ]
           );
       
@@ -517,15 +533,15 @@ export async function POST(req: Request) {
           await client.query(
             `UPDATE receivables
              SET remaining_amount = remaining_amount - $2
-             WHERE entity_id = $1`,
-            [entity_id, amountNumber]
+             WHERE entity_id = $1 AND user_id = $2`,
+            [entity_id, amountNumber, userId]
           );
       
           // 3️⃣ Auto delete if zero
           await client.query(
             `DELETE FROM receivables
-             WHERE entity_id = $1 AND remaining_amount <= 0`,
-            [entity_id]
+             WHERE entity_id = $1 AND user_id = $2 AND remaining_amount <= 0`,
+            [entity_id, userId]
           );
         }
       }
