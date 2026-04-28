@@ -2,31 +2,64 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { Pool } from "pg";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
 export async function DELETE() {
+  const session = await getServerSession(authOptions);
+
+  // 🔐 AUTH GUARD
+  if (!session || !session.user?.email) {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
+  const userId = session.user.email;
+
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
-    // clear all related tables first
-    await client.query(`DELETE FROM transactions`);
-    await client.query(`DELETE FROM debts`);
-    await client.query(`DELETE FROM receivables`);
+    // =========================
+    // USER-SCOPED CLEANUP
+    // =========================
+
+    await client.query(
+      `DELETE FROM transactions WHERE user_id = $1`,
+      [userId]
+    );
+
+    await client.query(
+      `DELETE FROM debts WHERE user_id = $1`,
+      [userId]
+    );
+
+    await client.query(
+      `DELETE FROM receivables WHERE user_id = $1`,
+      [userId]
+    );
 
     await client.query("COMMIT");
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      message: "User ledger reset successfully",
+    });
 
   } catch (err: any) {
     await client.query("ROLLBACK");
 
+    console.error("DELETE ERROR:", err);
+
     return NextResponse.json(
-      { error: err.message },
+      { error: err.message || "Delete failed" },
       { status: 500 }
     );
   } finally {
