@@ -1,3 +1,6 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -212,7 +215,7 @@ export async function POST(req: Request) {
     ) {
       result = await client.query(
         `INSERT INTO transactions 
-        (type, amount, from_account, to_account, entity_id, category_id, date, note)
+        (type, amount, from_account, to_account, entity_id, category_id, date, note, user_id)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
         RETURNING *`,
         [
@@ -552,10 +555,19 @@ export async function POST(req: Request) {
 // =========================
 
 export async function GET() {
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = session.user.email; // you are using email as id
+
   const client = await pool.connect();
 
   try {
-    const result = await client.query(`
+    const result = await client.query(
+      `
       SELECT 
         t.id,
         t.type,
@@ -573,8 +585,11 @@ export async function GET() {
       LEFT JOIN entities e ON t.entity_id = e.id
       LEFT JOIN accounts fa ON t.from_account = fa.id
       LEFT JOIN accounts ta ON t.to_account = ta.id
+      WHERE t.user_id = $1
       ORDER BY t.date DESC, t.created_at DESC;
-    `);
+      `,
+      [userId]
+    );
 
     return NextResponse.json({
       success: true,
