@@ -102,10 +102,10 @@ export async function POST(req: Request) {
     // ACCOUNT IDS
     // =========================
 
-    const accountId = await getAccountId(client, account);
-    const savingsId = await getAccountId(client, "Savings");
-    const debtId = await getAccountId(client, "Debt");
-    const receivableId = await getAccountId(client, "Receivable");
+    const accountId = await getAccountId(client, account, userId);
+    const savingsId = await getAccountId(client, "Savings", userId);
+    const debtId = await getAccountId(client, "Debt", userId);
+    const receivableId = await getAccountId(client, "Receivable", userId);
 
     // =========================
     // ENTITY
