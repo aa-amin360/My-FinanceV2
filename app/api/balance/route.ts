@@ -3,16 +3,27 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { Pool } from "pg";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
 export async function GET() {
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = session.user.email;
+
   const client = await pool.connect();
 
   try {
-    const result = await client.query(`
+    const result = await client.query(
+      `
       SELECT 
         t.amount,
         fa.name AS from_account,
@@ -20,7 +31,10 @@ export async function GET() {
       FROM transactions t
       LEFT JOIN accounts fa ON t.from_account = fa.id
       LEFT JOIN accounts ta ON t.to_account = ta.id
-    `);
+      WHERE t.user_id = $1
+      `,
+      [userId]
+    );
 
     let balance = 0;
     let cashBalance = 0;
@@ -29,7 +43,6 @@ export async function GET() {
     for (const row of result.rows) {
       const amount = Number(row.amount) || 0;
 
-      // normalize safely
       const from = row.from_account
         ? row.from_account.toLowerCase().trim()
         : null;
@@ -38,27 +51,23 @@ export async function GET() {
         ? row.to_account.toLowerCase().trim()
         : null;
 
-      // =========================
-      // CORE LOGIC
-      // =========================
-     
       // ===== CASH =====
       if (to === "cash") {
         cashBalance += amount;
         balance += amount;
       }
-      
+
       if (from === "cash") {
         cashBalance -= amount;
         balance -= amount;
       }
-      
+
       // ===== BANK =====
       if (to === "bank") {
         bankBalance += amount;
         balance += amount;
       }
-      
+
       if (from === "bank") {
         bankBalance -= amount;
         balance -= amount;
