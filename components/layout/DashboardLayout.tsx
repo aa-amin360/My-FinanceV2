@@ -157,8 +157,12 @@ export default function DashboardLayout({
   
     setError("");
   
-    // VALIDATION FIRST
-    if (!amount || Number(amount) <= 0) {
+    // =========================
+    // BASIC VALIDATION
+    // =========================
+    const amountNumber = Number(amount);
+  
+    if (!amount || amountNumber <= 0) {
       setError("Enter a valid amount");
       return;
     }
@@ -176,21 +180,34 @@ export default function DashboardLayout({
       return;
     }
   
-    const amountNumber = Number(amount);
+    // =========================
+    // ACCOUNT + BALANCE CHECK
+    // =========================
+    let selectedBalance = 0;
   
-    const selectedBalance =
-      account === "Cash" ? currentCash : currentBank;
-    
-    if (action === "EXPENSE" && amountNumber > selectedBalance) {
-      setError(`Not enough balance (You have ${selectedBalance} Tk)`);
+    if (account === "Cash") selectedBalance = currentCash;
+    else if (account === "Bank") selectedBalance = currentBank;
+    else {
+      setError("Invalid account selected");
       return;
     }
-    
-    if (action === "GIVE" && amountNumber > selectedBalance) {
-      setError(`You only have ${selectedBalance} Tk`);
-      return;
+  
+    const requiresBalanceCheck = ["EXPENSE", "GIVE", "REPAY"];
+  
+    if (requiresBalanceCheck.includes(action)) {
+      if (amountNumber > selectedBalance) {
+        const shortage = amountNumber - selectedBalance;
+      
+        setError(
+          `Not enough ${account} balance. Available: ${selectedBalance} Tk, Short by: ${shortage} Tk`
+        );
+        return;
+      }
     }
-    
+  
+    // =========================
+    // PREPARE REQUEST
+    // =========================
     setLoading(true);
   
     try {
@@ -205,6 +222,9 @@ export default function DashboardLayout({
       if (category) body.category_id = category;
       if (entity) body.entity = entity;
   
+      // =========================
+      // API CALL
+      // =========================
       const res = await fetch("/api/transactions", {
         method: "POST",
         headers: {
@@ -213,26 +233,41 @@ export default function DashboardLayout({
         body: JSON.stringify(body),
       });
   
-      if (res.ok) {
-        setShowModal(false);
-        setStep("ACTION");
-        setAmount("");
-        setCategory("");
-        setEntity("");
-        setNote("");
-        setError("");
-        setIsDirectFlow(false);
+      const data = await res.json();
   
-        window.dispatchEvent(new Event("refreshData"));
+      // =========================
+      // ERROR HANDLING
+      // =========================
+      if (!res.ok) {
+        setError(data.error || "Transaction failed");
+        return;
       }
+  
+      // =========================
+      // SUCCESS RESET
+      // =========================
+      setShowModal(false);
+      setStep("ACTION");
+      setAmount("");
+      setCategory("");
+      setEntity("");
+      setNote("");
+      setError("");
+      setIsDirectFlow(false);
+  
+      // =========================
+      // REFRESH DATA
+      // =========================
+      window.dispatchEvent(new Event("refreshData"));
   
     } catch (err) {
       console.error(err);
+      setError("Something went wrong");
     } finally {
       setLoading(false);
-    }    
+    }
   };
-
+  
   return (
     <div className="flex h-screen overflow-hidden bg-white text-black dark:bg-slate-950 dark:text-white transition-colors duration-300">
       
