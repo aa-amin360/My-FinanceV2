@@ -17,7 +17,7 @@ export const authOptions = {
   callbacks: {
     async signIn({ user }: any) {
       if (!user.email) return false;
-
+  
       await pool.query(
         `
         INSERT INTO users (id, email, name, image)
@@ -29,8 +29,12 @@ export const authOptions = {
         `,
         [user.email, user.email, user.name, user.image]
       );
-
+  
       return true;
+    },
+  
+    async redirect({ url, baseUrl }: any) {
+      return baseUrl; // always go to "/"
     },
   },
 };
