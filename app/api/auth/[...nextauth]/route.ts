@@ -6,7 +6,8 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-const handler = NextAuth({
+// ✅ STEP 1: Export authOptions (THIS WAS MISSING)
+export const authOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -16,7 +17,7 @@ const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
 
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user }: any) {
       if (!user.email) return false;
 
       await pool.query(
@@ -39,6 +40,9 @@ const handler = NextAuth({
       return true;
     },
   },
-});
+};
+
+// ✅ STEP 2: Use authOptions in NextAuth
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
