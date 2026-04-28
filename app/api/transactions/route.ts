@@ -18,7 +18,7 @@ const pool = new Pool({
 async function getAccountId(client: any, name: string, userId: string) {
   const res = await client.query(
     `SELECT id FROM accounts WHERE name = $1 AND user_id = $2 LIMIT 1`,
-    [accountName, userId]
+    [name, userId]
   );
 
   if (res.rows.length === 0) {
