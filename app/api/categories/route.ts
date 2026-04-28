@@ -31,7 +31,7 @@ export async function GET() {
       `
       SELECT id, name, type
       FROM categories
-      WHERE user_id = $1
+      WHERE user_id = $1 OR user_id IS NULL
       ORDER BY name ASC
       `,
       [userId]
