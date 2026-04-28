@@ -21,11 +21,23 @@ async function getAccountId(client: any, name: string, userId: string) {
     [name, userId]
   );
 
-  if (res.rows.length === 0) {
-    throw new Error(`Account not found: ${name}`);
-  }
+  if (res.rows.length > 0) return res.rows[0].id;
 
-  return res.rows[0].id;
+  // 🔥 AUTO CREATE (this is the missing piece)
+  const insert = await client.query(
+    `INSERT INTO accounts (name, type, user_id)
+     VALUES ($1, $2, $3)
+     RETURNING id`,
+    [
+      name,
+      name === "Debt"
+        ? "LIABILITY"
+        : "ASSET",
+      userId,
+    ]
+  );
+
+  return insert.rows[0].id;
 }
 
 async function getEntityId(client: any, name: string, type: string, userId: string) {
@@ -398,7 +410,7 @@ export async function POST(req: Request) {
           await client.query(
             `UPDATE debts
              SET remaining_amount = remaining_amount - $2
-             WHERE entity_id = $1 AND user_id = $2`,
+             WHERE entity_id = $1 AND user_id = $3`,
             [entity_id, amountNumber, userId]
           );
       
@@ -533,7 +545,7 @@ export async function POST(req: Request) {
           await client.query(
             `UPDATE receivables
              SET remaining_amount = remaining_amount - $2
-             WHERE entity_id = $1 AND user_id = $2`,
+             WHERE entity_id = $1 AND user_id = $3`,
             [entity_id, amountNumber, userId]
           );
       
