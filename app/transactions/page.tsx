@@ -29,6 +29,7 @@ export default function TransactionsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [confirmAll, setConfirmAll] = useState(false);
+  const [editTx, setEditTx] = useState<Transaction | null>(null);
 
   // =========================
   // LOAD DATA
