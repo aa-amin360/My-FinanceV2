@@ -23,7 +23,6 @@ async function getAccountId(client: any, name: string, userId: string) {
 
   if (res.rows.length > 0) return res.rows[0].id;
 
-  // 🔥 AUTO CREATE (this is the missing piece)
   const insert = await client.query(
     `INSERT INTO accounts (name, type, user_id)
      VALUES ($1, $2, $3)
@@ -604,6 +603,14 @@ export async function GET() {
         t.note,
         t.entity_id,
         t.category_id,
+        t.parent_id,
+      
+        EXISTS (
+          SELECT 1 
+          FROM transactions t2
+          WHERE t2.parent_id = t.id
+        ) AS has_child,
+      
         c.name AS category_name,
         e.name AS entity_name,
         fa.name AS from_account,
