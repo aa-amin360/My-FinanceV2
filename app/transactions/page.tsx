@@ -137,7 +137,7 @@ export default function TransactionsPage() {
   };
 
   const isEditable = (t: Transaction) => {
-    return !t.parent_id && !t.has_child;
+    return ["DEBT_REPAID", "RECEIVABLE_RECEIVED"].includes(t.type);
   };
   
   return (
