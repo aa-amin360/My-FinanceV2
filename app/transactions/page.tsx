@@ -19,6 +19,9 @@ type Transaction = {
   note: string | null;
   category_name?: string;
   entity_name?: string;
+
+  parent_id?: string | null;
+  has_child?: boolean;  
 };
 
 export default function TransactionsPage() {
@@ -131,6 +134,10 @@ export default function TransactionsPage() {
       setConfirmAll(false);
     }
   };
+
+  const isEditable = (t: Transaction) => {
+    return !t.parent_id && !t.has_child;
+  };
   
   return (
     <DashboardLayout>
@@ -216,7 +223,28 @@ export default function TransactionsPage() {
                   <div className="flex justify-center items-center gap-2">
   
                     {/* EDIT */}
-                    <button className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-slate-800 text-gray-400 hover:text-white transition">
+                    <button
+                      onClick={() => {
+                        if (!isEditable(t)) return;
+                    
+                        setEditTx(t);
+                    
+                        window.dispatchEvent(
+                          new CustomEvent("openAdd", {
+                            detail: {
+                              mode: "edit",
+                              data: t,
+                            },
+                          })
+                        );
+                      }}
+                      disabled={!isEditable(t)}
+                      className={`p-2 rounded-full transition ${
+                        isEditable(t)
+                          ? "hover:bg-gray-200 dark:hover:bg-slate-800 text-gray-400 hover:text-white"
+                          : "opacity-30 cursor-not-allowed text-gray-500"
+                      }`}
+                    >
                       <Pencil size={16} />
                     </button>
                   
