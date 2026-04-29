@@ -2,6 +2,8 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { Pool } from "pg";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -11,39 +13,53 @@ export async function DELETE(
   req: Request,
   { params }: { params: { id: string } }
 ) {
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = session.user.email;
+  const id = params.id;
+
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
-    const id = params.id;
-
-    const tx = await client.query(
-      `SELECT * FROM transactions WHERE id = $1`,
-      [id]
+    // =========================
+    // 1. Get transaction
+    // =========================
+    const txRes = await client.query(
+      `SELECT * FROM transactions WHERE id = $1 AND user_id = $2`,
+      [id, userId]
     );
 
-    if (tx.rows.length === 0) {
+    if (txRes.rows.length === 0) {
       throw new Error("Transaction not found");
     }
 
-    const t = tx.rows[0];
+    const t = txRes.rows[0];
 
-    // 🚫 BLOCK: child cannot be deleted directly
-    if (t.parent_id && t.type === "RECEIVABLE_GIVEN") {
+    // =========================
+    // 2. BLOCK invalid deletes
+    // =========================
+
+    // 🚫 Block deleting auto-generated child directly
+    if (t.parent_id) {
       return NextResponse.json(
-        { error: "Cannot delete auto-generated transaction" },
+        { error: "Cannot delete auto-generated transaction directly" },
         { status: 400 }
       );
     }
 
-    // 🔍 FIND CHILDREN
+    // 🔍 Find children
     const children = await client.query(
-      `SELECT * FROM transactions WHERE parent_id = $1`,
-      [t.id]
+      `SELECT * FROM transactions WHERE parent_id = $1 AND user_id = $2`,
+      [t.id, userId]
     );
 
-    // 🚫 BLOCK ONLY ROOT (DEBT_TAKEN)
+    // 🚫 Block deleting root debt with children
     if (children.rows.length > 0 && t.type === "DEBT_TAKEN") {
       return NextResponse.json(
         { error: "Cannot delete base debt while dependent records exist" },
@@ -51,97 +67,101 @@ export async function DELETE(
       );
     }
 
-    // 🔥 CASCADE DELETE (only for allowed cases like DEBT_REPAID)
-    for (const child of children.rows) {
-      const amt = Number(child.amount);
-
-      if (child.type === "RECEIVABLE_GIVEN") {
-        await client.query(
-          `UPDATE receivables
-           SET total_amount = total_amount - $2,
-               remaining_amount = remaining_amount - $2
-           WHERE entity_id = $1`,
-          [child.entity_id, amt]
-        );
-      }
-
-      if (child.type === "DEBT_TAKEN") {
-        await client.query(
-          `UPDATE debts
-           SET total_amount = total_amount - $2,
-               remaining_amount = remaining_amount - $2
-           WHERE entity_id = $1`,
-          [child.entity_id, amt]
-        );
-      }
-
-      await client.query(
-        `DELETE FROM transactions WHERE id = $1`,
-        [child.id]
-      );
-    }
-
-    const amount = Number(t.amount);
-
-    // ===== REVERSE EFFECT =====
-    if (t.entity_id) {
-      if (t.type === "DEBT_TAKEN") {
-        await client.query(
-          `UPDATE debts 
-           SET total_amount = total_amount - $2,
-               remaining_amount = remaining_amount - $2
-           WHERE entity_id = $1`,
-          [t.entity_id, amount]
-        );
-      }
-
-      if (t.type === "DEBT_REPAID") {
-        await client.query(
-          `UPDATE debts 
-           SET remaining_amount = remaining_amount + $2
-           WHERE entity_id = $1`,
-          [t.entity_id, amount]
-        );
-      }
-
-      if (t.type === "RECEIVABLE_GIVEN") {
-        await client.query(
-          `UPDATE receivables 
-           SET total_amount = total_amount - $2,
-               remaining_amount = remaining_amount - $2
-           WHERE entity_id = $1`,
-          [t.entity_id, amount]
-        );
-      }
-
-      if (t.type === "RECEIVABLE_RECEIVED") {
-        await client.query(
-          `UPDATE receivables 
-           SET remaining_amount = remaining_amount + $2
-           WHERE entity_id = $1`,
-          [t.entity_id, amount]
-        );
-      }
-
-      // ===== CLEANUP =====
-      await client.query(
-        `DELETE FROM debts
-         WHERE entity_id = $1 AND remaining_amount <= 0`,
-        [t.entity_id]
-      );
-
-      await client.query(
-        `DELETE FROM receivables
-         WHERE entity_id = $1 AND remaining_amount <= 0`,
-        [t.entity_id]
-      );
-    }
-
-    // ===== DELETE MAIN =====
+    // =========================
+    // 3. DELETE CHILDREN FIRST
+    // =========================
     await client.query(
-      `DELETE FROM transactions WHERE id = $1`,
-      [id]
+      `DELETE FROM transactions WHERE parent_id = $1 AND user_id = $2`,
+      [t.id, userId]
     );
+
+    // =========================
+    // 4. DELETE MAIN
+    // =========================
+    await client.query(
+      `DELETE FROM transactions WHERE id = $1 AND user_id = $2`,
+      [id, userId]
+    );
+
+    // =========================
+    // 5. REBUILD STATE (SAFE)
+    // =========================
+    if (t.entity_id) {
+      // clear existing state
+      await client.query(
+        `DELETE FROM debts WHERE entity_id = $1 AND user_id = $2`,
+        [t.entity_id, userId]
+      );
+
+      await client.query(
+        `DELETE FROM receivables WHERE entity_id = $1 AND user_id = $2`,
+        [t.entity_id, userId]
+      );
+
+      // rebuild from history
+      const history = await client.query(
+        `
+        SELECT * FROM transactions
+        WHERE entity_id = $1 AND user_id = $2
+        ORDER BY date ASC
+        `,
+        [t.entity_id, userId]
+      );
+
+      for (const h of history.rows) {
+        const amt = Number(h.amount);
+
+        if (h.type === "DEBT_TAKEN") {
+          await client.query(
+            `
+            INSERT INTO debts (entity_id, total_amount, remaining_amount, user_id)
+            VALUES ($1,$2,$2,$3)
+            ON CONFLICT (entity_id, user_id)
+            DO UPDATE SET
+              total_amount = debts.total_amount + $2,
+              remaining_amount = debts.remaining_amount + $2
+            `,
+            [h.entity_id, amt, userId]
+          );
+        }
+
+        if (h.type === "DEBT_REPAID") {
+          await client.query(
+            `
+            UPDATE debts
+            SET remaining_amount = remaining_amount - $2
+            WHERE entity_id = $1 AND user_id = $3
+            `,
+            [h.entity_id, amt, userId]
+          );
+        }
+
+        if (h.type === "RECEIVABLE_GIVEN") {
+          await client.query(
+            `
+            INSERT INTO receivables (entity_id, total_amount, remaining_amount, user_id)
+            VALUES ($1,$2,$2,$3)
+            ON CONFLICT (entity_id, user_id)
+            DO UPDATE SET
+              total_amount = receivables.total_amount + $2,
+              remaining_amount = receivables.remaining_amount + $2
+            `,
+            [h.entity_id, amt, userId]
+          );
+        }
+
+        if (h.type === "RECEIVABLE_RECEIVED") {
+          await client.query(
+            `
+            UPDATE receivables
+            SET remaining_amount = remaining_amount - $2
+            WHERE entity_id = $1 AND user_id = $3
+            `,
+            [h.entity_id, amt, userId]
+          );
+        }
+      }
+    }
 
     await client.query("COMMIT");
 
