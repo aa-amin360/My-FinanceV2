@@ -28,7 +28,7 @@ export async function DELETE(
     await client.query("BEGIN");
 
     // =========================
-    // 1. Get transaction
+    // 1. Fetch transaction
     // =========================
     const txRes = await client.query(
       `SELECT * FROM transactions WHERE id = $1 AND user_id = $2`,
@@ -42,38 +42,36 @@ export async function DELETE(
     const t = txRes.rows[0];
 
     // =========================
-    // 2. BLOCK invalid deletes
+    // 2. SAFETY RULES
     // =========================
 
-    // 🚫 Block deleting auto-generated child directly
+    // 🚫 Cannot delete child directly
     if (t.parent_id) {
-      return NextResponse.json(
-        { error: "Cannot delete auto-generated transaction directly" },
-        { status: 400 }
-      );
+      throw new Error("Cannot delete auto-generated transaction directly");
     }
 
-    // 🔍 Find children
-    const children = await client.query(
-      `SELECT * FROM transactions WHERE parent_id = $1 AND user_id = $2`,
+    // 🔍 Check children
+    const childrenRes = await client.query(
+      `SELECT id FROM transactions WHERE parent_id = $1 AND user_id = $2`,
       [t.id, userId]
     );
 
-    // 🚫 Block deleting root debt with children
-    if (children.rows.length > 0 && t.type === "DEBT_TAKEN") {
-      return NextResponse.json(
-        { error: "Cannot delete base debt while dependent records exist" },
-        { status: 400 }
-      );
+    const hasChildren = childrenRes.rows.length > 0;
+
+    // 🚫 Block deleting root debt if it has dependent flows
+    if (hasChildren && t.type === "DEBT_TAKEN") {
+      throw new Error("Cannot delete base debt while dependent records exist");
     }
 
     // =========================
-    // 3. DELETE CHILDREN FIRST
+    // 3. DELETE CHILDREN
     // =========================
-    await client.query(
-      `DELETE FROM transactions WHERE parent_id = $1 AND user_id = $2`,
-      [t.id, userId]
-    );
+    if (hasChildren) {
+      await client.query(
+        `DELETE FROM transactions WHERE parent_id = $1 AND user_id = $2`,
+        [t.id, userId]
+      );
+    }
 
     // =========================
     // 4. DELETE MAIN
@@ -84,10 +82,10 @@ export async function DELETE(
     );
 
     // =========================
-    // 5. REBUILD STATE (SAFE)
+    // 5. REBUILD STATE
     // =========================
     if (t.entity_id) {
-      // clear existing state
+      // Clear existing state
       await client.query(
         `DELETE FROM debts WHERE entity_id = $1 AND user_id = $2`,
         [t.entity_id, userId]
@@ -98,12 +96,12 @@ export async function DELETE(
         [t.entity_id, userId]
       );
 
-      // rebuild from history
+      // Rebuild from history
       const history = await client.query(
         `
         SELECT * FROM transactions
         WHERE entity_id = $1 AND user_id = $2
-        ORDER BY date ASC
+        ORDER BY date ASC, created_at ASC
         `,
         [t.entity_id, userId]
       );
