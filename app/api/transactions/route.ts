@@ -84,12 +84,15 @@ export async function POST(req: Request) {
   }
   
   const userId = session.user.email;
-  
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
+    // ✅ FIX 1: GET BODY FIRST
+    const body = await req.json();
+
+    // ✅ FIX 2: SINGLE DESTRUCTURE
     let {
       type,
       amount,
@@ -100,12 +103,12 @@ export async function POST(req: Request) {
       note,
       direction,
     } = body;
-    
+
     // =========================
     // VALIDATION
     // =========================
     const amountNumber = Number(amount);
-    
+
     if (!type || !amountNumber || !account || !date) {
       throw new Error("Missing required fields");
     }
@@ -229,7 +232,6 @@ export async function POST(req: Request) {
 
     let result = null;
     
-    // ⚠️ ONLY INSERT IF NOT SPLIT CASE
     if (
       type !== "DEBT_REPAID" &&
       type !== "RECEIVABLE_RECEIVED"
