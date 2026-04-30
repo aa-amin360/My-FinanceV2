@@ -161,7 +161,7 @@ export default function DashboardLayout({
   };
 
   // ================= SUBMIT =================
-  const handleSubmit = async () => {
+  const handleSubmit = async () => {    
     if (loading) return;
   
     setError("");
@@ -192,7 +192,7 @@ export default function DashboardLayout({
     if (!actionToTypeMap[action]) {
       setError("Invalid action");
       return;
-    }    
+    }
   
     // =========================
     // ACCOUNT + BALANCE CHECK
@@ -235,6 +235,10 @@ export default function DashboardLayout({
   
       if (category) body.category_id = category;
       if (entity) body.entity = entity;
+
+      if (editTx) {
+        body.id = editTx.id;
+      }     
   
       // =========================
       // API CALL
