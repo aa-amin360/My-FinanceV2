@@ -145,6 +145,18 @@ export default function TransactionsPage() {
   const isEditable = (t: Transaction) => {
     return ["DEBT_REPAID", "RECEIVABLE_RECEIVED"].includes(t.type);
   };
+
+  // =========================
+  // SORT (Parent → Child)
+  // =========================
+  const sortedTransactions = [...transactions].sort((a, b) => {
+    // parent should come before child
+    if (a.id === b.parent_id) return -1;
+    if (b.id === a.parent_id) return 1;
+  
+    return 0;
+  });
+  
   
   return (
     <DashboardLayout>
@@ -174,7 +186,7 @@ export default function TransactionsPage() {
           {/* ROWS */}
           {/* DESKTOP TABLE */}
             <div className="hidden md:block">
-              {transactions.map((t) => {
+              {sortedTransactions.map((t) => {
                 const amount = Number(t.amount);
   
                 const isChild = !!t.parent_id;
@@ -276,7 +288,7 @@ export default function TransactionsPage() {
           
           {/* MOBILE CARD */}
           <div className="md:hidden space-y-3">
-            {transactions.map((t) => {
+            {sortedTransactions.map((t) => {
               
               const amount = Number(t.amount);
 
