@@ -188,6 +188,11 @@ export default function DashboardLayout({
       setError("Enter person / entity");
       return;
     }
+
+    if (!actionToTypeMap[action]) {
+      setError("Invalid action");
+      return;
+    }    
   
     // =========================
     // ACCOUNT + BALANCE CHECK
