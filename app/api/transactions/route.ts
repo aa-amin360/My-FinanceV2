@@ -59,6 +59,8 @@ export async function POST(req: Request) {
       direction,
     } = body;
 
+    const { id } = body;
+
     const amountNumber = Number(amount);
 
     if (!type || !amountNumber || !account || !date) {
@@ -91,6 +93,42 @@ export async function POST(req: Request) {
       TYPE_META
     );
 
+    // =========================
+    // UPDATE (EDIT MODE)
+    // =========================
+    if (id) {
+      await client.query(
+        `
+        UPDATE transactions
+        SET 
+          type = $1,
+          amount = $2,
+          from_account = $3,
+          to_account = $4,
+          entity_id = $5,
+          category_id = $6,
+          date = $7,
+          note = $8
+        WHERE id = $9 AND user_id = $10
+        `,
+        [
+          type,
+          amountNumber,
+          from_account,
+          to_account,
+          entity_id,
+          category_id || null,
+          date,
+          note,
+          id,
+          userId,
+        ]
+      );
+    
+      await client.query("COMMIT");
+      return NextResponse.json({ success: true });
+    }
+    
     // insert normal
     if (type !== "DEBT_REPAID" && type !== "RECEIVABLE_RECEIVED") {
       await insertTransaction(client, [
