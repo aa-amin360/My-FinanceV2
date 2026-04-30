@@ -51,7 +51,7 @@ export default function TransactionsPage() {
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
   };
-  
+ 
   // Priority:
   // 1. Entity (Debt / Receivable)
   // 2. Note (Expense / Income source)
@@ -59,6 +59,12 @@ export default function TransactionsPage() {
   // 4. Type fallback
     
   const getDisplayName = (t: Transaction) => {
+    const isChild = !!t.parent_id;
+
+    if (isChild && t.type === "RECEIVABLE_GIVEN") {
+      return "Extra given (from repay)";
+    }
+    
     if (t.entity_name) return formatName(t.entity_name);
   
     if (t.note) return formatName(t.note);
@@ -168,60 +174,65 @@ export default function TransactionsPage() {
           {/* ROWS */}
           {/* DESKTOP TABLE */}
             <div className="hidden md:block">
-                      {transactions.map((t) => {
-              const amount = Number(t.amount);
-    
-              const isPositive =
-                t.type === "INCOME" ||
-                t.type === "DEBT_TAKEN" ||
-                t.type === "RECEIVABLE_RECEIVED";
-    
-              return (
-                <div
-                  key={t.id}
-                  className="grid grid-cols-[1.2fr_1fr_1fr_1fr_0.8fr] px-4 py-3 border-b border-gray-200 dark:border-slate-800 hover:bg-gray-200 dark:hover:bg-slate-800 transition"
-                >
-                  {/* NAME */}
-                  <div className="font-semibold text-gray-900 dark:text-white text-base">
-                    {getDisplayName(t)}
-                  </div>
-                
-                  {/* DATE */}
-                  <div className="text-xs text-gray-500">
-                    {new Date(t.date).toDateString()}
-                  </div>
-                
-                  {/* TYPE */}
-                  <div>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs inline-block whitespace-nowrap overflow-hidden text-ellipsis max-w-[140px] ${getTypeStyle(t.type)}`}
-                      title={formatType(t.type)} // optional: shows full text on hover
-                    >
-                      {formatType(t.type)}
-                    </span>
-                  </div>
-                
-                  {/* AMOUNT */}
+              {transactions.map((t) => {
+                const amount = Number(t.amount);
+  
+                const isChild = !!t.parent_id;
+      
+                const isPositive =
+                  t.type === "INCOME" ||
+                  t.type === "DEBT_TAKEN" ||
+                  t.type === "RECEIVABLE_RECEIVED";
+      
+                return (
                   <div
-                    className={`text-right font-semibold ${
-                      t.type === "INCOME" ||
-                      t.type === "DEBT_TAKEN" ||
-                      t.type === "RECEIVABLE_RECEIVED"
-                        ? "text-green-500"
-                        : "text-red-500"
+                    key={t.id}
+                    className={`grid grid-cols-5 items-center px-4 py-3 border-b border-gray-200 dark:border-gray-700 text-sm ${
+                      isChild ? "opacity-60 pl-6" : ""
                     }`}
                   >
-                    {(t.type === "INCOME" ||
-                      t.type === "DEBT_TAKEN" ||
-                      t.type === "RECEIVABLE_RECEIVED"
-                      ? "+"
-                      : "-") +
-                      Number(t.amount).toLocaleString("en-BD")}{" "}
-                    Tk
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex justify-center items-center gap-2">
+                    {/* NAME */}
+                    <div className="font-semibold text-gray-900 dark:text-white text-base">
+                      {isChild ? "↳ " : ""}
+                      {getDisplayName(t)}
+                    </div>
+                  
+                    {/* DATE */}
+                    <div className="text-xs text-gray-500">
+                      {new Date(t.date).toDateString()}
+                    </div>
+                  
+                    {/* TYPE */}
+                    <div>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs inline-block whitespace-nowrap overflow-hidden text-ellipsis max-w-[140px] ${getTypeStyle(t.type)}`}
+                        title={formatType(t.type)} // optional: shows full text on hover
+                      >
+                        {formatType(t.type)}
+                      </span>
+                    </div>
+                  
+                    {/* AMOUNT */}
+                    <div
+                      className={`text-right font-semibold ${
+                        t.type === "INCOME" ||
+                        t.type === "DEBT_TAKEN" ||
+                        t.type === "RECEIVABLE_RECEIVED"
+                          ? "text-green-500"
+                          : "text-red-500"
+                      }`}
+                    >
+                      {(t.type === "INCOME" ||
+                        t.type === "DEBT_TAKEN" ||
+                        t.type === "RECEIVABLE_RECEIVED"
+                        ? "+"
+                        : "-") +
+                        Number(t.amount).toLocaleString("en-BD")}{" "}
+                      Tk
+                    </div>
+  
+                    {/* Actions */}
+                    <div className="flex justify-center items-center gap-2">
   
                     {/* EDIT */}
                     <button
@@ -266,7 +277,10 @@ export default function TransactionsPage() {
           {/* MOBILE CARD */}
           <div className="md:hidden space-y-3">
             {transactions.map((t) => {
+              
               const amount = Number(t.amount);
+
+              const isChild = !!t.parent_id;
           
               const isPositive =
                 t.type === "INCOME" ||
@@ -281,6 +295,7 @@ export default function TransactionsPage() {
                   {/* ROW 1 → NAME + AMOUNT + EDIT */}
                   <div className="flex justify-between items-center">
                     <div className="font-semibold text-base text-gray-900 dark:text-white">
+                      {isChild ? "↳ " : ""}
                       {getDisplayName(t)}
                     </div>
           
