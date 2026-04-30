@@ -369,28 +369,14 @@ export async function POST(req: Request) {
         }
       
         // =========================
-        // ✅ NORMAL REPAY (FIX)
+        // ✅ NORMAL REPAY
         // =========================
-        else {          
-          // 🔍 find latest DEBT_TAKEN
-          const debtTaken = await client.query(
-            `SELECT id FROM transactions
-             WHERE entity_id = $1 AND type = 'DEBT_TAKEN' AND user_id = $2
-             ORDER BY date DESC LIMIT 1`,
-            [entity_id, userId]
-          );
-          
-          if (debtTaken.rows.length === 0) {
-            throw new Error("No DEBT_TAKEN found for this entity");
-          }
-          
-          const parentDebtId = debtTaken.rows[0].id;
-
-          // 1️⃣ Insert transaction
+        else {
+          // 1️⃣ Insert DEBT_REPAID
           await client.query(
             `INSERT INTO transactions
-             (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id, user_id)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+             (type, amount, from_account, to_account, entity_id, category_id, date, note, user_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
             [
               "DEBT_REPAID",
               amountNumber,
@@ -400,11 +386,10 @@ export async function POST(req: Request) {
               category_id || null,
               date,
               note,
-              parentDebtId,
               userId,
             ]
           );
-      
+        
           // 2️⃣ Reduce debt
           await client.query(
             `UPDATE debts
@@ -412,8 +397,8 @@ export async function POST(req: Request) {
              WHERE entity_id = $1 AND user_id = $3`,
             [entity_id, amountNumber, userId]
           );
-      
-          // 3️⃣ Optional safety (auto delete if zero)
+        
+          // 3️⃣ Clean if zero
           await client.query(
             `DELETE FROM debts
              WHERE entity_id = $1 AND user_id = $2 AND remaining_amount <= 0`,
@@ -484,27 +469,27 @@ export async function POST(req: Request) {
             [entity_id, userId]
           );
       
-          // 3️⃣ Convert extra → DEBT
+          // 3️⃣ Convert extra → RECEIVABLE
           if (extra > 0) {
             await client.query(
-              `INSERT INTO debts (entity_id, total_amount, remaining_amount, user_id)
+              `INSERT INTO receivables (entity_id, total_amount, remaining_amount, user_id)
                VALUES ($1, $2, $2, $3)
                ON CONFLICT (entity_id, user_id)
                DO UPDATE SET
-                 total_amount = debts.total_amount + $2,
-                 remaining_amount = debts.remaining_amount + $2`,
+                 total_amount = receivables.total_amount + $2,
+                 remaining_amount = receivables.remaining_amount + $2`,
               [entity_id, extra, userId]
             );
-      
+          
             await client.query(
               `INSERT INTO transactions
                (type, amount, from_account, to_account, entity_id, date, note, parent_id, user_id)
                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
               [
-                "DEBT_TAKEN",
+                "RECEIVABLE_GIVEN",
                 extra,
-                debtId,
-                to_account,
+                from_account,
+                receivableId,
                 entity_id,
                 date,
                 "Auto conversion",
