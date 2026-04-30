@@ -70,6 +70,7 @@ export default function DashboardLayout({
   const [action, setAction] = useState("");
   const [entity, setEntity] = useState("");
   const [loading, setLoading] = useState(false);
+  const [editTx, setEditTx] = useState<any | null>(null);
 
   // ================= FORM STATE =================
   const [amount, setAmount] = useState("");
@@ -95,6 +96,8 @@ export default function DashboardLayout({
     setShowModal(false);
     setIsDirectFlow(false);
     setStep("ACTION");
+
+    setEditTx(null);
   
     resetForm();
   
@@ -130,6 +133,8 @@ export default function DashboardLayout({
 
       if (typeof e.detail === "object") {
         const t = e.detail.data;
+
+        setEditTx(t);
       
         setStep("FORM");
       
