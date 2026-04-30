@@ -143,14 +143,25 @@ export default function TransactionsPage() {
   };
 
   const isEditable = (t: Transaction) => {
-    return ["DEBT_REPAID", "RECEIVABLE_RECEIVED"].includes(t.type);
+    const isChild = !!t.parent_id;
+    const hasChild = !!t.has_child;
+  
+    // allow normal transactions
+    if (!isChild && !hasChild) return true;
+  
+    // allow special middle ones
+    if (t.type === "DEBT_REPAID" || t.type === "RECEIVABLE_RECEIVED") {
+      return true;
+    }
+  
+    return false;
   };
 
   // =========================
   // SORT (Parent → Child)
   // =========================
   const sortedTransactions = [...transactions].sort((a, b) => {
-    // parent should come before child
+
     if (a.id === b.parent_id) return -1;
     if (b.id === a.parent_id) return 1;
   
