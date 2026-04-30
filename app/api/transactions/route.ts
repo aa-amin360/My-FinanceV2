@@ -161,3 +161,64 @@ export async function POST(req: Request) {
     client.release();
   }
 }
+
+// =========================
+// GET
+// =========================
+
+export async function GET() {
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = session.user.email;
+
+  const client = await pool.connect();
+
+  try {
+    const result = await client.query(
+      `
+      SELECT 
+        t.id,
+        t.type,
+        t.amount,
+        t.date,
+        t.note,
+        t.entity_id,
+        t.category_id,
+        t.parent_id,
+      
+        EXISTS (
+          SELECT 1 
+          FROM transactions t2
+          WHERE t2.parent_id = t.id
+        ) AS has_child,
+      
+        c.name AS category_name,
+        e.name AS entity_name,
+        fa.name AS from_account,
+        ta.name AS to_account
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      LEFT JOIN entities e ON t.entity_id = e.id
+      LEFT JOIN accounts fa ON t.from_account = fa.id
+      LEFT JOIN accounts ta ON t.to_account = ta.id
+      WHERE t.user_id = $1
+      ORDER BY t.date DESC, t.created_at DESC;
+      `,
+      [userId]
+    );
+
+    return NextResponse.json({
+      success: true,
+      data: result.rows,
+    });
+
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message });
+  } finally {
+    client.release();
+  }
+}
