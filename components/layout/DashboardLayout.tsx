@@ -129,11 +129,20 @@ export default function DashboardLayout({
       }
 
       if (typeof e.detail === "object") {
+        const t = e.detail.data;
+      
         setStep("FORM");
-        setEntity(e.detail.entity);
+      
+        setEntity(t.entity_name || "");
+        setNote(t.note || "");
+        setAmount(String(t.amount || ""));
 
-        if (e.detail.type === "DEBT_REPAID") setAction("REPAY");
-        if (e.detail.type === "RECEIVABLE_RECEIVED") setAction("RECEIVE");
+        if (t.type === "INCOME") setAction("INCOME");
+        if (t.type === "EXPENSE") setAction("EXPENSE");
+        if (t.type === "DEBT_TAKEN") setAction("BORROW");
+        if (t.type === "RECEIVABLE_GIVEN") setAction("GIVE");
+        if (t.type === "DEBT_REPAID") setAction("REPAY");
+        if (t.type === "RECEIVABLE_RECEIVED") setAction("RECEIVE");
       }
     };
 
