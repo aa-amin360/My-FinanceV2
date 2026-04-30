@@ -1,15 +1,25 @@
-import { useEffect } from "react";
+"use client";
+
+import { useEffect, useRef } from "react";
 
 export function useRefresh(callback: () => void) {
-  useEffect(() => {
-    callback();
+  const callbackRef = useRef(callback);
 
-    const handler = () => callback();
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
+  useEffect(() => {
+    callbackRef.current();
+
+    const handler = () => {
+      callbackRef.current();
+    };
 
     window.addEventListener("refreshData", handler);
 
     return () => {
       window.removeEventListener("refreshData", handler);
     };
-  }, [callback]);
+  }, []);
 }
