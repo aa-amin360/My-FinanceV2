@@ -92,6 +92,38 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
+    let {
+      type,
+      amount,
+      account,
+      category_id,
+      entity,
+      date,
+      note,
+      direction,
+    } = body;
+    
+    // =========================
+    // AUTO TYPE RESOLUTION
+    // =========================
+    if (!type) {
+      if (category_id && !entity) {
+        type = "EXPENSE";
+      } else if (entity) {
+        type = "DEBT_TAKEN";
+      }
+    }
+    
+    // =========================
+    // VALIDATION
+    // =========================
+    const amountNumber = Number(amount);
+    
+    if (!type || !amountNumber || !account || !date) {
+      throw new Error("Missing required fields");
+    }
+    
+
     const {
       type,
       amount,
