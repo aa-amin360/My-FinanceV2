@@ -30,6 +30,7 @@ export default function TransactionsPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [confirmAll, setConfirmAll] = useState(false);
   const [editTx, setEditTx] = useState<Transaction | null>(null);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   // =========================
   // LOAD DATA
@@ -51,7 +52,14 @@ export default function TransactionsPage() {
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
   };
- 
+
+  const toggleExpand = (id: string) => {
+    setExpanded((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+   
   // Priority:
   // 1. Entity (Debt / Receivable)
   // 2. Note (Expense / Income source)
@@ -114,7 +122,7 @@ export default function TransactionsPage() {
     const data = await res.json();
   
     if (!res.ok) {
-      setDeleteId(null); // close delete modal
+      setDeleteId(null);
       setErrorMessage(data.error || "Cannot delete transaction");
       return;
     }
@@ -231,7 +239,15 @@ export default function TransactionsPage() {
           {/* ROWS */}
           {/* DESKTOP TABLE */}
             <div className="hidden md:block">
-              {sortedTransactions.map((t) => {
+              {sortedTransactions
+                .filter((t) => {
+                  // show parent always
+                  if (!t.parent_id) return true;
+              
+                  // show child ONLY if parent expanded
+                  return expanded[t.parent_id];
+                })
+                .map((t) => {
                 const amount = Number(t.amount);
   
                 const isChild = !!t.parent_id;
@@ -244,13 +260,23 @@ export default function TransactionsPage() {
                 return (
                   <div
                     key={t.id}
-                    className={`grid grid-cols-5 items-center px-4 py-3 border-b border-gray-200 dark:border-gray-700 text-sm ${
-                      isChild ? "opacity-60 pl-6" : ""
-                    }`}
+                    onClick={() => {
+                      if (t.has_child) toggleExpand(t.id);
+                    }}
+                    className={`grid grid-cols-5 items-center px-4 py-3 border-b 
+                    border-gray-200 dark:border-gray-700 text-sm cursor-pointer ${
+                      t.has_child ? "hover:bg-gray-50 dark:hover:bg-slate-800" : ""
+                    } ${t.parent_id ? "opacity-60 pl-6" : ""}`}
                   >
                     {/* NAME */}
                     <div className="font-semibold text-gray-900 dark:text-white text-base">
-                      {isChild ? "↳ " : ""}
+                      {t.has_child && (
+                        <span className="mr-2">
+                          {expanded[t.id] ? "▼" : "▶"}
+                        </span>
+                      )}
+                      
+                      {t.parent_id && "↳ "}
                       {getDisplayName(t)}
                     </div>
                   
@@ -284,7 +310,9 @@ export default function TransactionsPage() {
                         t.type === "RECEIVABLE_RECEIVED"
                         ? "+"
                         : "-") +
-                        getAggregatedAmount(t).toLocaleString("en-BD")}{" "}
+                        t.has_child
+                        ? getAggregatedAmount(t)
+                        : Number(t.amount).toLocaleString("en-BD")}{" "}
                       Tk
                     </div>
   
@@ -293,7 +321,8 @@ export default function TransactionsPage() {
   
                     {/* EDIT */}
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         if (!isEditable(t)) return;
                     
                         setEditTx(t);
@@ -319,7 +348,9 @@ export default function TransactionsPage() {
                   
                     {/* DELETE */}
                     <button
-                      onClick={() => setDeleteId(t.id)}
+                      onClick={(e) => 
+                        e.stopPropagation();                        
+                        setDeleteId(t.id)
                       className="p-2 rounded-full hover:bg-red-500/20 text-red-400 hover:text-red-300 transition"
                     >
                       <Trash2 size={16} />
@@ -333,7 +364,12 @@ export default function TransactionsPage() {
           
           {/* MOBILE CARD */}
           <div className="md:hidden space-y-3">
-            {sortedTransactions.map((t) => {
+            {sortedTransactions
+              .filter((t) => {
+                if (!t.parent_id) return true;
+                return expanded[t.parent_id];
+              })
+              .map((t) => {
               
               const amount = Number(t.amount);
 
@@ -363,7 +399,9 @@ export default function TransactionsPage() {
                         }`}
                       >
                         {isPositive ? "+" : "-"}
-                        {getAggregatedAmount(t).toLocaleString("en-BD")} Tk
+                        {t.has_child
+                        ? getAggregatedAmount(t)
+                        : Number(t.amount).toLocaleString("en-BD")} Tk
                       </div>
           
                       {/* EDIT */}
