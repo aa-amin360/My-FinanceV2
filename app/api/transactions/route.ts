@@ -46,9 +46,101 @@ export async function POST(req: Request) {
   try {
     await client.query("BEGIN");
 
-    const body = await req.json();
+    // =========================
+    // 🧨 EDIT MODE: REVERSE + DELETE
+    // =========================
+    if (isEdit) {
+      // 1️⃣ get original transaction
+      const oldTxRes = await client.query(
+        `SELECT * FROM transactions WHERE id = $1 AND user_id = $2`,
+        [id, userId]
+      );
+    
+      const oldTx = oldTxRes.rows[0];
+    
+      if (!oldTx) {
+        throw new Error("Transaction not found for edit");
+      }
+    
+      // 2️⃣ get children (important for split cases)
+      const childrenRes = await client.query(
+        `SELECT * FROM transactions WHERE parent_id = $1 AND user_id = $2`,
+        [id, userId]
+      );
+    
+      const children = childrenRes.rows;
+    
+      const allTx = [oldTx, ...children];
+    
+      // =========================
+      // 🔄 REVERSE EFFECTS
+      // =========================
+      for (const tx of allTx) {
+        const amt = Number(tx.amount);
+        const entityId = tx.entity_id;
+    
+        if (!entityId) continue;
+    
+        // ---- DEBT ----
+        if (tx.type === "DEBT_TAKEN") {
+          await client.query(
+            `UPDATE debts
+             SET total_amount = total_amount - $2,
+                 remaining_amount = remaining_amount - $2
+             WHERE entity_id = $1 AND user_id = $3`,
+            [entityId, amt, userId]
+          );
+        }
+    
+        if (tx.type === "DEBT_REPAID") {
+          await client.query(
+            `UPDATE debts
+             SET remaining_amount = remaining_amount + $2
+             WHERE entity_id = $1 AND user_id = $3`,
+            [entityId, amt, userId]
+          );
+        }
+    
+        // ---- RECEIVABLE ----
+        if (tx.type === "RECEIVABLE_GIVEN") {
+          await client.query(
+            `UPDATE receivables
+             SET total_amount = total_amount - $2,
+                 remaining_amount = remaining_amount - $2
+             WHERE entity_id = $1 AND user_id = $3`,
+            [entityId, amt, userId]
+          );
+        }
+    
+        if (tx.type === "RECEIVABLE_RECEIVED") {
+          await client.query(
+            `UPDATE receivables
+             SET remaining_amount = remaining_amount + $2
+             WHERE entity_id = $1 AND user_id = $3`,
+            [entityId, amt, userId]
+          );
+        }
+      }
+    
+      // =========================
+      // 🧹 DELETE OLD TREE
+      // =========================
+    
+      await client.query(
+        `DELETE FROM transactions WHERE parent_id = $1 AND user_id = $2`,
+        [id, userId]
+      );
+    
+      await client.query(
+        `DELETE FROM transactions WHERE id = $1 AND user_id = $2`,
+        [id, userId]
+      );
+    }  
 
+    const body = await req.json();
+    
     const {
+      id,
       type,
       amount,
       account,
@@ -58,7 +150,9 @@ export async function POST(req: Request) {
       note,
       direction,
     } = body;
-
+    
+    const isEdit = !!id;
+    
     const { id } = body;
 
     const amountNumber = Number(amount);
