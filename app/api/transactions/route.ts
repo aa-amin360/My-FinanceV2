@@ -44,8 +44,24 @@ export async function POST(req: Request) {
   const client = await pool.connect();
 
   try {
-    await client.query("BEGIN");
+    await client.query("BEGIN");  
 
+    const body = await req.json();
+    
+    const {
+      id,
+      type,
+      amount,
+      account,
+      category_id,
+      entity,
+      date,
+      note,
+      direction,
+    } = body;
+    
+    const isEdit = !!id;
+    
     // =========================
     // 🧨 EDIT MODE: REVERSE + DELETE
     // =========================
@@ -135,24 +151,9 @@ export async function POST(req: Request) {
         `DELETE FROM transactions WHERE id = $1 AND user_id = $2`,
         [id, userId]
       );
-    }  
+    }
 
-    const body = await req.json();
     
-    const {
-      id,
-      type,
-      amount,
-      account,
-      category_id,
-      entity,
-      date,
-      note,
-      direction,
-    } = body;
-    
-    const isEdit = !!id;    
-
     const amountNumber = Number(amount);
 
     if (!type || !amountNumber || !account || !date) {
