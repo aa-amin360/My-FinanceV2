@@ -188,6 +188,11 @@ export default function TransactionsPage() {
   };
   
   const getAggregatedAmount = (t: Transaction) => {
+    if (t.type === "DEBT_TAKEN" || t.type === "RECEIVABLE_GIVEN") {
+      return Number(t.amount);
+    }
+  
+    // normal case
     if (!t.has_child) return Number(t.amount);
   
     const children = transactions.filter(
@@ -199,7 +204,7 @@ export default function TransactionsPage() {
     for (const c of children) {
       const val = Number(c.amount);
   
-      // match direction instead of blindly adding
+      // match direction
       if (isPositiveType(c.type) === isPositiveType(t.type)) {
         total += val;
       } else {
@@ -365,9 +370,12 @@ export default function TransactionsPage() {
                   t.type === "DEBT_TAKEN" ||
                   t.type === "RECEIVABLE_RECEIVED";
           
-                const finalAmount = t.has_child
-                  ? getAggregatedAmount(t)
-                  : Number(t.amount);
+                const finalAmount =
+                  t.has_child &&
+                  t.type !== "DEBT_TAKEN" &&
+                  t.type !== "RECEIVABLE_GIVEN"
+                    ? getAggregatedAmount(t)
+                    : Number(t.amount);
           
                 return (
                   <div
