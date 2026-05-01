@@ -238,25 +238,24 @@ export default function TransactionsPage() {
         <div className="pb-24 md:pb-0">
           {/* ROWS */}
           {/* DESKTOP TABLE */}
-            <div className="hidden md:block">
-              {sortedTransactions
-                .filter((t) => {
-                  // show parent always
-                  if (!t.parent_id) return true;
-              
-                  // show child ONLY if parent expanded
-                  return expanded[t.parent_id];
-                })
-                .map((t) => {
-                const amount = Number(t.amount);
-  
+          <div className="hidden md:block">
+            {sortedTransactions
+              .filter((t) => {
+                if (!t.parent_id) return true;
+                return expanded[t.parent_id];
+              })
+              .map((t) => {
                 const isChild = !!t.parent_id;
-      
+          
                 const isPositive =
                   t.type === "INCOME" ||
                   t.type === "DEBT_TAKEN" ||
                   t.type === "RECEIVABLE_RECEIVED";
-      
+          
+                const finalAmount = t.has_child
+                  ? getAggregatedAmount(t)
+                  : Number(t.amount);
+          
                 return (
                   <div
                     key={t.id}
@@ -266,7 +265,7 @@ export default function TransactionsPage() {
                     className={`grid grid-cols-5 items-center px-4 py-3 border-b 
                     border-gray-200 dark:border-gray-700 text-sm cursor-pointer ${
                       t.has_child ? "hover:bg-gray-50 dark:hover:bg-slate-800" : ""
-                    } ${t.parent_id ? "opacity-60 pl-6" : ""}`}
+                    } ${isChild ? "opacity-60 pl-6" : ""}`}
                   >
                     {/* NAME */}
                     <div className="font-semibold text-gray-900 dark:text-white text-base">
@@ -275,92 +274,81 @@ export default function TransactionsPage() {
                           {expanded[t.id] ? "▼" : "▶"}
                         </span>
                       )}
-                      
-                      {t.parent_id && "↳ "}
+          
+                      {isChild && "↳ "}
                       {getDisplayName(t)}
                     </div>
-                  
+          
                     {/* DATE */}
                     <div className="text-xs text-gray-500">
                       {new Date(t.date).toDateString()}
                     </div>
-                  
+          
                     {/* TYPE */}
                     <div>
                       <span
                         className={`px-2 py-1 rounded-full text-xs inline-block whitespace-nowrap overflow-hidden text-ellipsis max-w-[140px] ${getTypeStyle(t.type)}`}
-                        title={formatType(t.type)} // optional: shows full text on hover
                       >
                         {formatType(t.type)}
                       </span>
                     </div>
-                  
+          
                     {/* AMOUNT */}
                     <div
                       className={`text-right font-semibold ${
-                        t.type === "INCOME" ||
-                        t.type === "DEBT_TAKEN" ||
-                        t.type === "RECEIVABLE_RECEIVED"
-                          ? "text-green-500"
-                          : "text-red-500"
+                        isPositive ? "text-green-500" : "text-red-500"
                       }`}
                     >
-                      {(t.type === "INCOME" ||
-                        t.type === "DEBT_TAKEN" ||
-                        t.type === "RECEIVABLE_RECEIVED"
-                        ? "+"
-                        : "-") +
-                        t.has_child
-                        ? getAggregatedAmount(t)
-                        : Number(t.amount).toLocaleString("en-BD")}{" "}
+                      {(isPositive ? "+" : "-") +
+                        finalAmount.toLocaleString("en-BD")}{" "}
                       Tk
                     </div>
-  
-                    {/* Actions */}
+          
+                    {/* ACTIONS */}
                     <div className="flex justify-center items-center gap-2">
-  
-                    {/* EDIT */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!isEditable(t)) return;
-                    
-                        setEditTx(t);
-                    
-                        window.dispatchEvent(
-                          new CustomEvent("openAdd", {
-                            detail: {
-                              mode: "edit",
-                              data: t,
-                            },
-                          })
-                        );
-                      }}
-                      disabled={!isEditable(t)}
-                      className={`p-2 rounded-full transition ${
-                        isEditable(t)
-                          ? "hover:bg-gray-200 dark:hover:bg-slate-800 text-gray-400 hover:text-white"
-                          : "opacity-30 cursor-not-allowed text-gray-500"
-                      }`}
-                    >
-                      <Pencil size={16} />
-                    </button>
-                  
-                    {/* DELETE */}
-                    <button
-                      onClick={(e) => 
-                        e.stopPropagation();                        
-                        setDeleteId(t.id)
-                      className="p-2 rounded-full hover:bg-red-500/20 text-red-400 hover:text-red-300 transition"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  
+                      {/* EDIT */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!isEditable(t)) return;
+          
+                          setEditTx(t);
+          
+                          window.dispatchEvent(
+                            new CustomEvent("openAdd", {
+                              detail: {
+                                mode: "edit",
+                                data: t,
+                              },
+                            })
+                          );
+                        }}
+                        disabled={!isEditable(t)}
+                        className={`p-2 rounded-full transition ${
+                          isEditable(t)
+                            ? "hover:bg-gray-200 dark:hover:bg-slate-800 text-gray-400 hover:text-white"
+                            : "opacity-30 cursor-not-allowed text-gray-500"
+                        }`}
+                      >
+                        <Pencil size={16} />
+                      </button>
+          
+                      {/* DELETE */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteId(t.id);
+                        }}
+                        className="p-2 rounded-full hover:bg-red-500/20 text-red-400 hover:text-red-300 transition"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
+
           
           {/* MOBILE CARD */}
           <div className="md:hidden space-y-3">
@@ -370,82 +358,97 @@ export default function TransactionsPage() {
                 return expanded[t.parent_id];
               })
               .map((t) => {
-              
-              const amount = Number(t.amount);
-
-              const isChild = !!t.parent_id;
+                const isChild = !!t.parent_id;
           
-              const isPositive =
-                t.type === "INCOME" ||
-                t.type === "DEBT_TAKEN" ||
-                t.type === "RECEIVABLE_RECEIVED";
+                const isPositive =
+                  t.type === "INCOME" ||
+                  t.type === "DEBT_TAKEN" ||
+                  t.type === "RECEIVABLE_RECEIVED";
           
-              return (
-                <div
-                  key={t.id}
-                  className="bg-gray-100 dark:bg-slate-900 p-4 rounded-xl"
-                >
-                  {/* ROW 1 → NAME + AMOUNT + EDIT */}
-                  <div className="flex justify-between items-center">
-                    <div className="font-semibold text-base text-gray-900 dark:text-white">
-                      {isChild ? "↳ " : ""}
-                      {getDisplayName(t)}
-                    </div>
+                const finalAmount = t.has_child
+                  ? getAggregatedAmount(t)
+                  : Number(t.amount);
           
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`font-semibold text-sm ${
-                          isPositive ? "text-green-500" : "text-red-500"
-                        }`}
-                      >
-                        {isPositive ? "+" : "-"}
-                        {t.has_child
-                        ? getAggregatedAmount(t)
-                        : Number(t.amount).toLocaleString("en-BD")} Tk
+                return (
+                  <div
+                    key={t.id}
+                    className="bg-gray-100 dark:bg-slate-900 p-4 rounded-xl"
+                  >
+                    {/* ROW 1 */}
+                    <div className="flex justify-between items-center">
+                      <div className="font-semibold text-base text-gray-900 dark:text-white">
+                        {isChild ? "↳ " : ""}
+                        {getDisplayName(t)}
                       </div>
           
-                      {/* EDIT */}
-                      <button className="p-1 rounded-full text-gray-400 hover:text-white">
-                        <Pencil size={14} />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`font-semibold text-sm ${
+                            isPositive ? "text-green-500" : "text-red-500"
+                          }`}
+                        >
+                          {isPositive ? "+" : "-"}
+                          {finalAmount.toLocaleString("en-BD")} Tk
+                        </div>
+          
+                        {/* EDIT */}
+                        <button
+                          onClick={() => {
+                            if (!isEditable(t)) return;
+          
+                            setEditTx(t);
+          
+                            window.dispatchEvent(
+                              new CustomEvent("openAdd", {
+                                detail: {
+                                  mode: "edit",
+                                  data: t,
+                                },
+                              })
+                            );
+                          }}
+                          className="p-1 rounded-full text-gray-400 hover:text-white"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                      </div>
+                    </div>
+          
+                    {/* ROW 2 */}
+                    <div className="flex justify-between items-center mt-2">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(t.date).toDateString().slice(4, 10)}
+                      </div>
+          
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full ${
+                            t.type.includes("INCOME")
+                              ? "bg-green-500/20 text-green-400"
+                              : t.type.includes("EXPENSE")
+                              ? "bg-red-500/20 text-red-400"
+                              : t.type.includes("DEBT")
+                              ? "bg-blue-500/20 text-blue-400"
+                              : t.type.includes("RECEIVABLE")
+                              ? "bg-yellow-500/20 text-yellow-400"
+                              : "bg-gray-500/20 text-gray-400"
+                          }`}
+                        >
+                          {formatType(t.type)}
+                        </span>
+          
+                        {/* DELETE */}
+                        <button
+                          onClick={() => setDeleteId(t.id)}
+                          className="p-1 rounded-full text-red-400 hover:text-red-300"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-          
-                  {/* ROW 2 → DATE + TYPE + DELETE */}
-                  <div className="flex justify-between items-center mt-2">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {new Date(t.date).toDateString().slice(4, 10)}
-                    </div>
-          
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full ${
-                          t.type.includes("INCOME")
-                            ? "bg-green-500/20 text-green-400"
-                            : t.type.includes("EXPENSE")
-                            ? "bg-red-500/20 text-red-400"
-                            : t.type.includes("DEBT")
-                            ? "bg-blue-500/20 text-blue-400"
-                            : t.type.includes("RECEIVABLE")
-                            ? "bg-yellow-500/20 text-yellow-400"
-                            : "bg-gray-500/20 text-gray-400"
-                        }`}
-                      >
-                        {formatType(t.type)}
-                      </span>
-          
-                      {/* DELETE */}
-                      <button
-                        onClick={() => setDeleteId(t.id)}
-                        className="p-1 rounded-full text-red-400 hover:text-red-300"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </div>
 
