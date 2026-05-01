@@ -21,6 +21,7 @@ export default function TransactionModal() {
 
   const isEdit = !!editTx;
 
+  // ================= RESET =================
   const resetForm = () => {
     setAmount("");
     setCategory("");
@@ -40,19 +41,22 @@ export default function TransactionModal() {
     window.dispatchEvent(new Event("refreshData"));
   };
 
-  // categories
+  // ================= LOAD CATEGORIES =================
   useEffect(() => {
     fetch("/api/categories")
       .then((res) => res.json())
       .then((data) => setCategories(data.data || []));
   }, []);
 
-  // event listener (IMPORTANT)
+  // ================= EVENT HANDLER =================
   useEffect(() => {
     const handler = (e: any) => {
       setShowModal(true);
 
+      // 👉 CREATE FLOW
       if (typeof e.detail === "string") {
+        setEditTx(null);
+
         if (e.detail === "DEBT") {
           setAction("BORROW");
           setStep("FORM");
@@ -67,6 +71,7 @@ export default function TransactionModal() {
         }
       }
 
+      // 👉 EDIT FLOW
       if (typeof e.detail === "object") {
         const t = e.detail.data;
 
@@ -91,6 +96,7 @@ export default function TransactionModal() {
     return () => window.removeEventListener("openAdd", handler);
   }, []);
 
+  // ================= TYPE MAP =================
   const actionToTypeMap: Record<string, string> = {
     INCOME: "INCOME",
     EXPENSE: "EXPENSE",
@@ -100,6 +106,7 @@ export default function TransactionModal() {
     RECEIVE: "RECEIVABLE_RECEIVED",
   };
 
+  // ================= SUBMIT =================
   const handleSubmit = async () => {
     if (loading) return;
 
@@ -112,6 +119,7 @@ export default function TransactionModal() {
       return;
     }
 
+    // ✅ FIX: don't force category on edit
     if (!isEdit && (action === "INCOME" || action === "EXPENSE") && !category) {
       setError("Select a category");
       return;
@@ -166,22 +174,95 @@ export default function TransactionModal() {
   if (!showModal) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center">
-      <div className="w-[340px] bg-white dark:bg-slate-900 rounded-2xl p-5">
-        
-        <h3 className="font-semibold">
-          {isEdit ? "Edit Transaction" : "Add Transaction"}
-        </h3>
+    <div
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center"
+      onClick={closeModal}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-[340px] bg-white/90 dark:bg-slate-900/90 border border-gray-200 dark:border-slate-700 text-black dark:text-white rounded-2xl p-5 shadow-2xl flex flex-col gap-4"
+      >
+        {/* ================= ACTION ================= */}
+        {step === "ACTION" && (
+          <>
+            <div className="flex justify-between">
+              <h3 className="text-lg font-semibold">Select Action</h3>
+              <button onClick={closeModal}>✕</button>
+            </div>
 
-        <input value={amount} onChange={(e) => setAmount(e.target.value)} />
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={() => { setAction("INCOME"); setStep("FORM"); }}>Income</button>
+              <button onClick={() => { setAction("EXPENSE"); setStep("FORM"); }}>Expense</button>
+              <button onClick={() => { setAction("BORROW"); setStep("FORM"); }}>Borrow</button>
+              <button onClick={() => { setAction("GIVE"); setStep("FORM"); }}>Give</button>
+            </div>
+          </>
+        )}
 
-        {error && <div className="text-red-500">{error}</div>}
+        {/* ================= FORM ================= */}
+        {step === "FORM" && (
+          <>
+            <div className="flex justify-between">
+              <h3 className="font-semibold">
+                {isEdit ? "Edit Transaction" : "Add Transaction"}
+              </h3>
+              <button onClick={closeModal}>✕</button>
+            </div>
 
-        <button onClick={handleSubmit}>
-          {loading ? "Processing..." : isEdit ? "Update" : "Save"}
-        </button>
+            <input
+              className="p-3 rounded-xl border"
+              placeholder="Amount"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
 
-        <button onClick={closeModal}>Close</button>
+            <select value={account} onChange={(e) => setAccount(e.target.value)}>
+              <option>Cash</option>
+              <option>Bank</option>
+            </select>
+
+            {(action === "INCOME" || action === "EXPENSE") && (
+              <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                <option value="">Select Category</option>
+                {categories
+                  .filter((c) => c.type === action)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+              </select>
+            )}
+
+            {(action === "BORROW" || action === "GIVE") && (
+              <input
+                placeholder="Entity"
+                value={entity}
+                onChange={(e) => setEntity(e.target.value)}
+              />
+            )}
+
+            <input
+              placeholder="Note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+
+            {error && <div className="text-red-500 text-sm">{error}</div>}
+
+            <button onClick={handleSubmit}>
+              {loading
+                ? "Processing..."
+                : isEdit
+                ? "Update"
+                : "Save"}
+            </button>
+
+            {!isDirectFlow && (
+              <button onClick={() => setStep("ACTION")}>Back</button>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
