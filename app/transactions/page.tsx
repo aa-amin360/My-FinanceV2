@@ -167,6 +167,40 @@ export default function TransactionsPage() {
   
     return 0;
   });
+
+  // =========================
+  // AGGREGATE HELPER (NEW)
+  // =========================
+  const isPositiveType = (type: string) => {
+    return (
+      type === "INCOME" ||
+      type === "DEBT_TAKEN" ||
+      type === "RECEIVABLE_RECEIVED"
+    );
+  };
+  
+  const getAggregatedAmount = (t: Transaction) => {
+    if (!t.has_child) return Number(t.amount);
+  
+    const children = transactions.filter(
+      (child) => child.parent_id === t.id
+    );
+  
+    let total = Number(t.amount);
+  
+    for (const c of children) {
+      const val = Number(c.amount);
+  
+      // match direction instead of blindly adding
+      if (isPositiveType(c.type) === isPositiveType(t.type)) {
+        total += val;
+      } else {
+        total -= val;
+      }
+    }
+  
+    return total;
+  };
   
   
   return (
@@ -250,7 +284,7 @@ export default function TransactionsPage() {
                         t.type === "RECEIVABLE_RECEIVED"
                         ? "+"
                         : "-") +
-                        Number(t.amount).toLocaleString("en-BD")}{" "}
+                        getAggregatedAmount(t).toLocaleString("en-BD")}{" "}
                       Tk
                     </div>
   
@@ -329,7 +363,7 @@ export default function TransactionsPage() {
                         }`}
                       >
                         {isPositive ? "+" : "-"}
-                        {Number(amount).toLocaleString("en-BD")} Tk
+                        {getAggregatedAmount(t).toLocaleString("en-BD")} Tk
                       </div>
           
                       {/* EDIT */}
