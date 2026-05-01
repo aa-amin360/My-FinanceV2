@@ -73,23 +73,46 @@ export default function TransactionModal() {
 
       // EDIT FLOW
       if (typeof e.detail === "object") {
-        const t = e.detail.data;
-
-        setEditTx(t);
-        setStep("FORM");
-
-        setAmount(String(t.amount || ""));
-        setNote(t.note || "");
-        setEntity(t.entity_name || "");
-        setCategory(t.category_id || "");
-
-        if (t.type === "INCOME") setAction("INCOME");
-        if (t.type === "EXPENSE") setAction("EXPENSE");
-        if (t.type === "DEBT_TAKEN") setAction("BORROW");
-        if (t.type === "RECEIVABLE_GIVEN") setAction("GIVE");
-        if (t.type === "DEBT_REPAID") setAction("REPAY");
-        if (t.type === "RECEIVABLE_RECEIVED") setAction("RECEIVE");
-        if (t.entity_name) { setEntity(t.entity_name); }
+        // 🔥 CASE 1: FULL TRANSACTION (edit)
+        if (e.detail.data) {
+          const t = e.detail.data;
+      
+          setEditTx(t);
+          setStep("FORM");
+      
+          setAmount(String(t.amount || ""));
+          setNote(t.note || "");
+          setEntity(t.entity_name || "");
+          setCategory(t.category_id || "");
+      
+          if (t.type === "INCOME") setAction("INCOME");
+          if (t.type === "EXPENSE") setAction("EXPENSE");
+          if (t.type === "DEBT_TAKEN") setAction("BORROW");
+          if (t.type === "RECEIVABLE_GIVEN") setAction("GIVE");
+          if (t.type === "DEBT_REPAID") setAction("REPAY");
+          if (t.type === "RECEIVABLE_RECEIVED") setAction("RECEIVE");
+        }
+      
+        // 🔥 CASE 2: DIRECT REPAY (from debt page)
+        else if (e.detail.type === "DEBT_REPAID") {
+          setEditTx(null);
+          setAction("REPAY");
+          setStep("FORM");
+          setIsDirectFlow(true);
+      
+          // 🔥 THIS WAS MISSING
+          setEntity(e.detail.entity || "");
+        }
+      
+        // 🔥 CASE 3: DIRECT RECEIVE (future-proof)
+        else if (e.detail.type === "RECEIVABLE_RECEIVED") {
+          setEditTx(null);
+          setAction("RECEIVE");
+          setStep("FORM");
+          setIsDirectFlow(true);
+      
+          setEntity(e.detail.entity || "");
+        }
       }
     };
 
