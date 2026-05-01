@@ -89,6 +89,7 @@ export default function TransactionModal() {
         if (t.type === "RECEIVABLE_GIVEN") setAction("GIVE");
         if (t.type === "DEBT_REPAID") setAction("REPAY");
         if (t.type === "RECEIVABLE_RECEIVED") setAction("RECEIVE");
+        if (t.entity_name) { setEntity(t.entity_name); }
       }
     };
 
@@ -270,7 +271,7 @@ export default function TransactionModal() {
               </select>
             )}
 
-            {(action === "BORROW" || action === "GIVE") && (
+            {["BORROW", "GIVE", "REPAY", "RECEIVE"].includes(action) && (
               <input
                 className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Person / Bank"
