@@ -52,19 +52,30 @@ export async function handleDebt({
         throw new Error("Nothing to repay");
       }
 
-      const debtTaken = await client.query(
-        `SELECT id FROM transactions
-         WHERE entity_id = $1 AND type = 'DEBT_TAKEN' AND user_id = $2
-         ORDER BY date DESC LIMIT 1`,
-        [entity_id, userId]
-      );
+      const parentTx = await client.query(
+        `INSERT INTO transactions
+         (type, amount, from_account, to_account, entity_id, category_id, date, note, user_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+         RETURNING id`,
+        [
+          "DEBT_REPAID",
+          amountNumber,
+          from_account,
+          to_account,
+          entity_id,
+          category_id || null,
+          date,
+          note,
+          userId,
+        ]
+      );      
 
       if (debtTaken.rows.length === 0) {
         throw new Error("No DEBT_TAKEN found");
       }
-
-      const parentDebtId = debtTaken.rows[0].id;
-
+      
+      const parentId = parentTx.rows[0].id;
+      
       const repayTx = await client.query(
         `INSERT INTO transactions
          (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id, user_id)
@@ -79,7 +90,7 @@ export async function handleDebt({
           category_id || null,
           date,
           note,
-          parentDebtId,
+          parentId,
           userId,
         ]
       );
@@ -109,7 +120,7 @@ export async function handleDebt({
 
         await client.query(
           `INSERT INTO transactions
-           (type, amount, from_account, to_account, entity_id, date, note, parent_id, user_id)
+           (type, amount, from_account, to_account, entity_id, date, note, , user_id)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
           [
             "RECEIVABLE_GIVEN",
