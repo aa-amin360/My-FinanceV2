@@ -169,7 +169,10 @@ export default function TransactionsPage() {
   // SORT (Parent → Child)
   // =========================
   const sortedTransactions = [...transactions].sort((a, b) => {
-
+    const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+    if (dateDiff !== 0) return dateDiff;
+  
+    // Parent comes before child
     if (a.id === b.parent_id) return -1;
     if (b.id === a.parent_id) return 1;
   
