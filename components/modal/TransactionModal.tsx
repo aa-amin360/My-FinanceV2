@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+// ⛳️ keep your ActionCard import
+import ActionCard from "@/components/ActionCard"; // adjust path if needed
+
 export default function TransactionModal() {
   const [showModal, setShowModal] = useState(false);
   const [step, setStep] = useState<"ACTION" | "FORM">("ACTION");
@@ -53,7 +56,7 @@ export default function TransactionModal() {
     const handler = (e: any) => {
       setShowModal(true);
 
-      // 👉 CREATE FLOW
+      // CREATE FLOW
       if (typeof e.detail === "string") {
         setEditTx(null);
 
@@ -71,7 +74,7 @@ export default function TransactionModal() {
         }
       }
 
-      // 👉 EDIT FLOW
+      // EDIT FLOW
       if (typeof e.detail === "object") {
         const t = e.detail.data;
 
@@ -119,7 +122,7 @@ export default function TransactionModal() {
       return;
     }
 
-    // ✅ FIX: don't force category on edit
+    // ✅ IMPORTANT FIX: don't force category in edit
     if (!isEdit && (action === "INCOME" || action === "EXPENSE") && !category) {
       setError("Select a category");
       return;
@@ -180,49 +183,86 @@ export default function TransactionModal() {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-[340px] bg-white/90 dark:bg-slate-900/90 border border-gray-200 dark:border-slate-700 text-black dark:text-white rounded-2xl p-5 shadow-2xl flex flex-col gap-4"
+        className="w-[340px] bg-white/90 dark:bg-slate-900/90 border border-gray-200 dark:border-slate-700 text-black dark:text-white rounded-2xl p-5 shadow-2xl flex flex-col gap-4 animate-modalIn"
       >
         {/* ================= ACTION ================= */}
         {step === "ACTION" && (
           <>
-            <div className="flex justify-between">
-              <h3 className="text-lg font-semibold">Select Action</h3>
-              <button onClick={closeModal}>✕</button>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                Select Action
+              </h3>
+
+              <button
+                onClick={closeModal}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-700 transition"
+              >
+                ✕
+              </button>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => { setAction("INCOME"); setStep("FORM"); }}>Income</button>
-              <button onClick={() => { setAction("EXPENSE"); setStep("FORM"); }}>Expense</button>
-              <button onClick={() => { setAction("BORROW"); setStep("FORM"); }}>Borrow</button>
-              <button onClick={() => { setAction("GIVE"); setStep("FORM"); }}>Give</button>
+              <ActionCard label="Income" onClick={() => { setAction("INCOME"); setStep("FORM"); }} />
+              <ActionCard label="Expense" onClick={() => { setAction("EXPENSE"); setStep("FORM"); }} />
+              <ActionCard label="Borrow" onClick={() => { setAction("BORROW"); setStep("FORM"); }} />
+              <ActionCard label="Give" onClick={() => { setAction("GIVE"); setStep("FORM"); }} />
             </div>
+
+            <button
+              onClick={closeModal}
+              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition"
+            >
+              Cancel
+            </button>
           </>
         )}
 
         {/* ================= FORM ================= */}
         {step === "FORM" && (
           <>
-            <div className="flex justify-between">
-              <h3 className="font-semibold">
-                {isEdit ? "Edit Transaction" : "Add Transaction"}
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-gray-800 dark:text-white">
+                {isEdit
+                  ? "Edit Transaction"
+                  : action === "INCOME"
+                  ? "Add Income"
+                  : action === "EXPENSE"
+                  ? "Add Expense"
+                  : action === "BORROW"
+                  ? "Borrow Money"
+                  : "Give Money"}
               </h3>
-              <button onClick={closeModal}>✕</button>
+
+              <button
+                onClick={closeModal}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-700 transition"
+              >
+                ✕
+              </button>
             </div>
 
             <input
-              className="p-3 rounded-xl border"
-              placeholder="Amount"
+              className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="Enter amount"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
 
-            <select value={account} onChange={(e) => setAccount(e.target.value)}>
+            <select
+              className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              value={account}
+              onChange={(e) => setAccount(e.target.value)}
+            >
               <option>Cash</option>
               <option>Bank</option>
             </select>
 
             {(action === "INCOME" || action === "EXPENSE") && (
-              <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              <select
+                className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
                 <option value="">Select Category</option>
                 {categories
                   .filter((c) => c.type === action)
@@ -236,30 +276,45 @@ export default function TransactionModal() {
 
             {(action === "BORROW" || action === "GIVE") && (
               <input
-                placeholder="Entity"
+                className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="Person / Bank"
                 value={entity}
                 onChange={(e) => setEntity(e.target.value)}
               />
             )}
 
             <input
-              placeholder="Note"
+              className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="Add note (optional)"
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
 
-            {error && <div className="text-red-500 text-sm">{error}</div>}
+            {error && (
+              <div className="text-red-500 text-sm text-center">
+                {error}
+              </div>
+            )}
 
-            <button onClick={handleSubmit}>
-              {loading
-                ? "Processing..."
-                : isEdit
-                ? "Update"
-                : "Save"}
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className={`py-3 rounded-xl font-semibold transition ${
+                loading
+                  ? "bg-gray-500 cursor-not-allowed"
+                  : "bg-green-500 hover:bg-green-600 active:scale-95"
+              }`}
+            >
+              {loading ? "Processing..." : isEdit ? "Update" : "Save"}
             </button>
 
             {!isDirectFlow && (
-              <button onClick={() => setStep("ACTION")}>Back</button>
+              <button
+                onClick={() => setStep("ACTION")}
+                className="bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-black dark:text-white py-3 rounded-xl"
+              >
+                Back
+              </button>
             )}
           </>
         )}
