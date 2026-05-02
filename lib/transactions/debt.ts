@@ -43,7 +43,9 @@ export async function handleDebt({
       debtRes.rows[0]?.remaining_amount || 0
     );
 
-    // 🔥 OVERPAY
+    // =========================
+    // 🔥 OVERPAY CASE
+    // =========================
     if (amountNumber > currentRemaining) {
       const repayAmount = currentRemaining;
       const extra = amountNumber - currentRemaining;
@@ -52,6 +54,7 @@ export async function handleDebt({
         throw new Error("Nothing to repay");
       }
 
+      // ✅ 1. CREATE PARENT TRANSACTION (TOTAL AMOUNT)
       const parentTx = await client.query(
         `INSERT INTO transactions
          (type, amount, from_account, to_account, entity_id, category_id, date, note, user_id)
@@ -68,19 +71,15 @@ export async function handleDebt({
           note,
           userId,
         ]
-      );      
+      );
 
-      if (debtTaken.rows.length === 0) {
-        throw new Error("No DEBT_TAKEN found");
-      }
-      
       const parentId = parentTx.rows[0].id;
-      
-      const repayTx = await client.query(
+
+      // ✅ 2. CHILD → ACTUAL DEBT REPAY
+      await client.query(
         `INSERT INTO transactions
          (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id, user_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-         RETURNING id`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
         [
           "DEBT_REPAID",
           repayAmount,
@@ -95,9 +94,7 @@ export async function handleDebt({
         ]
       );
 
-      const parentId = repayTx.rows[0].id;
-
-      // clear debt
+      // ✅ 3. CLEAR DEBT
       await client.query(
         `UPDATE debts
          SET total_amount = 0,
@@ -106,7 +103,7 @@ export async function handleDebt({
         [entity_id, userId]
       );
 
-      // extra → receivable
+      // ✅ 4. EXTRA → RECEIVABLE
       if (extra > 0) {
         await client.query(
           `INSERT INTO receivables (entity_id, total_amount, remaining_amount, user_id)
@@ -120,7 +117,7 @@ export async function handleDebt({
 
         await client.query(
           `INSERT INTO transactions
-           (type, amount, from_account, to_account, entity_id, date, note, , user_id)
+           (type, amount, from_account, to_account, entity_id, date, note, parent_id, user_id)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
           [
             "RECEIVABLE_GIVEN",
@@ -139,7 +136,9 @@ export async function handleDebt({
       return "COMMIT_EARLY";
     }
 
+    // =========================
     // ✅ NORMAL REPAY
+    // =========================
     await client.query(
       `INSERT INTO transactions
        (type, amount, from_account, to_account, entity_id, category_id, date, note, user_id)
