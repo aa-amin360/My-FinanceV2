@@ -104,27 +104,29 @@ export async function handleReceivable({
         [entity_id, userId]
       );
 
-      // ✅ 4. EXTRA → NEW RECEIVABLE
+      // ✅ 4. EXTRA → CONVERT TO DEBT
       if (extra > 0) {
+        // create debt state
         await client.query(
-          `INSERT INTO receivables (entity_id, total_amount, remaining_amount, user_id)
+          `INSERT INTO debts (entity_id, total_amount, remaining_amount, user_id)
            VALUES ($1, $2, $2, $3)
            ON CONFLICT (entity_id, user_id)
            DO UPDATE SET
-             total_amount = receivables.total_amount + $2,
-             remaining_amount = receivables.remaining_amount + $2`,
+             total_amount = debts.total_amount + $2,
+             remaining_amount = debts.remaining_amount + $2`,
           [entity_id, extra, userId]
         );
-
+      
+        // create transaction
         await client.query(
           `INSERT INTO transactions
            (type, amount, from_account, to_account, entity_id, date, note, parent_id, user_id)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
           [
-            "RECEIVABLE_GIVEN",
+            "DEBT_TAKEN",
             extra,
-            from_account,
-            receivableId,
+            null,
+            debtId,
             entity_id,
             date,
             "Auto conversion",
