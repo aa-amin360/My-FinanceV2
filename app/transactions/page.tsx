@@ -217,7 +217,11 @@ export default function TransactionsPage() {
   
     return total;
   };
-  
+
+  const roots = transactions.filter((t) => !t.parent_id);
+
+  const getChildren = (id: string) =>
+    transactions.filter((t) => t.parent_id === id);
   
   return (
     <DashboardLayout>
@@ -247,111 +251,166 @@ export default function TransactionsPage() {
           {/* ROWS */}
           {/* DESKTOP TABLE */}
           <div className="hidden md:block">
-            {sortedTransactions
-              .filter((t) => {
-                if (!t.parent_id) return true;
-                return expanded[t.parent_id];
-              })
-              .map((t) => {
-                const isChild = !!t.parent_id;
+            {transactions
+              .filter((t) => !t.parent_id) // only ROOTS
+              .map((parent) => {
+                const children = transactions.filter(
+                  (c) => c.parent_id === parent.id
+                );
+          
+                const isExpanded = expanded[parent.id];
           
                 const isPositive =
-                  t.type === "INCOME" ||
-                  t.type === "DEBT_TAKEN" ||
-                  t.type === "RECEIVABLE_RECEIVED";
+                  parent.type === "INCOME" ||
+                  parent.type === "DEBT_TAKEN" ||
+                  parent.type === "RECEIVABLE_RECEIVED";
           
-                const finalAmount = t.has_child
-                  ? getAggregatedAmount(t)
-                  : Number(t.amount);
+                const finalAmount = parent.has_child
+                  ? getAggregatedAmount(parent)
+                  : Number(parent.amount);
           
                 return (
-                  <div
-                    key={t.id}
-                    onClick={() => {
-                      if (t.has_child) toggleExpand(t.id);
-                    }}
-                    className={`grid grid-cols-5 items-center px-4 py-3 border-b 
-                    border-gray-200 dark:border-gray-700 text-sm cursor-pointer ${
-                      t.has_child ? "hover:bg-gray-50 dark:hover:bg-slate-800" : ""
-                    } ${isChild ? "opacity-60 pl-6" : ""}`}
-                  >
-                    {/* NAME */}
-                    <div className="font-semibold text-gray-900 dark:text-white text-base">
-                      {t.has_child && (
-                        <span className="mr-2">
-                          {expanded[t.id] ? "▼" : "▶"}
-                        </span>
-                      )}
-          
-                      {isChild && "↳ "}
-                      {getDisplayName(t)}
-                    </div>
-          
-                    {/* DATE */}
-                    <div className="text-xs text-gray-500">
-                      {new Date(t.date).toDateString()}
-                    </div>
-          
-                    {/* TYPE */}
-                    <div>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs inline-block whitespace-nowrap overflow-hidden text-ellipsis max-w-[140px] ${getTypeStyle(t.type)}`}
-                      >
-                        {formatType(t.type)}
-                      </span>
-                    </div>
-          
-                    {/* AMOUNT */}
+                  <div key={parent.id}>
+                    {/* ================= PARENT ================= */}
                     <div
-                      className={`text-right font-semibold ${
-                        isPositive ? "text-green-500" : "text-red-500"
+                      onClick={() => {
+                        if (parent.has_child) toggleExpand(parent.id);
+                      }}
+                      className={`grid grid-cols-5 items-center px-4 py-3 border-b 
+                      border-gray-200 dark:border-gray-700 text-sm cursor-pointer ${
+                        parent.has_child
+                          ? "hover:bg-gray-50 dark:hover:bg-slate-800"
+                          : ""
                       }`}
                     >
-                      {(isPositive ? "+" : "-") +
-                        finalAmount.toLocaleString("en-BD")}{" "}
-                      Tk
-                    </div>
+                      {/* NAME */}
+                      <div className="font-semibold text-gray-900 dark:text-white text-base">
+                        {parent.has_child && (
+                          <span className="mr-2">
+                            {isExpanded ? "▼" : "▶"}
+                          </span>
+                        )}
+                        {getDisplayName(parent)}
+                      </div>
           
-                    {/* ACTIONS */}
-                    <div className="flex justify-center items-center gap-2">
-                      {/* EDIT */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!isEditable(t)) return;
+                      {/* DATE */}
+                      <div className="text-xs text-gray-500">
+                        {new Date(parent.date).toDateString()}
+                      </div>
           
-                          setEditTx(t);
+                      {/* TYPE */}
+                      <div>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
+                            parent.type
+                          )}`}
+                        >
+                          {formatType(parent.type)}
+                        </span>
+                      </div>
           
-                          window.dispatchEvent(
-                            new CustomEvent("openAdd", {
-                              detail: {
-                                mode: "edit",
-                                data: t,
-                              },
-                            })
-                          );
-                        }}
-                        disabled={!isEditable(t)}
-                        className={`p-2 rounded-full transition ${
-                          isEditable(t)
-                            ? "hover:bg-gray-200 dark:hover:bg-slate-800 text-gray-400 hover:text-white"
-                            : "opacity-30 cursor-not-allowed text-gray-500"
+                      {/* AMOUNT */}
+                      <div
+                        className={`text-right font-semibold ${
+                          isPositive ? "text-green-500" : "text-red-500"
                         }`}
                       >
-                        <Pencil size={16} />
-                      </button>
+                        {(isPositive ? "+" : "-") +
+                          finalAmount.toLocaleString("en-BD")}{" "}
+                        Tk
+                      </div>
           
-                      {/* DELETE */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteId(t.id);
-                        }}
-                        className="p-2 rounded-full hover:bg-red-500/20 text-red-400 hover:text-red-300 transition"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {/* ACTIONS */}
+                      <div className="flex justify-center items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isEditable(parent)) return;
+          
+                            setEditTx(parent);
+          
+                            window.dispatchEvent(
+                              new CustomEvent("openAdd", {
+                                detail: {
+                                  mode: "edit",
+                                  data: parent,
+                                },
+                              })
+                            );
+                          }}
+                          disabled={!isEditable(parent)}
+                          className={`p-2 rounded-full transition ${
+                            isEditable(parent)
+                              ? "hover:bg-gray-200 dark:hover:bg-slate-800 text-gray-400 hover:text-white"
+                              : "opacity-30 cursor-not-allowed text-gray-500"
+                          }`}
+                        >
+                          <Pencil size={16} />
+                        </button>
+          
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteId(parent.id);
+                          }}
+                          className="p-2 rounded-full hover:bg-red-500/20 text-red-400 hover:text-red-300 transition"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
+          
+                    {/* ================= CHILDREN ================= */}
+                    {isExpanded &&
+                      children.map((child) => {
+                        const isPositiveChild =
+                          child.type === "INCOME" ||
+                          child.type === "DEBT_TAKEN" ||
+                          child.type === "RECEIVABLE_RECEIVED";
+          
+                        return (
+                          <div
+                            key={child.id}
+                            className="grid grid-cols-5 items-center px-4 py-3 border-b 
+                            border-gray-200 dark:border-gray-700 text-sm opacity-60 pl-6"
+                          >
+                            {/* NAME */}
+                            <div className="font-semibold">
+                              ↳ {getDisplayName(child)}
+                            </div>
+          
+                            {/* DATE */}
+                            <div className="text-xs text-gray-500">
+                              {new Date(child.date).toDateString()}
+                            </div>
+          
+                            {/* TYPE */}
+                            <div>
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
+                                  child.type
+                                )}`}
+                              >
+                                {formatType(child.type)}
+                              </span>
+                            </div>
+          
+                            {/* AMOUNT */}
+                            <div
+                              className={`text-right font-semibold ${
+                                isPositiveChild ? "text-green-500" : "text-red-500"
+                              }`}
+                            >
+                              {(isPositiveChild ? "+" : "-") +
+                                Number(child.amount).toLocaleString("en-BD")}{" "}
+                              Tk
+                            </div>
+          
+                            {/* EMPTY ACTION CELL */}
+                            <div />
+                          </div>
+                        );
+                      })}
                   </div>
                 );
               })}
