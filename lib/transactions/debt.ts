@@ -137,13 +137,16 @@ export async function handleDebt({
       return "COMMIT_EARLY";
     }
 
-    // =========================
-    // ✅ NORMAL REPAY
-    // =========================
-    await client.query(
+    // ================
+    // ✅ NORMAL REPAY 
+    // ================
+    
+    // 1. CREATE PARENT
+    const parentTx = await client.query(
       `INSERT INTO transactions
-       (type, amount, from_account, to_account, entity_id, category_id, date, note, user_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+       (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id, user_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+       RETURNING id`,
       [
         "DEBT_REPAID",
         amountNumber,
@@ -153,21 +156,47 @@ export async function handleDebt({
         category_id || null,
         date,
         note,
+        null,
         userId,
       ]
     );
-
+    
+    const parentId = parentTx.rows[0].id;
+    
+    // 2. CHILD → ACTUAL REPAY
+    await client.query(
+      `INSERT INTO transactions
+       (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id, user_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+      [
+        "DEBT_REPAID",
+        amountNumber,
+        from_account,
+        to_account,
+        entity_id,
+        category_id || null,
+        date,
+        note,
+        parentId,
+        userId,
+      ]
+    );
+    
+    // 3. UPDATE DEBT
     await client.query(
       `UPDATE debts
        SET remaining_amount = remaining_amount - $2
        WHERE entity_id = $1 AND user_id = $3`,
       [entity_id, amountNumber, userId]
     );
-
+    
     await client.query(
       `DELETE FROM debts
        WHERE entity_id = $1 AND user_id = $2 AND remaining_amount <= 0`,
       [entity_id, userId]
     );
+    
+    return "COMMIT_EARLY";    
+
   }
 }
