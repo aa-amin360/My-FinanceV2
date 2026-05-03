@@ -10,6 +10,7 @@ export async function handleReceivable({
   note,
   userId,
   receivableId,
+  debtId,
 }: any) {
   if (!entity_id) return;
 
