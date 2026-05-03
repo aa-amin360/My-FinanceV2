@@ -270,6 +270,7 @@ export async function POST(req: Request) {
       note,
       userId,
       receivableId: accounts.receivableId,
+      debtId: accounts.debtId,
     });
 
     if (recResult === "COMMIT_EARLY") {
