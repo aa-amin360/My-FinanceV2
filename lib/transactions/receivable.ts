@@ -112,11 +112,16 @@ export async function handleReceivable({
       return "COMMIT_EARLY";
     }
 
-    // ✅ NORMAL RECEIVE
-    await client.query(
+    // =========================
+    // ✅ NORMAL RECEIVE (STRUCTURED)
+    // =========================
+    
+    // 1. CREATE PARENT
+    const parentTx = await client.query(
       `INSERT INTO transactions
-       (type, amount, from_account, to_account, entity_id, category_id, date, note, user_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+       (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id, user_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+       RETURNING id`,
       [
         "RECEIVABLE_RECEIVED",
         amountNumber,
@@ -126,21 +131,47 @@ export async function handleReceivable({
         category_id || null,
         date,
         note,
+        null,
         userId,
       ]
     );
-
+    
+    const parentId = parentTx.rows[0].id;
+    
+    // 2. CHILD → ACTUAL RECEIVE
+    await client.query(
+      `INSERT INTO transactions
+       (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id, user_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+      [
+        "RECEIVABLE_RECEIVED",
+        amountNumber,
+        from_account,
+        to_account,
+        entity_id,
+        category_id || null,
+        date,
+        note,
+        parentId,
+        userId,
+      ]
+    );
+    
+    // 3. UPDATE RECEIVABLE
     await client.query(
       `UPDATE receivables
        SET remaining_amount = remaining_amount - $2
        WHERE entity_id = $1 AND user_id = $3`,
       [entity_id, amountNumber, userId]
     );
-
+    
     await client.query(
       `DELETE FROM receivables
        WHERE entity_id = $1 AND user_id = $2 AND remaining_amount <= 0`,
       [entity_id, userId]
     );
+    
+    return "COMMIT_EARLY";
+    
   }
 }
