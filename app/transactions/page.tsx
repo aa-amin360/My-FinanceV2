@@ -179,45 +179,6 @@ export default function TransactionsPage() {
     return 0;
   });
 
-  // =========================
-  // AGGREGATE HELPER (NEW)
-  // =========================
-  const isPositiveType = (type: string) => {
-    return (
-      type === "INCOME" ||
-      type === "DEBT_TAKEN" ||
-      type === "RECEIVABLE_RECEIVED"
-    );
-  };
-  
-  const getAggregatedAmount = (t: Transaction) => {
-    if (t.type === "DEBT_TAKEN" || t.type === "RECEIVABLE_GIVEN") {
-      return Number(t.amount);
-    }
-  
-    // normal case
-    if (!t.has_child) return Number(t.amount);
-  
-    const children = transactions.filter(
-      (child) => child.parent_id === t.id
-    );
-  
-    let total = Number(t.amount);
-  
-    for (const c of children) {
-      const val = Number(c.amount);
-  
-      // match direction
-      if (isPositiveType(c.type) === isPositiveType(t.type)) {
-        total += val;
-      } else {
-        total -= val;
-      }
-    }
-  
-    return total;
-  };
-
   const roots = transactions.filter((t) => !t.parent_id);
 
   const getChildren = (id: string) =>
@@ -252,7 +213,7 @@ export default function TransactionsPage() {
           {/* DESKTOP TABLE */}
           <div className="hidden md:block">
             {transactions
-              .filter((t) => !t.parent_id) // only ROOTS
+              .filter((t) => !t.parent_id)
               .map((parent) => {
                 const children = transactions.filter(
                   (c) => c.parent_id === parent.id
@@ -265,32 +226,29 @@ export default function TransactionsPage() {
                   parent.type === "DEBT_TAKEN" ||
                   parent.type === "RECEIVABLE_RECEIVED";
           
-                const finalAmount = parent.has_child
-                  ? getAggregatedAmount(parent)
-                  : Number(parent.amount);
+                const finalAmount = Number(parent.amount);
           
                 return (
                   <div key={parent.id}>
                     {/* ================= PARENT ================= */}
-                    <div
-                      onClick={() => {
-                        if (parent.has_child) toggleExpand(parent.id);
-                      }}
-                      className={`grid grid-cols-5 items-center px-4 py-3 border-b 
-                      border-gray-200 dark:border-gray-700 text-sm cursor-pointer ${
-                        parent.has_child
-                          ? "hover:bg-gray-50 dark:hover:bg-slate-800"
-                          : ""
-                      }`}
-                    >
+                    <div className="grid grid-cols-5 items-center px-4 py-3 border-b 
+                    border-gray-200 dark:border-gray-700 text-sm">
+          
                       {/* NAME */}
-                      <div className="font-semibold text-gray-900 dark:text-white text-base">
+                      <div className="font-semibold text-gray-900 dark:text-white text-base flex items-center">
                         {parent.has_child && (
-                          <span className="mr-2">
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpand(parent.id);
+                            }}
+                            className="mr-2 cursor-pointer text-gray-400"
+                          >
                             {isExpanded ? "▼" : "▶"}
                           </span>
                         )}
-                        {getDisplayName(parent)}
+          
+                        <span>{getDisplayName(parent)}</span>
                       </div>
           
                       {/* DATE */}
@@ -371,16 +329,17 @@ export default function TransactionsPage() {
                         return (
                           <div
                             key={child.id}
-                            className="grid grid-cols-5 items-center px-4 py-3 border-b 
-                            border-gray-200 dark:border-gray-700 text-sm opacity-60 pl-6"
+                            className="grid grid-cols-5 items-center px-4 py-2 border-b 
+                            border-gray-200 dark:border-gray-700 text-sm pl-10 text-gray-400"
                           >
                             {/* NAME */}
-                            <div className="font-semibold">
-                              ↳ {getDisplayName(child)}
+                            <div className="flex items-center gap-2">
+                              <span>↳</span>
+                              <span>{getDisplayName(child)}</span>
                             </div>
           
                             {/* DATE */}
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs">
                               {new Date(child.date).toDateString()}
                             </div>
           
@@ -406,7 +365,6 @@ export default function TransactionsPage() {
                               Tk
                             </div>
           
-                            {/* EMPTY ACTION CELL */}
                             <div />
                           </div>
                         );
@@ -418,104 +376,164 @@ export default function TransactionsPage() {
 
           
           {/* MOBILE CARD */}
-          <div className="md:hidden space-y-3">
-            {sortedTransactions
-              .filter((t) => {
-                if (!t.parent_id) return true;
-                return expanded[t.parent_id];
-              })
-              .map((t) => {
-                const isChild = !!t.parent_id;
+          <div className="hidden md:block">
+            {transactions
+              .filter((t) => !t.parent_id)
+              .map((parent) => {
+                const children = transactions.filter(
+                  (c) => c.parent_id === parent.id
+                );
+          
+                const isExpanded = expanded[parent.id];
           
                 const isPositive =
-                  t.type === "INCOME" ||
-                  t.type === "DEBT_TAKEN" ||
-                  t.type === "RECEIVABLE_RECEIVED";
+                  parent.type === "INCOME" ||
+                  parent.type === "DEBT_TAKEN" ||
+                  parent.type === "RECEIVABLE_RECEIVED";
           
-                const finalAmount =
-                  t.has_child &&
-                  t.type !== "DEBT_TAKEN" &&
-                  t.type !== "RECEIVABLE_GIVEN"
-                    ? getAggregatedAmount(t)
-                    : Number(t.amount);
+                const finalAmount = Number(parent.amount);
           
                 return (
-                  <div
-                    key={t.id}
-                    className="bg-gray-100 dark:bg-slate-900 p-4 rounded-xl"
-                  >
-                    {/* ROW 1 */}
-                    <div className="flex justify-between items-center">
-                      <div className="font-semibold text-base text-gray-900 dark:text-white">
-                        {isChild ? "↳ " : ""}
-                        {getDisplayName(t)}
+                  <div key={parent.id}>
+                    {/* ================= PARENT ================= */}
+                    <div className="grid grid-cols-5 items-center px-4 py-3 border-b 
+                    border-gray-200 dark:border-gray-700 text-sm">
+          
+                      {/* NAME */}
+                      <div className="font-semibold text-gray-900 dark:text-white text-base flex items-center">
+                        {parent.has_child && (
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpand(parent.id);
+                            }}
+                            className="mr-2 cursor-pointer text-gray-400"
+                          >
+                            {isExpanded ? "▼" : "▶"}
+                          </span>
+                        )}
+          
+                        <span>{getDisplayName(parent)}</span>
                       </div>
           
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`font-semibold text-sm ${
-                            isPositive ? "text-green-500" : "text-red-500"
-                          }`}
+                      {/* DATE */}
+                      <div className="text-xs text-gray-500">
+                        {new Date(parent.date).toDateString()}
+                      </div>
+          
+                      {/* TYPE */}
+                      <div>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
+                            parent.type
+                          )}`}
                         >
-                          {isPositive ? "+" : "-"}
-                          {finalAmount.toLocaleString("en-BD")} Tk
-                        </div>
+                          {formatType(parent.type)}
+                        </span>
+                      </div>
           
-                        {/* EDIT */}
+                      {/* AMOUNT */}
+                      <div
+                        className={`text-right font-semibold ${
+                          isPositive ? "text-green-500" : "text-red-500"
+                        }`}
+                      >
+                        {(isPositive ? "+" : "-") +
+                          finalAmount.toLocaleString("en-BD")}{" "}
+                        Tk
+                      </div>
+          
+                      {/* ACTIONS */}
+                      <div className="flex justify-center items-center gap-2">
                         <button
-                          onClick={() => {
-                            if (!isEditable(t)) return;
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isEditable(parent)) return;
           
-                            setEditTx(t);
+                            setEditTx(parent);
           
                             window.dispatchEvent(
                               new CustomEvent("openAdd", {
                                 detail: {
                                   mode: "edit",
-                                  data: t,
+                                  data: parent,
                                 },
                               })
                             );
                           }}
-                          className="p-1 rounded-full text-gray-400 hover:text-white"
-                        >
-                          <Pencil size={14} />
-                        </button>
-                      </div>
-                    </div>
-          
-                    {/* ROW 2 */}
-                    <div className="flex justify-between items-center mt-2">
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {new Date(t.date).toDateString().slice(4, 10)}
-                      </div>
-          
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-xs px-2 py-1 rounded-full ${
-                            t.type.includes("INCOME")
-                              ? "bg-green-500/20 text-green-400"
-                              : t.type.includes("EXPENSE")
-                              ? "bg-red-500/20 text-red-400"
-                              : t.type.includes("DEBT")
-                              ? "bg-blue-500/20 text-blue-400"
-                              : t.type.includes("RECEIVABLE")
-                              ? "bg-yellow-500/20 text-yellow-400"
-                              : "bg-gray-500/20 text-gray-400"
+                          disabled={!isEditable(parent)}
+                          className={`p-2 rounded-full transition ${
+                            isEditable(parent)
+                              ? "hover:bg-gray-200 dark:hover:bg-slate-800 text-gray-400 hover:text-white"
+                              : "opacity-30 cursor-not-allowed text-gray-500"
                           }`}
                         >
-                          {formatType(t.type)}
-                        </span>
+                          <Pencil size={16} />
+                        </button>
           
-                        {/* DELETE */}
                         <button
-                          onClick={() => setDeleteId(t.id)}
-                          className="p-1 rounded-full text-red-400 hover:text-red-300"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteId(parent.id);
+                          }}
+                          className="p-2 rounded-full hover:bg-red-500/20 text-red-400 hover:text-red-300 transition"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </div>
+          
+                    {/* ================= CHILDREN ================= */}
+                    {isExpanded &&
+                      children.map((child) => {
+                        const isPositiveChild =
+                          child.type === "INCOME" ||
+                          child.type === "DEBT_TAKEN" ||
+                          child.type === "RECEIVABLE_RECEIVED";
+          
+                        return (
+                          <div
+                            key={child.id}
+                            className="grid grid-cols-5 items-center px-4 py-2 border-b 
+                            border-gray-200 dark:border-gray-700 text-sm pl-10 text-gray-400"
+                          >
+                            {/* NAME */}
+                            <div className="flex items-center gap-2">
+                              <span>↳</span>
+                              <span>{getDisplayName(child)}</span>
+                            </div>
+          
+                            {/* DATE */}
+                            <div className="text-xs">
+                              {new Date(child.date).toDateString()}
+                            </div>
+          
+                            {/* TYPE */}
+                            <div>
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
+                                  child.type
+                                )}`}
+                              >
+                                {formatType(child.type)}
+                              </span>
+                            </div>
+          
+                            {/* AMOUNT */}
+                            <div
+                              className={`text-right font-semibold ${
+                                isPositiveChild ? "text-green-500" : "text-red-500"
+                              }`}
+                            >
+                              {(isPositiveChild ? "+" : "-") +
+                                Number(child.amount).toLocaleString("en-BD")}{" "}
+                              Tk
+                            </div>
+          
+                            <div />
+                          </div>
+                        );
+                      })}
                   </div>
                 );
               })}
