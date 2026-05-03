@@ -43,7 +43,9 @@ export async function handleReceivable({
       recRes.rows[0]?.remaining_amount || 0
     );
 
-    // 🔥 OVER RECEIVE
+    // =========================
+    // 🔥 OVER RECEIVE (FIXED STRUCTURE)
+    // =========================
     if (amountNumber > currentRemaining) {
       const receiveAmount = currentRemaining;
       const extra = amountNumber - currentRemaining;
@@ -52,11 +54,33 @@ export async function handleReceivable({
         throw new Error("Nothing to receive");
       }
 
-      const receiveTx = await client.query(
+      // ✅ 1. CREATE PARENT (TOTAL AMOUNT)
+      const parentTx = await client.query(
         `INSERT INTO transactions
-         (type, amount, from_account, to_account, entity_id, category_id, date, note, user_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+         (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id, user_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
          RETURNING id`,
+        [
+          "RECEIVABLE_RECEIVED",
+          amountNumber,
+          from_account,
+          to_account,
+          entity_id,
+          category_id || null,
+          date,
+          note,
+          null,
+          userId,
+        ]
+      );
+
+      const parentId = parentTx.rows[0].id;
+
+      // ✅ 2. CHILD → ACTUAL RECEIVE
+      await client.query(
+        `INSERT INTO transactions
+         (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id, user_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
         [
           "RECEIVABLE_RECEIVED",
           receiveAmount,
@@ -66,12 +90,12 @@ export async function handleReceivable({
           category_id || null,
           date,
           note,
+          parentId,
           userId,
         ]
       );
 
-      const parentId = receiveTx.rows[0].id;
-
+      // ✅ 3. CLEAR RECEIVABLE
       await client.query(
         `UPDATE receivables
          SET total_amount = 0,
@@ -80,6 +104,7 @@ export async function handleReceivable({
         [entity_id, userId]
       );
 
+      // ✅ 4. EXTRA → NEW RECEIVABLE
       if (extra > 0) {
         await client.query(
           `INSERT INTO receivables (entity_id, total_amount, remaining_amount, user_id)
@@ -115,7 +140,7 @@ export async function handleReceivable({
     // =========================
     // ✅ NORMAL RECEIVE (STRUCTURED)
     // =========================
-    
+
     // 1. CREATE PARENT
     const parentTx = await client.query(
       `INSERT INTO transactions
@@ -135,9 +160,9 @@ export async function handleReceivable({
         userId,
       ]
     );
-    
+
     const parentId = parentTx.rows[0].id;
-    
+
     // 2. CHILD → ACTUAL RECEIVE
     await client.query(
       `INSERT INTO transactions
@@ -156,7 +181,7 @@ export async function handleReceivable({
         userId,
       ]
     );
-    
+
     // 3. UPDATE RECEIVABLE
     await client.query(
       `UPDATE receivables
@@ -164,14 +189,13 @@ export async function handleReceivable({
        WHERE entity_id = $1 AND user_id = $3`,
       [entity_id, amountNumber, userId]
     );
-    
+
     await client.query(
       `DELETE FROM receivables
        WHERE entity_id = $1 AND user_id = $2 AND remaining_amount <= 0`,
       [entity_id, userId]
     );
-    
+
     return "COMMIT_EARLY";
-    
   }
 }
