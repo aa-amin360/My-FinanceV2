@@ -57,8 +57,8 @@ export async function handleDebt({
       // ✅ 1. CREATE PARENT TRANSACTION (TOTAL AMOUNT)
       const parentTx = await client.query(
         `INSERT INTO transactions
-         (type, amount, from_account, to_account, entity_id, category_id, date, note, user_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+         (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id, user_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
          RETURNING id`,
         [
           "DEBT_REPAID",
@@ -69,6 +69,7 @@ export async function handleDebt({
           category_id || null,
           date,
           note,
+          null,
           userId,
         ]
       );
