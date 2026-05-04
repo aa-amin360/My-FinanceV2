@@ -101,21 +101,23 @@ export async function POST(req: Request) {
         // ---- DEBT ----
         if (tx.type === "DEBT_TAKEN") {
           await client.query(
-            `UPDATE debts
-             SET 
-               total_amount = GREATEST(total_amount - $2, 0),
-               remaining_amount = GREATEST(remaining_amount - $2, 0)
-             WHERE entity_id = $1 AND user_id = $3`,
+            `INSERT INTO debts (entity_id, total_amount, remaining_amount, user_id)
+             VALUES ($1, 0, 0, $3)
+             ON CONFLICT (entity_id, user_id)
+             DO UPDATE SET
+               total_amount = GREATEST(debts.total_amount - $2, 0),
+               remaining_amount = GREATEST(debts.remaining_amount - $2, 0)`,
             [entityId, amt, userId]
           );
         }
     
         if (tx.type === "DEBT_REPAID") {
           await client.query(
-            `UPDATE debts
-             SET 
-               remaining_amount = remaining_amount + $2
-             WHERE entity_id = $1 AND user_id = $3`,
+            `INSERT INTO debts (entity_id, total_amount, remaining_amount, user_id)
+             VALUES ($1, 0, $2, $3)
+             ON CONFLICT (entity_id, user_id)
+             DO UPDATE SET
+               remaining_amount = debts.remaining_amount + $2`,
             [entityId, amt, userId]
           );
         }
@@ -123,40 +125,43 @@ export async function POST(req: Request) {
         // ---- RECEIVABLE ----
         if (tx.type === "RECEIVABLE_GIVEN") {
           await client.query(
-            `UPDATE receivables
-             SET 
-               total_amount = GREATEST(total_amount - $2, 0),
-               remaining_amount = GREATEST(remaining_amount - $2, 0)
-             WHERE entity_id = $1 AND user_id = $3`,
+            `INSERT INTO receivables (entity_id, total_amount, remaining_amount, user_id)
+             VALUES ($1, 0, 0, $3)
+             ON CONFLICT (entity_id, user_id)
+             DO UPDATE SET
+               total_amount = GREATEST(receivables.total_amount - $2, 0),
+               remaining_amount = GREATEST(receivables.remaining_amount - $2, 0)`,
             [entityId, amt, userId]
           );
         }
     
         if (tx.type === "RECEIVABLE_RECEIVED") {
           await client.query(
-            `UPDATE receivables
-             SET 
-               remaining_amount = remaining_amount + $2
-             WHERE entity_id = $1 AND user_id = $3`,
+            `INSERT INTO receivables (entity_id, total_amount, remaining_amount, user_id)
+             VALUES ($1, 0, $2, $3)
+             ON CONFLICT (entity_id, user_id)
+             DO UPDATE SET
+               remaining_amount = receivables.remaining_amount + $2`,
             [entityId, amt, userId]
           );
         }
       }
     
-      // =========================
-      // 🧹 CLEANUP ZERO STATES (CRITICAL)
-      // =========================
-      await client.query(
-        `DELETE FROM debts
-         WHERE user_id = $1 AND remaining_amount <= 0`,
-        [userId]
-      );
-    
-      await client.query(
-        `DELETE FROM receivables
-         WHERE user_id = $1 AND remaining_amount <= 0`,
-        [userId]
-      );
+      await client.query(`
+        INSERT INTO debts (entity_id, total_amount, remaining_amount, user_id)
+        SELECT entity_id, 0, 0, user_id
+        FROM transactions
+        WHERE user_id = $1 AND entity_id IS NOT NULL
+        ON CONFLICT DO NOTHING
+      `, [userId]);
+      
+      await client.query(`
+        INSERT INTO receivables (entity_id, total_amount, remaining_amount, user_id)
+        SELECT entity_id, 0, 0, user_id
+        FROM transactions
+        WHERE user_id = $1 AND entity_id IS NOT NULL
+        ON CONFLICT DO NOTHING
+      `, [userId]);
     
       // =========================
       // 🧹 DELETE OLD TREE
