@@ -62,122 +62,6 @@ export async function POST(req: Request) {
     
     const isEdit = !!id;
     
-    // ================================
-    // 🧨 EDIT MODE: REVERSE + DELETE
-    // ================================
-    if (isEdit) {
-      // 1️⃣ get original transaction
-      const oldTxRes = await client.query(
-        `SELECT * FROM transactions WHERE id = $1 AND user_id = $2`,
-        [id, userId]
-      );
-    
-      const oldTx = oldTxRes.rows[0];
-    
-      if (!oldTx) {
-        throw new Error("Transaction not found for edit");
-      }
-    
-      // 2️⃣ get children
-      const childrenRes = await client.query(
-        `SELECT * FROM transactions WHERE parent_id = $1 AND user_id = $2`,
-        [id, userId]
-      );
-    
-      const children = childrenRes.rows;
-    
-      // 🔥 IMPORTANT: reverse children FIRST, then parent
-      const allTx = [...children, oldTx];
-    
-      // =========================
-      // 🔄 REVERSE EFFECTS (SAFE)
-      // =========================
-      for (const tx of allTx) {
-        const amt = Number(tx.amount);
-        const entityId = tx.entity_id;
-    
-        if (!entityId) continue;
-    
-        // ---- DEBT ----
-        if (tx.type === "DEBT_TAKEN") {
-          await client.query(
-            `INSERT INTO debts (entity_id, total_amount, remaining_amount, user_id)
-             VALUES ($1, 0, 0, $3)
-             ON CONFLICT (entity_id, user_id)
-             DO UPDATE SET
-               total_amount = GREATEST(debts.total_amount - $2, 0),
-               remaining_amount = GREATEST(debts.remaining_amount - $2, 0)`,
-            [entityId, amt, userId]
-          );
-        }
-    
-        if (tx.type === "DEBT_REPAID") {
-          await client.query(
-            `INSERT INTO debts (entity_id, total_amount, remaining_amount, user_id)
-             VALUES ($1, 0, $2, $3)
-             ON CONFLICT (entity_id, user_id)
-             DO UPDATE SET
-               remaining_amount = debts.remaining_amount + $2`,
-            [entityId, amt, userId]
-          );
-        }
-    
-        // ---- RECEIVABLE ----
-        if (tx.type === "RECEIVABLE_GIVEN") {
-          await client.query(
-            `INSERT INTO receivables (entity_id, total_amount, remaining_amount, user_id)
-             VALUES ($1, 0, 0, $3)
-             ON CONFLICT (entity_id, user_id)
-             DO UPDATE SET
-               total_amount = GREATEST(receivables.total_amount - $2, 0),
-               remaining_amount = GREATEST(receivables.remaining_amount - $2, 0)`,
-            [entityId, amt, userId]
-          );
-        }
-    
-        if (tx.type === "RECEIVABLE_RECEIVED") {
-          await client.query(
-            `INSERT INTO receivables (entity_id, total_amount, remaining_amount, user_id)
-             VALUES ($1, 0, $2, $3)
-             ON CONFLICT (entity_id, user_id)
-             DO UPDATE SET
-               remaining_amount = receivables.remaining_amount + $2`,
-            [entityId, amt, userId]
-          );
-        }
-      }
-    
-      await client.query(`
-        INSERT INTO debts (entity_id, total_amount, remaining_amount, user_id)
-        SELECT entity_id, 0, 0, user_id
-        FROM transactions
-        WHERE user_id = $1 AND entity_id IS NOT NULL
-        ON CONFLICT DO NOTHING
-      `, [userId]);
-      
-      await client.query(`
-        INSERT INTO receivables (entity_id, total_amount, remaining_amount, user_id)
-        SELECT entity_id, 0, 0, user_id
-        FROM transactions
-        WHERE user_id = $1 AND entity_id IS NOT NULL
-        ON CONFLICT DO NOTHING
-      `, [userId]);
-    
-      // =========================
-      // 🧹 DELETE OLD TREE
-      // =========================
-      await client.query(
-        `DELETE FROM transactions WHERE parent_id = $1 AND user_id = $2`,
-        [id, userId]
-      );
-    
-      await client.query(
-        `DELETE FROM transactions WHERE id = $1 AND user_id = $2`,
-        [id, userId]
-      );
-    }
-
-    
     const amountNumber = Number(amount);
 
     if (!type || !amountNumber || !account || !date) {
@@ -210,11 +94,6 @@ export async function POST(req: Request) {
       TYPE_META
     );
 
-    // =========================
-    // UPDATE (EDIT MODE)
-    // =========================
-
-    
     // insert normal
     if (type !== "DEBT_REPAID" && type !== "RECEIVABLE_RECEIVED") {
       await insertTransaction(client, [
