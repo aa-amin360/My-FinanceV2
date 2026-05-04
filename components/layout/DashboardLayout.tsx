@@ -114,7 +114,7 @@ export default function DashboardLayout({
               <img
                 src="/logo.png"
                 alt="logo"
-                className="w-5 h-5 object-contain"
+                className="w-full h-full object-cover"
               />
             </div>
             <h1 className="text-lg font-semibold text-green-500 tracking-wide">
