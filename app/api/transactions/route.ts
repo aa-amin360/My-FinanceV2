@@ -60,8 +60,6 @@ export async function POST(req: Request) {
       direction,
     } = body;
     
-    const isEdit = !!id;
-    
     const amountNumber = Number(amount);
 
     if (!type || !amountNumber || !account || !date) {
