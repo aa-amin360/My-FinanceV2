@@ -29,7 +29,6 @@ export default function TransactionsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [confirmAll, setConfirmAll] = useState(false);
-  const [editTx, setEditTx] = useState<Transaction | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   // =========================
@@ -150,21 +149,6 @@ export default function TransactionsPage() {
     }
   };
 
-  const isEditable = (t: Transaction) => {
-    const isChild = !!t.parent_id;
-    const hasChild = !!t.has_child;
-  
-    // allow normal transactions
-    if (!isChild && !hasChild) return true;
-  
-    // allow special middle ones
-    if (t.type === "DEBT_REPAID" || t.type === "RECEIVABLE_RECEIVED") {
-      return true;
-    }
-  
-    return false;
-  };
-
   // =========================
   // SORT (Parent → Child)
   // =========================
@@ -279,33 +263,7 @@ export default function TransactionsPage() {
                       </div>
           
                       {/* ACTIONS */}
-                      <div className="flex justify-center items-center gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!isEditable(parent)) return;
-          
-                            setEditTx(parent);
-          
-                            window.dispatchEvent(
-                              new CustomEvent("openAdd", {
-                                detail: {
-                                  mode: "edit",
-                                  data: parent,
-                                },
-                              })
-                            );
-                          }}
-                          disabled={!isEditable(parent)}
-                          className={`p-2 rounded-full transition ${
-                            isEditable(parent)
-                              ? "hover:bg-gray-200 dark:hover:bg-slate-800 text-gray-400 hover:text-white"
-                              : "opacity-30 cursor-not-allowed text-gray-500"
-                          }`}
-                        >
-                          <Pencil size={16} />
-                        </button>
-          
+                      <div className="flex justify-center items-center gap-2">          
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
