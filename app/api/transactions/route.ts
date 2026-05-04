@@ -62,9 +62,9 @@ export async function POST(req: Request) {
     
     const isEdit = !!id;
     
-    // =========================
+    // ================================
     // 🧨 EDIT MODE: REVERSE + DELETE
-    // =========================
+    // ================================
     if (isEdit) {
       // 1️⃣ get original transaction
       const oldTxRes = await client.query(
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
         throw new Error("Transaction not found for edit");
       }
     
-      // 2️⃣ get children (important for split cases)
+      // 2️⃣ get children
       const childrenRes = await client.query(
         `SELECT * FROM transactions WHERE parent_id = $1 AND user_id = $2`,
         [id, userId]
@@ -86,10 +86,11 @@ export async function POST(req: Request) {
     
       const children = childrenRes.rows;
     
-      const allTx = [oldTx, ...children];
+      // 🔥 IMPORTANT: reverse children FIRST, then parent
+      const allTx = [...children, oldTx];
     
       // =========================
-      // 🔄 REVERSE EFFECTS
+      // 🔄 REVERSE EFFECTS (SAFE)
       // =========================
       for (const tx of allTx) {
         const amt = Number(tx.amount);
@@ -101,8 +102,9 @@ export async function POST(req: Request) {
         if (tx.type === "DEBT_TAKEN") {
           await client.query(
             `UPDATE debts
-             SET total_amount = total_amount - $2,
-                 remaining_amount = remaining_amount - $2
+             SET 
+               total_amount = GREATEST(total_amount - $2, 0),
+               remaining_amount = GREATEST(remaining_amount - $2, 0)
              WHERE entity_id = $1 AND user_id = $3`,
             [entityId, amt, userId]
           );
@@ -111,7 +113,8 @@ export async function POST(req: Request) {
         if (tx.type === "DEBT_REPAID") {
           await client.query(
             `UPDATE debts
-             SET remaining_amount = remaining_amount + $2
+             SET 
+               remaining_amount = remaining_amount + $2
              WHERE entity_id = $1 AND user_id = $3`,
             [entityId, amt, userId]
           );
@@ -121,8 +124,9 @@ export async function POST(req: Request) {
         if (tx.type === "RECEIVABLE_GIVEN") {
           await client.query(
             `UPDATE receivables
-             SET total_amount = total_amount - $2,
-                 remaining_amount = remaining_amount - $2
+             SET 
+               total_amount = GREATEST(total_amount - $2, 0),
+               remaining_amount = GREATEST(remaining_amount - $2, 0)
              WHERE entity_id = $1 AND user_id = $3`,
             [entityId, amt, userId]
           );
@@ -131,7 +135,8 @@ export async function POST(req: Request) {
         if (tx.type === "RECEIVABLE_RECEIVED") {
           await client.query(
             `UPDATE receivables
-             SET remaining_amount = remaining_amount + $2
+             SET 
+               remaining_amount = remaining_amount + $2
              WHERE entity_id = $1 AND user_id = $3`,
             [entityId, amt, userId]
           );
@@ -139,9 +144,23 @@ export async function POST(req: Request) {
       }
     
       // =========================
+      // 🧹 CLEANUP ZERO STATES (CRITICAL)
+      // =========================
+      await client.query(
+        `DELETE FROM debts
+         WHERE user_id = $1 AND remaining_amount <= 0`,
+        [userId]
+      );
+    
+      await client.query(
+        `DELETE FROM receivables
+         WHERE user_id = $1 AND remaining_amount <= 0`,
+        [userId]
+      );
+    
+      // =========================
       // 🧹 DELETE OLD TREE
       // =========================
-    
       await client.query(
         `DELETE FROM transactions WHERE parent_id = $1 AND user_id = $2`,
         [id, userId]
