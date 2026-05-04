@@ -8,7 +8,6 @@ export default function TransactionModal() {
   const [action, setAction] = useState("");
   const [entity, setEntity] = useState("");
   const [loading, setLoading] = useState(false);
-  const [editTx, setEditTx] = useState<any | null>(null);
 
   const [amount, setAmount] = useState("");
   const [account, setAccount] = useState("Cash");
