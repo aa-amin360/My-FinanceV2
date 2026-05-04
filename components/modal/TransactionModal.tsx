@@ -18,8 +18,6 @@ export default function TransactionModal() {
   const [error, setError] = useState("");
   const [isDirectFlow, setIsDirectFlow] = useState(false);
 
-  const isEdit = !!editTx;
-
   // ================= RESET =================
   const resetForm = () => {
     setAmount("");
@@ -35,7 +33,6 @@ export default function TransactionModal() {
     setShowModal(false);
     setIsDirectFlow(false);
     setStep("ACTION");
-    setEditTx(null);
     resetForm();
     window.dispatchEvent(new Event("refreshData"));
   };
@@ -54,8 +51,6 @@ export default function TransactionModal() {
 
       // CREATE FLOW
       if (typeof e.detail === "string") {
-        setEditTx(null);
-
         if (e.detail === "DEBT") {
           setAction("BORROW");
           setStep("FORM");
@@ -70,46 +65,17 @@ export default function TransactionModal() {
         }
       }
 
-      // EDIT FLOW
+      // DIRECT FLOWS ONLY (no edit anymore)
       if (typeof e.detail === "object") {
-        // 🔥 CASE 1: FULL TRANSACTION (edit)
-        if (e.detail.data) {
-          const t = e.detail.data;
-      
-          setEditTx(t);
-          setStep("FORM");
-      
-          setAmount(String(t.amount || ""));
-          setNote(t.note || "");
-          setEntity(t.entity_name || "");
-          setCategory(t.category_id || "");
-      
-          if (t.type === "INCOME") setAction("INCOME");
-          if (t.type === "EXPENSE") setAction("EXPENSE");
-          if (t.type === "DEBT_TAKEN") setAction("BORROW");
-          if (t.type === "RECEIVABLE_GIVEN") setAction("GIVE");
-          if (t.type === "DEBT_REPAID") setAction("REPAY");
-          if (t.type === "RECEIVABLE_RECEIVED") setAction("RECEIVE");
-        }
-      
-        // 🔥 CASE 2: DIRECT REPAY (from debt page)
-        else if (e.detail.type === "DEBT_REPAID") {
-          setEditTx(null);
+        if (e.detail.type === "DEBT_REPAID") {
           setAction("REPAY");
           setStep("FORM");
           setIsDirectFlow(true);
-      
-          // 🔥 THIS WAS MISSING
           setEntity(e.detail.entity || "");
-        }
-      
-        // 🔥 CASE 3: DIRECT RECEIVE (future-proof)
-        else if (e.detail.type === "RECEIVABLE_RECEIVED") {
-          setEditTx(null);
+        } else if (e.detail.type === "RECEIVABLE_RECEIVED") {
           setAction("RECEIVE");
           setStep("FORM");
           setIsDirectFlow(true);
-      
           setEntity(e.detail.entity || "");
         }
       }
@@ -142,7 +108,7 @@ export default function TransactionModal() {
       return;
     }
 
-    if (!isEdit && (action === "INCOME" || action === "EXPENSE") && !category) {
+    if ((action === "INCOME" || action === "EXPENSE") && !category) {
       setError("Select a category");
       return;
     }
@@ -162,13 +128,12 @@ export default function TransactionModal() {
         type: actionToTypeMap[action],
         amount: amountNumber,
         account,
-        date: isEdit ? editTx.date : new Date().toISOString(),
+        date: new Date().toISOString(),
         note,
       };
 
       if (category) body.category_id = category;
       if (entity) body.entity = entity;
-      if (isEdit) body.id = editTx.id;
 
       const res = await fetch("/api/transactions", {
         method: "POST",
@@ -241,14 +206,16 @@ export default function TransactionModal() {
           <>
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-gray-800 dark:text-white">
-                {isEdit
-                  ? "Edit Transaction"
-                  : action === "INCOME"
+                {action === "INCOME"
                   ? "Add Income"
                   : action === "EXPENSE"
                   ? "Add Expense"
                   : action === "BORROW"
                   ? "Borrow Money"
+                  : action === "REPAY"
+                  ? "Repay Debt"
+                  : action === "RECEIVE"
+                  ? "Receive Money"
                   : "Give Money"}
               </h3>
 
@@ -324,7 +291,7 @@ export default function TransactionModal() {
                   : "bg-green-500 hover:bg-green-600 active:scale-95"
               }`}
             >
-              {loading ? "Processing..." : isEdit ? "Update" : "Save"}
+              {loading ? "Processing..." : "Save"}
             </button>
 
             {!isDirectFlow && (
