@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import CashflowChart from "../components/charts/CashflowChart";
+import WeeklyChartCard from "../components/dashboard/WeeklyChartCard";
 import Link from "next/link";
 import { Trash2, Wallet, Landmark } from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
@@ -181,8 +182,13 @@ export default function Home() {
         <div className="bg-gray-50 dark:bg-slate-800/40 border border-gray-200 dark:border-slate-700 rounded-xl p-2 h-[260px]">
           <CashflowChart data={chartData} />
         </div>
+      </div>      
+      
+      {/* Weeklychart */}
+      <div className="mt-6 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
+        <WeeklyChartCard />
       </div>
-
+      
       {/* HISTORY */}
       <div className="mt-6">
         <h3 className="text-lg font-semibold mb-3">Recent Transactions</h3>
@@ -275,7 +281,7 @@ export default function Home() {
                 </div>
               );
             })}
-        </div>
+        </div>        
       </div>
 
       
