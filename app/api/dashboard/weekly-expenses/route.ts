@@ -51,14 +51,12 @@ export async function GET() {
       const day = new Date(tx.full_date).toLocaleDateString("en-US", {
         weekday: "short",
       });
-
+    
       const amount = Number(tx.amount);
-
+    
       if (tx.type === "EXPENSE") {
         daysMap[day] += amount;
       }
-
-      daysMap[day] += positive ? amount : -amount;
     }
 
     const ordered = [
