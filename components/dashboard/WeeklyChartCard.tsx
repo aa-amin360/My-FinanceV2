@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRefresh } from "../hooks/useRefresh";
+import { useRefresh } from "@/hooks/useRefresh";
 
 type DayData = {
   day: string;
