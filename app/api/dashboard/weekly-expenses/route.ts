@@ -75,7 +75,7 @@ export async function GET() {
 
     const data = ordered.map((day) => ({
       day,
-      amount: daysMap[day] || 0,
+      amount: Math.abs(daysMap[day] || 0),
     }));
 
     return NextResponse.json({
