@@ -158,7 +158,13 @@ export default function DebtDetailPage() {
                   {t.type.replace("_", " ")}
                 </div>
                 <div className="text-xs text-gray-500">
-                  {new Date(t.date).toDateString()}
+                  {new Date(t.date).toLocaleDateString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    timeZone: "UTC",
+                  })}
                 </div>
               </div>
 
