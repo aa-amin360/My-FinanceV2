@@ -232,7 +232,13 @@ export default function Home() {
                     </div>
       
                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {new Date(t.date).toDateString()}
+                      {new Date(t.date).toLocaleDateString("en-US", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                        timeZone: "UTC",
+                      })}
                     </div>
                   </div>
       
