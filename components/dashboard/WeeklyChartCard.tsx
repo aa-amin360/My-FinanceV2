@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRefresh } from "../hooks/useRefresh";
 
 type DayData = {
   day: string;
@@ -11,20 +12,18 @@ export default function WeeklyChartCard() {
   const [data, setData] = useState<DayData[]>([]);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
-  useEffect(() => {
-    const loadWeeklyData = async () => {
-      try {
-        const res = await fetch("/api/dashboard/weekly-expenses");
-        const json = await res.json();
-
-        setData(json.data || []);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    loadWeeklyData();
-  }, []);
+  const loadWeeklyData = async () => {
+    try {
+      const res = await fetch("/api/dashboard/weekly-expenses");
+      const json = await res.json();
+  
+      setData(json.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  
+  useRefresh(loadWeeklyData);
 
   // 🔥 FIX: use absolute values
   const maxAmount = Math.max(
