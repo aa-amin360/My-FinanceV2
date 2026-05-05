@@ -60,10 +60,13 @@ export default function WeeklyChartCard() {
           const normalized =
             (Math.abs(item.amount) / maxAmount) * 100;
 
+          const today = new Date().toLocaleDateString("en-US", {
+            weekday: "short",
+          });
+          
           const isActive =
             activeIndex === index ||
-            (activeIndex === null &&
-              index === data.length - 1);
+            (activeIndex === null && item.day === today);
 
           return (
             <div
