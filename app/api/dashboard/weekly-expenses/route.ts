@@ -54,11 +54,9 @@ export async function GET() {
 
       const amount = Number(tx.amount);
 
-      // 🔥 Positive flow
-      const positive =
-        tx.type === "INCOME" ||
-        tx.type === "DEBT_TAKEN" ||
-        tx.type === "RECEIVABLE_RECEIVED";
+      if (tx.type === "EXPENSE") {
+        daysMap[day] += amount;
+      }
 
       daysMap[day] += positive ? amount : -amount;
     }
