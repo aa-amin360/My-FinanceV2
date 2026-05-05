@@ -237,7 +237,13 @@ export default function TransactionsPage() {
           
                       {/* DATE */}
                       <div className="text-xs text-gray-500">
-                        {new Date(parent.date).toDateString()}
+                        {new Date(parent.date).toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          timeZone: "UTC",
+                        })}
                       </div>
           
                       {/* TYPE */}
@@ -298,7 +304,13 @@ export default function TransactionsPage() {
           
                             {/* DATE */}
                             <div className="text-xs">
-                              {new Date(child.date).toDateString()}
+                              {new Date(child.date).toLocaleDateString("en-US", {
+                                weekday: "short",
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                                timeZone: "UTC",
+                              })}
                             </div>
           
                             {/* TYPE */}
@@ -381,7 +393,13 @@ export default function TransactionsPage() {
                       </div>
           
                       <div className="flex justify-between mt-2 text-xs text-gray-400">
-                        <span>{new Date(parent.date).toDateString().slice(4, 10)}</span>
+                        <span>
+                          {new Date(parent.date).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            timeZone: "UTC",
+                          })}
+                        </span>
           
                         <span
                           className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
