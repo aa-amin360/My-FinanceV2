@@ -163,7 +163,7 @@ export default function TransactionsPage() {
     return 0;
   });
 
-  const roots = transactions.filter((t) => !t.parent_id);
+  const roots = sortedTransactions.filter((t) => !t.parent_id);
 
   const getChildren = (id: string) =>
     transactions.filter((t) => t.parent_id === id);
@@ -196,10 +196,8 @@ export default function TransactionsPage() {
           {/* ROWS */}
           {/* DESKTOP TABLE */}
           <div className="hidden md:block">
-            {transactions
-              .filter((t) => !t.parent_id)
-              .map((parent) => {
-                const children = transactions.filter(
+            {roots.map((parent) => {
+                const children = sortedTransactions.filter(
                   (c) => c.parent_id === parent.id
                 );
           
@@ -347,10 +345,8 @@ export default function TransactionsPage() {
           
           {/* MOBILE CARD */}
           <div className="md:hidden space-y-3">
-            {transactions
-              .filter((t) => !t.parent_id)
-              .map((parent) => {
-                const children = transactions.filter(
+            {roots.map((parent) => {
+                const children = sortedTransactions.filter(
                   (c) => c.parent_id === parent.id
                 );
           
