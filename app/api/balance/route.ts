@@ -14,7 +14,10 @@ export async function GET() {
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    );
   }
 
   const userId = session.user.email;
@@ -32,6 +35,7 @@ export async function GET() {
       LEFT JOIN accounts fa ON t.from_account = fa.id
       LEFT JOIN accounts ta ON t.to_account = ta.id
       WHERE t.user_id = $1
+      AND t.parent_id IS NULL
       `,
       [userId]
     );
@@ -51,7 +55,9 @@ export async function GET() {
         ? row.to_account.toLowerCase().trim()
         : null;
 
-      // ===== CASH =====
+      // =========================
+      // CASH
+      // =========================
       if (to === "cash") {
         cashBalance += amount;
         balance += amount;
@@ -62,7 +68,9 @@ export async function GET() {
         balance -= amount;
       }
 
-      // ===== BANK =====
+      // =========================
+      // BANK
+      // =========================
       if (to === "bank") {
         bankBalance += amount;
         balance += amount;
