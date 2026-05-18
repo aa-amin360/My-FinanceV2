@@ -19,7 +19,6 @@ export async function checkBalance(
     FROM transactions
     WHERE user_id = $2
       AND (to_account = $1 OR from_account = $1)
-    FOR UPDATE
     `,
     [accountId, userId]
   );
