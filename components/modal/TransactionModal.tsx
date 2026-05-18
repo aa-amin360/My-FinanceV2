@@ -128,7 +128,7 @@ export default function TransactionModal() {
         type: actionToTypeMap[action],
         amount: amountNumber,
         account,
-        date: new Date().toISOString(),
+        date: isEdit ? editTx.date : new Date().toISOString(),
         note,
       };
 
