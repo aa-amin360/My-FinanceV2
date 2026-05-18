@@ -64,7 +64,12 @@ export default function Home() {
   let runningBalance = 0;
   
   const chartData = transactions
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .filter((t: any) => !t.parent_id)
+    .sort(
+      (a, b) =>
+        new Date(a.date).getTime() -
+        new Date(b.date).getTime()
+    )
     .map((t) => {
       const isPositive =
         t.type === "INCOME" ||
@@ -81,6 +86,7 @@ export default function Home() {
         date: new Date(t.date).toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
+          timeZone: "UTC",
         }),
         balance: runningBalance,
       };
@@ -195,6 +201,7 @@ export default function Home() {
       
         <div className="space-y-3">
           {[...transactions]
+            .filter((t: any) => !t.parent_id)
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
             .slice(0, 5)
             .map((t) => {
