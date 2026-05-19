@@ -10,7 +10,7 @@ export default function AmbientPlayer() {
 
     if (!audio) return;
 
-    audio.volume = 0.22;
+    audio.volume = 0.12;
 
     const startAudio = async () => {
       try {
