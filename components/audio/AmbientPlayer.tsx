@@ -36,9 +36,11 @@ export default function AmbientPlayer() {
   }, []);
 
   return (
+return (
     <audio
       ref={audioRef}
       loop
+      autoPlay
       preload="auto"
     >
       <source src="/audio/bella-ciao.mp3" type="audio/mpeg" />
