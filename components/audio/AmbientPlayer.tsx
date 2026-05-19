@@ -36,7 +36,6 @@ export default function AmbientPlayer() {
   }, []);
 
   return (
-return (
     <audio
       ref={audioRef}
       loop
