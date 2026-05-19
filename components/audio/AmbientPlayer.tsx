@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react";
 
 export default function AmbientPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const startedRef = useRef(false);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -13,36 +12,39 @@ export default function AmbientPlayer() {
 
     audio.volume = 0.12;
 
-    const startAudio = async () => {
-      if (startedRef.current) return;
-
+    const tryPlay = async () => {
       try {
-        await audio.play();
-        startedRef.current = true;
+        if (audio.paused) {
+          await audio.play();
+        }
       } catch (err) {
         console.log("Autoplay blocked");
       }
     };
 
-    // try autoplay immediately
-    startAudio();
+    // autoplay attempt
+    tryPlay();
 
-    // fallback: first interaction only
-    window.addEventListener("click", startAudio, { once: true });
+    // fallback unlock on first interaction
+    const unlock = () => {
+      tryPlay();
+      window.removeEventListener("click", unlock);
+    };
+
+    window.addEventListener("click", unlock);
 
     return () => {
-      window.removeEventListener("click", startAudio);
+      window.removeEventListener("click", unlock);
     };
   }, []);
 
   return (
     <audio
       ref={audioRef}
+      src="/audio/bella-ciao.mp3"
       loop
       autoPlay
       preload="auto"
-    >
-      <source src="/audio/bella-ciao.mp3" type="audio/mpeg" />
-    </audio>
+    />
   );
 }
