@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 export default function AmbientPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const startedRef = useRef(false);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -13,14 +14,20 @@ export default function AmbientPlayer() {
     audio.volume = 0.12;
 
     const startAudio = async () => {
+      if (startedRef.current) return;
+
       try {
         await audio.play();
+        startedRef.current = true;
       } catch (err) {
         console.log("Autoplay blocked");
       }
     };
 
-    // first interaction unlock
+    // try autoplay immediately
+    startAudio();
+
+    // fallback: first interaction only
     window.addEventListener("click", startAudio, { once: true });
 
     return () => {
