@@ -1,6 +1,7 @@
 import "./globals.css";
 import { ThemeProvider } from "../components/ThemeProvider";
 import { Inter } from "next/font/google";
+import AmbientPlayer from "@/components/audio/AmbientPlayer";
 
 const inter = Inter({
   subsets: ["latin"],
