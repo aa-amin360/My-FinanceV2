@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { Space_Grotesk } from "next/font/google";
 
 import TransactionModal from "@/components/modal/TransactionModal";
+import AmbientPlayer from "@/components/audio/AmbientPlayer";
 
 const space = Space_Grotesk({
   subsets: ["latin"],
@@ -138,6 +139,8 @@ export default function DashboardLayout({
 
       {/* ================= MOBILE NAV ================= */}
       <FloatingNav pathname={pathname} />
+
+      <AmbientPlayer />
 
       {/* ================= FAB ================= */}
       <button
