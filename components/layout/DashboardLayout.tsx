@@ -140,8 +140,6 @@ export default function DashboardLayout({
       {/* ================= MOBILE NAV ================= */}
       <FloatingNav pathname={pathname} />
 
-      <AmbientPlayer />
-
       {/* ================= FAB ================= */}
       <button
         onClick={() => {
