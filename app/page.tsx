@@ -150,7 +150,7 @@ export default function Home() {
       
         {/* DROPDOWN */}
         {open && (
-          <div className="absolute top-full left-0 w-full mt-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-gray-200 dark:border-slate-800 rounded-2xl shadow-lg overflow-hidden z-50">
+          <div className="absolute top-full left-0 w-full mt-2 bg-white/80 dark:bg-black/80 backdrop-blur-md border border-gray-200 dark:border-slate-800 rounded-2xl shadow-lg overflow-hidden z-50">
       
             <div className="px-4 py-3 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer">
               <Wallet size={16} />
@@ -301,7 +301,7 @@ export default function Home() {
       {deleteId && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           
-          <div className="bg-white/90 dark:bg-slate-900/80 border border-gray-200 dark:border-slate-700 
+          <div className="bg-white/90 dark:bg-black/80 border border-gray-200 dark:border-slate-700 
             text-black dark:text-white backdrop-blur-xl rounded-2xl p-6 w-[320px] text-center shadow-2xl">
             
             <h3 className="text-lg font-semibold mb-4">
@@ -364,7 +364,7 @@ const getCardStyle = (type: string) => {
     default:
       return {
         text: "text-gray-400",
-        bg: "bg-gray-100 dark:bg-slate-900",
+        bg: "bg-gray-100 dark:bg-black",
       };
   }
 };
