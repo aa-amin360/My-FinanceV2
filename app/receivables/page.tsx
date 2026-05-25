@@ -68,7 +68,7 @@ export default function ReceivablePage() {
               <div className="font-semibold text-lg">
                 {formatName(r.name)}
               </div>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-zinc-500>
                 Tap to view details
               </div>
             </div>
