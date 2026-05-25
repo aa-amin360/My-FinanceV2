@@ -167,7 +167,7 @@ export default function TransactionModal() {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-[340px] bg-white/90 dark:bg-slate-900/90 border border-gray-200 dark:border-slate-700 text-black dark:text-white rounded-2xl p-5 shadow-2xl flex flex-col gap-4 animate-modalIn"
+        className="w-[340px] bg-white/90 dark:bg-black/90 border border-gray-200 dark:border-slate-700 text-black dark:text-white rounded-2xl p-5 shadow-2xl flex flex-col gap-4 animate-modalIn"
       >
         {/* ================= ACTION ================= */}
         {step === "ACTION" && (
