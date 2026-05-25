@@ -182,119 +182,156 @@ export default function Home() {
       </div>
       
       {/* CHART */}
-      <div className="mt-6 bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-xl border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
-        <h3 className="mb-4 text-sm text-gray-400">Balance</h3>
-      
-        <div className="bg-gray-50 dark:bg-slate-800/40 border border-gray-200 dark:border-slate-700 rounded-xl p-2 h-[260px]">
+      <div className="mt-6 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-900 rounded-2xl p-5">
+        <h3 className="mb-4 text-sm text-zinc-500">
+          Balance
+        </h3>
+
+        <div className="bg-gray-50 dark:bg-black border border-gray-200 dark:border-zinc-900 rounded-xl p-2 h-[260px]">
           <CashflowChart data={chartData} />
         </div>
-      </div>      
-      
-      {/* Weeklychart */}
-      <div className="mt-6 bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-xl border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
+      </div>
+
+      {/* WEEKLY CHART */}
+      <div className="mt-6 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-900 rounded-2xl p-5">
         <WeeklyChartCard />
       </div>
-      
+
       {/* HISTORY */}
       <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-3">Recent Transactions</h3>
-      
+        <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">
+          Recent Transactions
+        </h3>
+
         <div className="space-y-3">
           {[...transactions]
             .filter((t: any) => !t.parent_id)
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .sort(
+              (a, b) =>
+                new Date(b.date).getTime() -
+                new Date(a.date).getTime()
+            )
             .slice(0, 5)
             .map((t) => {
               const amount = Number(t.amount);
-      
+
               const isPositive =
                 t.type === "INCOME" ||
                 t.type === "DEBT_TAKEN" ||
                 t.type === "RECEIVABLE_RECEIVED";
-      
+
               const formatType = (type: string) =>
                 type
                   .toLowerCase()
                   .replace(/_/g, " ")
                   .replace(/\b\w/g, (c) => c.toUpperCase());
-      
+
               const capitalize = (text: string) =>
-                text ? text.charAt(0).toUpperCase() + text.slice(1) : "";
-      
+                text
+                  ? text.charAt(0).toUpperCase() +
+                    text.slice(1)
+                  : "";
+
               const getDisplayName = (t: any) => {
-                if (t.entity_name) return capitalize(t.entity_name);
-                if (t.category_name) return capitalize(t.category_name);
+                if (t.entity_name)
+                  return capitalize(t.entity_name);
+
+                if (t.category_name)
+                  return capitalize(t.category_name);
+
                 return formatType(t.type);
               };
-      
+
               return (
                 <div
                   key={t.id}
-                  className="bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-xl border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 flex justify-between items-center hover:bg-gray-100 dark:hover:bg-slate-800 transition"
+                  className="
+                    bg-white dark:bg-zinc-950
+                    border border-gray-200 dark:border-zinc-900
+                    rounded-2xl
+                    px-4 py-4
+                    flex justify-between items-center
+                    hover:bg-gray-50 dark:hover:bg-zinc-900
+                    transition-all duration-200
+                  "
                 >
                   {/* LEFT */}
                   <div>
-                    <div className="font-medium text-gray-900 dark:text-white">
+                    <div className="font-medium text-black dark:text-white">
                       {getDisplayName(t)}
                     </div>
-      
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {new Date(t.date).toLocaleDateString("en-US", {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                        timeZone: "UTC",
-                      })}
+
+                    <div className="text-xs text-gray-500 dark:text-zinc-500 mt-1">
+                      {new Date(t.date).toLocaleDateString(
+                        "en-US",
+                        {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          timeZone: "UTC",
+                        }
+                      )}
                     </div>
                   </div>
-      
+
                   {/* RIGHT */}
                   <div className="flex items-center gap-4">
-                    
+
                     {/* AMOUNT + TYPE */}
                     <div className="text-right">
                       <div
                         className={`font-semibold ${
-                          isPositive ? "text-green-500" : "text-red-500"
+                          isPositive
+                            ? "text-green-500"
+                            : "text-red-500"
                         }`}
                       >
                         {isPositive ? "+" : "-"}
-                        {Number(amount).toLocaleString("en-BD")} Tk
+                        {Number(amount).toLocaleString(
+                          "en-BD"
+                        )}{" "}
+                        Tk
                       </div>
-      
+
                       <div className="mt-1">
                         <span
                           className={`text-xs px-2 py-1 rounded-full ${
                             t.type === "INCOME"
-                              ? "bg-green-500/20 text-green-400"
+                              ? "bg-green-500/10 text-green-400"
                               : t.type === "EXPENSE"
-                              ? "bg-red-500/20 text-red-400"
+                              ? "bg-red-500/10 text-red-400"
                               : t.type.includes("DEBT")
-                              ? "bg-blue-500/20 text-blue-400"
+                              ? "bg-blue-500/10 text-blue-400"
                               : t.type.includes("RECEIVABLE")
-                              ? "bg-yellow-500/20 text-yellow-400"
-                              : "bg-gray-500/20 text-gray-400"
+                              ? "bg-yellow-500/10 text-yellow-400"
+                              : "bg-zinc-800 text-zinc-400"
                           }`}
                         >
                           {formatType(t.type)}
                         </span>
                       </div>
                     </div>
-      
-                    {/* DELETE ICON (ONLY CHANGE) */}
+
+                    {/* DELETE */}
                     <button
                       onClick={() => setDeleteId(t.id)}
-                      className="p-2 rounded-full hover:bg-red-500/20 text-red-400 hover:text-red-300 transition"
+                      className="
+                        p-2 rounded-full
+                        hover:bg-red-500/10
+                        text-red-400
+                        hover:text-red-300
+                        transition
+                      "
                     >
                       <Trash2 size={18} />
                     </button>
-      
+
                   </div>
                 </div>
               );
             })}
-        </div>        
+        </div>
       </div>
 
       
