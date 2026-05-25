@@ -119,7 +119,7 @@ export default function Home() {
             e.stopPropagation();
             setOpen(!open);
           }}
-          className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-2xl text-black cursor-pointer flex justify-between items-center"
+          className="bg-gradient-to-r from-emerald-500 to-green-600 p-6 rounded-2xl text-black cursor-pointer flex justify-between items-center"
         >
           <h1
             className={`font-bold ${
