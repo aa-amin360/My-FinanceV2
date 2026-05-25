@@ -344,22 +344,22 @@ const getCardStyle = (type: string) => {
     case "income":
       return {
         text: "text-green-500",
-        bg: "bg-green-500/10",
+        bg: "bg-green-500/20",
       };
     case "expense":
       return {
         text: "text-red-500",
-        bg: "bg-red-500/10",
+        bg: "bg-red-500/20",
       };
     case "debt":
       return {
         text: "text-cyan-400",
-        bg: "bg-cyan-400/10",
+        bg: "bg-cyan-400/20",
       };
     case "receivable":
       return {
         text: "text-yellow-400",
-        bg: "bg-yellow-400/10",
+        bg: "bg-yellow-400/20",
       };
     default:
       return {
