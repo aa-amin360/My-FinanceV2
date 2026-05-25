@@ -65,7 +65,7 @@ export default function DashboardLayout({
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white text-black dark:bg-slate-950 dark:text-white transition-colors duration-300">
+    <div className="flex h-screen overflow-hidden bg-white text-black dark:bg-[#081120] dark:text-white transition-colors duration-300">
       
       {/* ================= SIDEBAR ================= */}
       <aside
