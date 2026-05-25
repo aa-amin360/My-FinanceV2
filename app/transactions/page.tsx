@@ -181,7 +181,7 @@ export default function TransactionsPage() {
         </button>
       </div>
 
-      <div className="bg-gray-100 dark:bg-slate-900 rounded-2xl overflow-hidden">
+      <div className="bg-gray-100 dark:bg-black rounded-2xl overflow-hidden">
 
         {/* HEADER */}
         <div className="grid grid-cols-5 px-4 py-3 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-slate-800">
@@ -363,7 +363,7 @@ export default function TransactionsPage() {
                   <div key={parent.id} className="space-y-2">
           
                     {/* ===== PARENT CARD ===== */}
-                    <div className="bg-gray-100 dark:bg-slate-900 p-4 rounded-xl">
+                    <div className="bg-gray-100 dark:bg-black p-4 rounded-xl">
                       <div className="flex justify-between items-center">
           
                         <div className="flex items-center gap-2 font-semibold text-white">
@@ -453,7 +453,7 @@ export default function TransactionsPage() {
       {deleteId && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           
-          <div className="bg-white/90 dark:bg-slate-900/80 border border-gray-200 dark:border-slate-700 
+          <div className="bg-white/90 dark:bg-black/80 border border-gray-200 dark:border-slate-700 
             text-black dark:text-white backdrop-blur-xl rounded-2xl p-6 w-[320px] text-center shadow-2xl">
             
             <h3 className="text-lg font-semibold mb-5">
@@ -489,7 +489,7 @@ export default function TransactionsPage() {
       {confirmAll && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           
-          <div className="bg-white/90 dark:bg-slate-900/80 border border-gray-200 dark:border-slate-700 
+          <div className="bg-white/90 dark:bg-black/80 border border-gray-200 dark:border-slate-700 
             text-black dark:text-white backdrop-blur-xl rounded-2xl p-6 w-[320px] text-center shadow-2xl">
             
             <h3 className="text-lg font-semibold mb-4 text-red-400">
@@ -523,7 +523,7 @@ export default function TransactionsPage() {
       {errorMessage && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           
-          <div className="bg-white/90 dark:bg-slate-900/80 border border-gray-200 dark:border-slate-700 
+          <div className="bg-white/90 dark:bg-black/80 border border-gray-200 dark:border-slate-700 
             text-black dark:text-white backdrop-blur-xl rounded-2xl p-6 w-[320px] text-center shadow-2xl">
             
             <h3 className="text-lg font-semibold mb-3 text-red-400">
