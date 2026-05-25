@@ -65,7 +65,7 @@ export default function DebtPage() {
               <div className="font-semibold text-lg">
                 {formatName(d.name)}
               </div>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-zinc-500">
                 Tap to view details
               </div>
             </div>
