@@ -36,7 +36,7 @@ export default function CashflowChart({ data }: Props) {
     return () => observer.disconnect();
   }, []);
 
-  const axisColor = isDark ? "#94a3b8" : "#475569";
+  const axisColor = isDark ? "#52525b" : "#71717a";
 
   return (
     <div className="w-full h-full">
@@ -52,7 +52,7 @@ export default function CashflowChart({ data }: Props) {
               <stop
                 offset="5%"
                 stopColor="#22c55e"
-                stopOpacity={isDark ? 0.4 : 0.25}
+                stopOpacity={isDark ? 0.18 : 0.12}
               />
               <stop
                 offset="95%"
@@ -83,9 +83,9 @@ export default function CashflowChart({ data }: Props) {
           {/* TOOLTIP */}
           <Tooltip
             contentStyle={{
-              background: isDark ? "#020617" : "#ffffff",
+              background: isDark ? "#09090b" : "#ffffff",
               border: isDark
-                ? "1px solid #1e293b"
+                ? "1px solid #27272a"
                 : "1px solid #e5e7eb",
               borderRadius: "8px",
               fontSize: "12px",
@@ -99,9 +99,13 @@ export default function CashflowChart({ data }: Props) {
             type="monotone"
             dataKey="balance"
             stroke="#22c55e"
-            strokeWidth={2}
+            strokeWidth={2.5}
             fill="url(#balanceGradient)"
-            dot={{ r: 3 }}
+            dot={{
+              r: 3,
+              strokeWidth: 2,
+              fill: "#09090b",
+            }}
             activeDot={{ r: 4 }}            
           />
         </AreaChart>
