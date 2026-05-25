@@ -71,7 +71,7 @@ export default function DashboardLayout({
       <aside
         className={`hidden md:flex ${
           collapsed ? "w-16" : "w-56"
-        } h-full bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 flex-col transition-all duration-300`}
+        } h-full bg-white dark:bg-black border-r border-gray-200 dark:border-slate-800 flex-col transition-all duration-300`}
       >
         <div className="p-4 flex items-center justify-between">
           {!collapsed && (
@@ -109,7 +109,7 @@ export default function DashboardLayout({
       <div className="flex flex-col flex-1 h-full">
         
         {/* HEADER */}
-        <div className="h-16 flex items-center justify-between px-6 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800">
+        <div className="h-16 flex items-center justify-between px-6 bg-white dark:bg-black border-b border-gray-200 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-green-500 flex items-center justify-center overflow-hidden">
               <img
@@ -200,7 +200,7 @@ function FloatingNav({ pathname }: { pathname: string }) {
 
   return (
     <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full px-4">
-      <div className="flex justify-around items-center w-full max-w-md mx-auto px-2 py-2 rounded-full bg-white/80 dark:bg-slate-900/80 border border-gray-200 dark:border-slate-700 backdrop-blur-xl shadow-xl">
+      <div className="flex justify-around items-center w-full max-w-md mx-auto px-2 py-2 rounded-full bg-white/80 dark:bg-black/80 border border-gray-200 dark:border-slate-700 backdrop-blur-xl shadow-xl">
         {items.map((item) => {
           const isActive =
             pathname === item.href ||
