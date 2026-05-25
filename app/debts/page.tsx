@@ -82,7 +82,7 @@ export default function DebtPage() {
                   e.stopPropagation(); // 🔥 prevent navigation
                   handleRepay(d.name);
                 }}
-                className="px-3 py-1 rounded bg-green-500 text-black text-sm"
+                className="px-3 py-1 rounded bg-green-500/90 hover:bg-green-400 text-black text-sm"
               >
                 Repay
               </button>
