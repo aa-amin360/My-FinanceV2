@@ -57,7 +57,7 @@ export default function DebtPage() {
         {debts.map((d) => (
           <div
             key={d.entity_id}
-            className="bg-gray-100 dark:bg-slate-900 p-5 rounded-2xl flex justify-between items-center hover:bg-gray-200 dark:hover:bg-slate-800 transition cursor-pointer"
+            className="bg-gray-100 dark:bg-zinc-950 border border-zinc-900 p-5 rounded-2xl flex justify-between items-center hover:bg-gray-200 dark:hover:bg-zinc-900 transition cursor-pointer"
             onClick={() => router.push(`/debts/${d.entity_id}`)}
           >
             {/* LEFT */}
