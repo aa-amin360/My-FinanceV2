@@ -34,7 +34,7 @@ export default function WeeklyChartCard() {
   const total = data.reduce((sum, item) => sum + item.amount, 0);
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-gray-200 dark:border-slate-800 shadow-sm">
+    <div className="bg-white dark:bg-black rounded-3xl p-6 border border-gray-200 dark:border-slate-800 shadow-sm">
 
       {/* HEADER */}
       <div className="flex items-start justify-between mb-8">
