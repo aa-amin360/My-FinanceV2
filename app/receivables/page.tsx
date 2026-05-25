@@ -85,7 +85,7 @@ export default function ReceivablePage() {
                   e.stopPropagation(); // prevent navigation
                   handleReceive(r.name);
                 }}
-                className="px-3 py-1 rounded bg-blue-500 text-black text-sm"
+                className="px-3 py-1 rounded bg-blue-500/90 hover:bg-blue-400 text-black text-sm"
               >
                 Receive
               </button>
