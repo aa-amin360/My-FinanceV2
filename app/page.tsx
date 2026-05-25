@@ -182,7 +182,7 @@ export default function Home() {
       </div>
       
       {/* CHART */}
-      <div className="mt-6 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
+      <div className="mt-6 bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-xl border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
         <h3 className="mb-4 text-sm text-gray-400">Balance</h3>
       
         <div className="bg-gray-50 dark:bg-slate-800/40 border border-gray-200 dark:border-slate-700 rounded-xl p-2 h-[260px]">
@@ -191,7 +191,7 @@ export default function Home() {
       </div>      
       
       {/* Weeklychart */}
-      <div className="mt-6 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
+      <div className="mt-6 bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-xl border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
         <WeeklyChartCard />
       </div>
       
@@ -230,7 +230,7 @@ export default function Home() {
               return (
                 <div
                   key={t.id}
-                  className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 flex justify-between items-center hover:bg-gray-100 dark:hover:bg-slate-800 transition"
+                  className="bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-xl border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 flex justify-between items-center hover:bg-gray-100 dark:hover:bg-slate-800 transition"
                 >
                   {/* LEFT */}
                   <div>
