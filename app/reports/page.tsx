@@ -116,7 +116,7 @@ export default function ReportsPage() {
         {/* TOP GRID */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-          <div className="order-2 md:order-1 md:col-span-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
+          <div className="order-2 md:order-1 md:col-span-2 bg-white dark:bg-black border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
             <h3 className="mb-4 text-sm text-gray-400">Expense Breakdown</h3>
           
             <div className="bg-gray-50 dark:bg-slate-800/40 border border-gray-200 dark:border-slate-700 rounded-xl p-3">
@@ -134,7 +134,7 @@ export default function ReportsPage() {
         </div>
 
         {/* GRAPH */}
-        <div className="mt-6 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
+        <div className="mt-6 bg-white dark:bg-black border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
           <h3 className="mb-4 text-sm text-gray-400">Balance</h3>
         
           <div className="bg-gray-50 dark:bg-slate-800/40 border border-gray-200 dark:border-slate-700 rounded-xl p-2 h-[260px]">
@@ -150,7 +150,7 @@ export default function ReportsPage() {
 // ================= COMPONENTS =================
 function Box({ label, value, color }: any) {
   return (
-    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 p-4 rounded-2xl">
+    <div className="bg-white dark:bg-black border border-gray-200 dark:border-slate-800 p-4 rounded-2xl">
       <p className="text-gray-400 text-sm">{label}</p>
       <p className={`text-xl font-semibold ${color}`}>
         {Number(value).toLocaleString()}
