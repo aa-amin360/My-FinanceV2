@@ -71,7 +71,7 @@ export default function DashboardLayout({
       <aside
         className={`hidden md:flex ${
           collapsed ? "w-16" : "w-56"
-        } h-full bg-white dark:bg-black border-r border-gray-200 dark:border-slate-800 flex-col transition-all duration-300`}
+        } h-full bg-white dark:bg-black border-r border-gray-200 dark:border-zinc-900 flex-col transition-all duration-300`}
       >
         <div className="p-4 flex items-center justify-between">
           {!collapsed && (
@@ -109,7 +109,7 @@ export default function DashboardLayout({
       <div className="flex flex-col flex-1 h-full">
         
         {/* HEADER */}
-        <div className="h-16 flex items-center justify-between px-6 bg-white dark:bg-black border-b border-gray-200 dark:border-slate-800">
+        <div className="h-16 flex items-center justify-between px-6 bg-white dark:bg-black border-b border-gray-200 dark:border-zinc-900">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-green-500 flex items-center justify-center overflow-hidden">
               <img
@@ -178,7 +178,7 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
         } py-2 rounded-lg cursor-pointer transition ${
           isActive
             ? "bg-green-500 text-black font-medium"
-            : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-black dark:hover:text-white"
+            : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-900 hover:text-black dark:hover:text-white"
         }`}
       >
         <Icon size={collapsed ? 20 : 18} />
@@ -214,7 +214,7 @@ function FloatingNav({ pathname }: { pathname: string }) {
                 className={`flex items-center justify-center gap-2 py-2 rounded-full transition ${
                   isActive
                     ? "bg-green-500 text-black px-4 scale-105"
-                    : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-800 w-10 h-10"
+                    : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-200 dark:hover:bg-zinc-900 w-10 h-10"
                 }`}
               >
                 <Icon size={20} />
