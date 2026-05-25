@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import { Trash2, Pencil } from "lucide-react";
+import {
+  Trash2,
+  ChevronRight,
+  ChevronDown,
+  CornerDownRight,
+} from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
 
 const formatType = (type: string) =>
@@ -181,10 +186,10 @@ export default function TransactionsPage() {
         </button>
       </div>
 
-      <div className="bg-gray-100 dark:bg-black rounded-2xl overflow-hidden">
+      <div className="bg-black border border-zinc-900 rounded-3xl overflow-hidden">
 
         {/* HEADER */}
-        <div className="grid grid-cols-5 px-4 py-3 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-slate-800">
+        <div className="grid grid-cols-5 px-4 py-4 text-xs uppercase tracking-wider text-zinc-500 border-b border-zinc-900">
           <div>Name</div>
           <div>Date</div>
           <div>Type</div>
@@ -213,8 +218,16 @@ export default function TransactionsPage() {
                 return (
                   <div key={parent.id}>
                     {/* ================= PARENT ================= */}
-                    <div className="grid grid-cols-5 items-center px-4 py-3 border-b 
-                    border-gray-200 dark:border-gray-700 text-sm">
+                    <div
+                      className="
+                      grid grid-cols-5 items-center
+                      px-4 py-4
+                      border-b border-zinc-900
+                      text-sm
+                      hover:bg-zinc-950/60
+                      transition-all duration-200
+                      "
+                      >
           
                       {/* NAME */}
                       <div className="font-semibold text-gray-900 dark:text-white text-base flex items-center">
@@ -226,7 +239,11 @@ export default function TransactionsPage() {
                             }}
                             className="mr-2 cursor-pointer text-gray-400"
                           >
-                            {isExpanded ? "▼" : "▶"}
+                            {isExpanded ? (
+                              <ChevronDown size={16} />
+                            ) : (
+                              <ChevronRight size={16} />
+                            )}
                           </span>
                         )}
           
@@ -291,12 +308,17 @@ export default function TransactionsPage() {
                         return (
                           <div
                             key={child.id}
-                            className="grid grid-cols-5 items-center px-4 py-2 border-b 
-                            border-gray-200 dark:border-gray-700 text-sm pl-10 text-gray-400"
+                            className="
+                            grid grid-cols-5 items-center
+                            px-4 py-3 pl-10
+                            border-b border-zinc-900
+                            text-sm text-zinc-500
+                            bg-zinc-950/30
+                            "
                           >
                             {/* NAME */}
                             <div className="flex items-center gap-2">
-                              <span>↳</span>
+                              <CornerDownRight size={14} className="text-zinc-500" />
                               <span>{getDisplayName(child)}</span>
                             </div>
           
