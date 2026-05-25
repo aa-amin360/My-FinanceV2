@@ -34,7 +34,7 @@ export default function WeeklyChartCard() {
   const total = data.reduce((sum, item) => sum + item.amount, 0);
 
   return (
-    <div className="bg-white dark:bg-black rounded-3xl p-6 border border-gray-200 dark:border-slate-800 shadow-sm">
+    <div className="bg-white dark:bg-black rounded-3xl p-6 border border-gray-200 dark:border-zinc-900 shadow-sm">
 
       {/* HEADER */}
       <div className="flex items-start justify-between mb-8">
@@ -43,12 +43,12 @@ export default function WeeklyChartCard() {
             ${total.toLocaleString()}
           </h2>
 
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-gray-500 dark:text-zinc-500 mt-1">
             Weekly Flow
           </p>
         </div>
 
-        <button className="text-sm text-gray-500 dark:text-gray-400">
+        <button className="text-sm text-gray-500 dark:text-zinc-500">
           Week
         </button>
       </div>
@@ -90,7 +90,7 @@ export default function WeeklyChartCard() {
                   className={`w-full rounded-full transition-all duration-300 ${
                     isActive
                       ? "bg-black dark:bg-white"
-                      : "bg-gray-200 dark:bg-slate-700"
+                      : "bg-gray-200 dark:bg-zinc-800"
                   }`}
                   style={{
                     height: `${Math.max(normalized, 12)}%`,
@@ -99,7 +99,7 @@ export default function WeeklyChartCard() {
               </div>
 
               {/* LABEL */}
-              <span className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+              <span className="mt-3 text-xs text-gray-500 dark:text-zinc-500">
                 {item.day}
               </span>
             </div>
