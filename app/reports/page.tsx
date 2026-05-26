@@ -100,49 +100,106 @@ export default function ReportsPage() {
   // ================= UI =================
   return (
     <DashboardLayout>
-      <div className="flex flex-col gap-6">
 
+      <div className="flex flex-col gap-6">
+      
         {/* HEADER */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Reports</h1>
-
+          <h1 className="text-2xl font-semibold text-black dark:text-white">
+            Reports
+          </h1>
+      
           <div className="flex gap-2">
-            <FilterBtn label="All" active={range === "ALL"} onClick={() => setRange("ALL")} />
-            <FilterBtn label="This Year" active={range === "YEAR"} onClick={() => setRange("YEAR")} />
-            <FilterBtn label="This Month" active={range === "MONTH"} onClick={() => setRange("MONTH")} />
+            <FilterBtn
+              label="All"
+              active={range === "ALL"}
+              onClick={() => setRange("ALL")}
+            />
+      
+            <FilterBtn
+              label="This Year"
+              active={range === "YEAR"}
+              onClick={() => setRange("YEAR")}
+            />
+      
+            <FilterBtn
+              label="This Month"
+              active={range === "MONTH"}
+              onClick={() => setRange("MONTH")}
+            />
           </div>
         </div>
-
+      
         {/* TOP GRID */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-          <div className="order-2 md:order-1 md:col-span-2 bg-white dark:bg-black border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
-            <h3 className="mb-4 text-sm text-gray-400">Expense Breakdown</h3>
-          
-            <div className="bg-gray-50 dark:bg-slate-800/40 border border-gray-200 dark:border-slate-700 rounded-xl p-3">
-              <CategoryDonut data={donutData} />              
+      
+          {/* DONUT */}
+          <div
+            className="
+            order-2 md:order-1 md:col-span-2
+            bg-white dark:bg-black
+            border border-gray-200 dark:border-zinc-900
+            rounded-3xl p-5
+            "
+          >
+            <h3 className="mb-4 text-sm text-gray-500 dark:text-zinc-500">
+              Expense Breakdown
+            </h3>
+      
+            <div
+              className="
+              bg-gray-50 dark:bg-zinc-950/40
+              border border-gray-200 dark:border-zinc-900
+              rounded-2xl p-3
+              "
+            >
+              <CategoryDonut data={donutData} />
             </div>
-          
           </div>
-
+      
           {/* STATS */}
           <div className="order-1 md:order-2 grid grid-cols-2 md:flex md:flex-col gap-4">
-            <Box label="Total Income" value={income} color="text-green-400" />
-            <Box label="Total Expense" value={expense} color="text-red-400" />
+            <Box
+              label="Total Income"
+              value={income}
+              color="text-green-400"
+            />
+      
+            <Box
+              label="Total Expense"
+              value={expense}
+              color="text-red-400"
+            />
           </div>
-
+      
         </div>
-
+      
         {/* GRAPH */}
-        <div className="mt-6 bg-white dark:bg-black border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
-          <h3 className="mb-4 text-sm text-gray-400">Balance</h3>
-        
-          <div className="bg-gray-50 dark:bg-slate-800/40 border border-gray-200 dark:border-slate-700 rounded-xl p-2 h-[260px]">
+        <div
+          className="
+          mt-6
+          bg-white dark:bg-black
+          border border-gray-200 dark:border-zinc-900
+          rounded-3xl p-5
+          "
+        >
+          <h3 className="mb-4 text-sm text-gray-500 dark:text-zinc-500">
+            Balance
+          </h3>
+      
+          <div
+            className="
+            bg-gray-50 dark:bg-zinc-950/40
+            border border-gray-200 dark:border-zinc-900
+            rounded-2xl p-2 h-[260px]
+            "
+          >
             <CashflowChart data={chartData} />
           </div>
         </div>
-        
+      
       </div>
+      
     </DashboardLayout>
   );
 }
