@@ -385,47 +385,92 @@ export default function TransactionsPage() {
                   <div key={parent.id} className="space-y-2">
           
                     {/* ===== PARENT CARD ===== */}
-                    <div className="bg-gray-100 dark:bg-black p-4 rounded-xl">
-                      <div className="flex justify-between items-center">
-          
-                        <div className="flex items-center gap-2 font-semibold text-white">
+                    <div
+                      className="
+                      bg-zinc-950
+                      border border-zinc-900
+                      p-4 rounded-2xl
+                      "
+                    >
+                      <div className="flex justify-between items-start">
+                    
+                        {/* LEFT */}
+                        <div className="flex items-start gap-2">
+                    
                           {parent.has_child && (
-                            <span
+                            <button
                               onClick={() => toggleExpand(parent.id)}
-                              className="cursor-pointer text-gray-400"
+                              className="
+                              mt-0.5
+                              w-6 h-6
+                              rounded-full
+                              bg-zinc-900
+                              flex items-center justify-center
+                              text-zinc-400
+                              "
                             >
-                              {isExpanded ? "▼" : "▶"}
-                            </span>
+                              {isExpanded ? (
+                                <ChevronDown size={14} />
+                              ) : (
+                                <ChevronRight size={14} />
+                              )}
+                            </button>
                           )}
-                          {getDisplayName(parent)}
+                    
+                          <div>
+                            <div className="font-semibold text-white">
+                              {getDisplayName(parent)}
+                            </div>
+                    
+                            <div className="mt-1 text-xs text-zinc-500">
+                              {new Date(parent.date).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                timeZone: "UTC",
+                              })}
+                            </div>
+                          </div>
                         </div>
-          
-                        <div
-                          className={`font-semibold ${
-                            isPositive ? "text-green-500" : "text-red-500"
-                          }`}
-                        >
-                          {isPositive ? "+" : "-"}
-                          {finalAmount.toLocaleString("en-BD")} Tk
+                    
+                        {/* RIGHT */}
+                        <div className="flex flex-col items-end gap-2">
+                    
+                          <div
+                            className={`font-semibold ${
+                              isPositive ? "text-green-500" : "text-red-500"
+                            }`}
+                          >
+                            {isPositive ? "+" : "-"}
+                            {finalAmount.toLocaleString("en-BD")} Tk
+                          </div>
+                    
+                          <div className="flex items-center gap-2">
+                    
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
+                                parent.type
+                              )}`}
+                            >
+                              {formatType(parent.type)}
+                            </span>
+                    
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteId(parent.id);
+                              }}
+                              className="
+                              w-8 h-8 rounded-full
+                              bg-zinc-900
+                              flex items-center justify-center
+                              text-red-400
+                              "
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                    
+                          </div>
                         </div>
-                      </div>
-          
-                      <div className="flex justify-between mt-2 text-xs text-gray-400">
-                        <span>
-                          {new Date(parent.date).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            timeZone: "UTC",
-                          })}
-                        </span>
-          
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
-                            parent.type
-                          )}`}
-                        >
-                          {formatType(parent.type)}
-                        </span>
                       </div>
                     </div>
           
@@ -440,10 +485,18 @@ export default function TransactionsPage() {
                         return (
                           <div
                             key={child.id}
-                            className="bg-gray-800/40 p-3 rounded-xl ml-4 text-gray-400"
+                            className="
+                            bg-zinc-950/60
+                            border border-zinc-900
+                            p-3 rounded-xl
+                            ml-4 text-zinc-500
+                            "
                           >
                             <div className="flex justify-between">
-                              <span>↳ {getDisplayName(child)}</span>
+                              <div className="flex items-center gap-2">
+                                <CornerDownRight size={14} />
+                                <span>{getDisplayName(child)}</span>
+                              </div>
           
                               <span
                                 className={`${
