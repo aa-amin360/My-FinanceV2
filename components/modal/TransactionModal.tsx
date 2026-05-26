@@ -161,51 +161,107 @@ export default function TransactionModal() {
   if (!showModal) return null;
 
   return (
+
     <div
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center"
+      className="
+      fixed inset-0 z-50
+      bg-black/60 backdrop-blur-sm
+      flex items-center justify-center
+      "
       onClick={closeModal}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-[340px] bg-white/90 dark:bg-black/90 border border-gray-200 dark:border-slate-700 text-black dark:text-white rounded-2xl p-5 shadow-2xl flex flex-col gap-4 animate-modalIn"
+        className="
+        w-[340px]
+        bg-white dark:bg-black
+        border border-gray-200 dark:border-zinc-900
+        text-black dark:text-white
+        rounded-3xl
+        p-5
+        shadow-2xl
+        flex flex-col gap-4
+        animate-modalIn
+        "
       >
+    
         {/* ================= ACTION ================= */}
         {step === "ACTION" && (
           <>
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+              <h3 className="text-lg font-semibold text-black dark:text-white">
                 Select Action
               </h3>
-
+    
               <button
                 onClick={closeModal}
-                className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-700 transition"
+                className="
+                w-8 h-8
+                flex items-center justify-center
+                rounded-full
+                text-gray-400 dark:text-zinc-500
+                hover:text-black dark:hover:text-white
+                hover:bg-gray-100 dark:hover:bg-zinc-900
+                transition
+                "
               >
                 ✕
               </button>
             </div>
-
+    
             <div className="grid grid-cols-2 gap-3">
-              <ActionCard label="Income" onClick={() => { setAction("INCOME"); setStep("FORM"); }} />
-              <ActionCard label="Expense" onClick={() => { setAction("EXPENSE"); setStep("FORM"); }} />
-              <ActionCard label="Borrow" onClick={() => { setAction("BORROW"); setStep("FORM"); }} />
-              <ActionCard label="Give" onClick={() => { setAction("GIVE"); setStep("FORM"); }} />
+              <ActionCard
+                label="Income"
+                onClick={() => {
+                  setAction("INCOME");
+                  setStep("FORM");
+                }}
+              />
+    
+              <ActionCard
+                label="Expense"
+                onClick={() => {
+                  setAction("EXPENSE");
+                  setStep("FORM");
+                }}
+              />
+    
+              <ActionCard
+                label="Borrow"
+                onClick={() => {
+                  setAction("BORROW");
+                  setStep("FORM");
+                }}
+              />
+    
+              <ActionCard
+                label="Give"
+                onClick={() => {
+                  setAction("GIVE");
+                  setStep("FORM");
+                }}
+              />
             </div>
-
+    
             <button
               onClick={closeModal}
-              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition"
+              className="
+              text-sm
+              text-gray-500 dark:text-zinc-500
+              hover:text-black dark:hover:text-white
+              transition
+              "
             >
               Cancel
             </button>
           </>
         )}
-
+    
         {/* ================= FORM ================= */}
         {step === "FORM" && (
           <>
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-800 dark:text-white">
+              <h3 className="font-semibold text-black dark:text-white">
                 {action === "INCOME"
                   ? "Add Income"
                   : action === "EXPENSE"
@@ -218,38 +274,66 @@ export default function TransactionModal() {
                   ? "Receive Money"
                   : "Give Money"}
               </h3>
-
+    
               <button
                 onClick={closeModal}
-                className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-700 transition"
+                className="
+                w-8 h-8
+                flex items-center justify-center
+                rounded-full
+                text-gray-400 dark:text-zinc-500
+                hover:text-black dark:hover:text-white
+                hover:bg-gray-100 dark:hover:bg-zinc-900
+                transition
+                "
               >
                 ✕
               </button>
             </div>
-
+    
             <input
-              className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="
+              p-3 rounded-2xl
+              bg-gray-50 dark:bg-zinc-950
+              border border-gray-200 dark:border-zinc-900
+              text-black dark:text-white
+              placeholder:text-gray-400 dark:placeholder:text-zinc-500
+              focus:outline-none focus:ring-2 focus:ring-green-500
+              "
               placeholder="Enter amount"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
-
+    
             <select
-              className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="
+              p-3 rounded-2xl
+              bg-gray-50 dark:bg-zinc-950
+              border border-gray-200 dark:border-zinc-900
+              text-black dark:text-white
+              focus:outline-none focus:ring-2 focus:ring-green-500
+              "
               value={account}
               onChange={(e) => setAccount(e.target.value)}
             >
               <option>Cash</option>
               <option>Bank</option>
             </select>
-
+    
             {(action === "INCOME" || action === "EXPENSE") && (
               <select
-                className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="
+                p-3 rounded-2xl
+                bg-gray-50 dark:bg-zinc-950
+                border border-gray-200 dark:border-zinc-900
+                text-black dark:text-white
+                focus:outline-none focus:ring-2 focus:ring-green-500
+                "
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
               >
                 <option value="">Select Category</option>
+    
                 {categories
                   .filter((c) => c.type === action)
                   .map((c) => (
@@ -259,45 +343,69 @@ export default function TransactionModal() {
                   ))}
               </select>
             )}
-
+    
             {["BORROW", "GIVE", "REPAY", "RECEIVE"].includes(action) && (
               <input
-                className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="
+                p-3 rounded-2xl
+                bg-gray-50 dark:bg-zinc-950
+                border border-gray-200 dark:border-zinc-900
+                text-black dark:text-white
+                placeholder:text-gray-400 dark:placeholder:text-zinc-500
+                focus:outline-none focus:ring-2 focus:ring-green-500
+                "
                 placeholder="Person / Bank"
                 value={entity}
                 onChange={(e) => setEntity(e.target.value)}
               />
             )}
-
+    
             <input
-              className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="
+              p-3 rounded-2xl
+              bg-gray-50 dark:bg-zinc-950
+              border border-gray-200 dark:border-zinc-900
+              text-black dark:text-white
+              placeholder:text-gray-400 dark:placeholder:text-zinc-500
+              focus:outline-none focus:ring-2 focus:ring-green-500
+              "
               placeholder="Add note (optional)"
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
-
+    
             {error && (
               <div className="text-red-500 text-sm text-center">
                 {error}
               </div>
             )}
-
+    
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className={`py-3 rounded-xl font-semibold transition ${
+              className={`
+              py-3 rounded-2xl
+              font-semibold transition
+              ${
                 loading
-                  ? "bg-gray-500 cursor-not-allowed"
-                  : "bg-green-500 hover:bg-green-600 active:scale-95"
-              }`}
+                  ? "bg-gray-400 dark:bg-zinc-700 cursor-not-allowed text-white"
+                  : "bg-green-500 hover:bg-green-400 active:scale-95 text-black"
+              }
+              `}
             >
               {loading ? "Processing..." : "Save"}
             </button>
-
+    
             {!isDirectFlow && (
               <button
                 onClick={() => setStep("ACTION")}
-                className="bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-black dark:text-white py-3 rounded-xl"
+                className="
+                bg-gray-100 dark:bg-zinc-900
+                hover:bg-gray-200 dark:hover:bg-zinc-800
+                text-black dark:text-white
+                py-3 rounded-2xl
+                transition
+                "
               >
                 Back
               </button>
@@ -305,7 +413,8 @@ export default function TransactionModal() {
           </>
         )}
       </div>
-    </div>
+    </div>   
+    
   );
 }
 
