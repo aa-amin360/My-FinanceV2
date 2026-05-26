@@ -77,11 +77,15 @@ export default function TransactionsPage() {
       return "Over-collected → now debt";
     }
   
-    if (t.entity_name) return formatName(t.entity_name);
+    // Counterparty names for debt/receivable flows
+    if (t.entity_name) {
+      return formatName(t.entity_name);
+    }
   
-    if (t.note) return formatName(t.note);
-  
-    if (t.category_name) return formatName(t.category_name);
+    // Expense / Income should prioritize category
+    if (t.category_name) {
+      return formatName(t.category_name);
+    }
   
     return formatType(t.type);
   };
@@ -189,10 +193,11 @@ export default function TransactionsPage() {
       <div className="bg-white dark:bg-black border border-gray-200 dark:border-zinc-900 rounded-3xl overflow-hidden">
 
         {/* HEADER */}
-        <div className="grid grid-cols-5 px-4 py-4 text-xs uppercase tracking-wider text-gray-500 dark:text-zinc-500 border-b border-gray-200 dark:border-zinc-900">
+        <div className="grid grid-cols-6 px-4 py-4 text-xs uppercase tracking-wider text-gray-500 dark:text-zinc-500 border-b border-gray-200 dark:border-zinc-900">
           <div>Name</div>
           <div>Date</div>
           <div>Type</div>
+          <div>Note</div>
           <div className="text-right">Amount</div>
           <div className="text-center">Actions</div>
         </div>
@@ -220,7 +225,7 @@ export default function TransactionsPage() {
                   {/* ================= PARENT ================= */}
                   <div
                     className="
-                    grid grid-cols-5 items-center
+                    grid grid-cols-6 items-center
                     px-4 py-4
                     border-b border-gray-200 dark:border-zinc-900
                     text-sm
@@ -271,6 +276,11 @@ export default function TransactionsPage() {
                         {formatType(parent.type)}
                       </span>
                     </div>
+
+                    {/* NOTE */}
+                    <div className="text-xs text-gray-500 dark:text-zinc-500 truncate">
+                      {parent.note || "—"}
+                    </div>                    
         
                     {/* AMOUNT */}
                     <div
@@ -314,7 +324,7 @@ export default function TransactionsPage() {
                         <div
                           key={child.id}
                           className="
-                          grid grid-cols-5 items-center
+                          grid grid-cols-6 items-center
                           px-4 py-3 pl-10
                           border-b border-gray-200 dark:border-zinc-900
                           text-sm
@@ -352,6 +362,11 @@ export default function TransactionsPage() {
                               {formatType(child.type)}
                             </span>
                           </div>
+
+                          {/* NOTE */}
+                          <div className="text-xs truncate">
+                            {child.note || "—"}
+                          </div>                        
         
                           {/* AMOUNT */}
                           <div
@@ -400,11 +415,11 @@ export default function TransactionsPage() {
                     p-4 rounded-2xl
                     "
                   >
-                    <div className="flex justify-between items-start">
-        
-                      {/* LEFT */}
+                    <div className="space-y-3">
+                    
+                      {/* TOP */}
                       <div className="flex items-start gap-2">
-        
+                    
                         {parent.has_child && (
                           <button
                             onClick={() => toggleExpand(parent.id)}
@@ -424,36 +439,25 @@ export default function TransactionsPage() {
                             )}
                           </button>
                         )}
-        
-                        <div>
-                          <div className="font-semibold text-black dark:text-white">
-                            {getDisplayName(parent)}
-                          </div>
-        
-                          <div className="mt-1 text-xs text-gray-500 dark:text-zinc-500">
-                            {new Date(parent.date).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              timeZone: "UTC",
-                            })}
-                          </div>
+                    
+                        <div className="font-semibold text-black dark:text-white">
+                          {getDisplayName(parent)}
                         </div>
                       </div>
-        
-                      {/* RIGHT */}
-                      <div className="flex flex-col items-end gap-2">
-        
-                        <div
-                          className={`font-semibold ${
-                            isPositive ? "text-green-500" : "text-red-500"
-                          }`}
-                        >
-                          {isPositive ? "+" : "-"}
-                          {finalAmount.toLocaleString("en-BD")} Tk
+                    
+                      {/* MIDDLE */}
+                      <div className="flex items-center justify-between">
+                    
+                        <div className="text-xs text-gray-500 dark:text-zinc-500">
+                          {new Date(parent.date).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            timeZone: "UTC",
+                          })}
                         </div>
-        
+                    
                         <div className="flex items-center gap-2">
-        
+                    
                           <span
                             className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
                               parent.type
@@ -461,7 +465,7 @@ export default function TransactionsPage() {
                           >
                             {formatType(parent.type)}
                           </span>
-        
+                    
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -476,9 +480,28 @@ export default function TransactionsPage() {
                           >
                             <Trash2 size={14} />
                           </button>
-        
+                    
                         </div>
                       </div>
+                    
+                      {/* BOTTOM */}
+                      <div className="flex items-end justify-between">
+                    
+                        <div className="text-sm text-gray-500 dark:text-zinc-500 truncate">
+                          {parent.note || "No note"}
+                        </div>
+                    
+                        <div
+                          className={`font-semibold ${
+                            isPositive ? "text-green-500" : "text-red-500"
+                          }`}
+                        >
+                          {isPositive ? "+" : "-"}
+                          {finalAmount.toLocaleString("en-BD")} Tk
+                        </div>
+                    
+                      </div>
+                    
                     </div>
                   </div>
         
@@ -501,22 +524,61 @@ export default function TransactionsPage() {
                           text-gray-500 dark:text-zinc-500
                           "
                         >
-                          <div className="flex justify-between">
+                          <div className="space-y-2">
+                          
+                            {/* TOP */}
                             <div className="flex items-center gap-2">
-                              <CornerDownRight size={14} />
-                              <span>{getDisplayName(child)}</span>
+                              <CornerDownRight
+                                size={14}
+                                className="text-gray-400 dark:text-zinc-500"
+                              />
+                          
+                              <span className="text-black dark:text-white">
+                                {getDisplayName(child)}
+                              </span>
                             </div>
-        
-                            <span
-                              className={`${
-                                isPositiveChild
-                                  ? "text-green-400"
-                                  : "text-red-400"
-                              }`}
-                            >
-                              {isPositiveChild ? "+" : "-"}
-                              {Number(child.amount).toLocaleString("en-BD")} Tk
-                            </span>
+                          
+                            {/* MIDDLE */}
+                            <div className="flex items-center justify-between">
+                          
+                              <div className="text-xs text-gray-500 dark:text-zinc-500">
+                                {new Date(child.date).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  timeZone: "UTC",
+                                })}
+                              </div>
+                          
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
+                                  child.type
+                                )}`}
+                              >
+                                {formatType(child.type)}
+                              </span>
+                          
+                            </div>
+                          
+                            {/* BOTTOM */}
+                            <div className="flex items-end justify-between">
+                          
+                              <div className="text-xs text-gray-500 dark:text-zinc-500 truncate">
+                                {child.note || "No note"}
+                              </div>
+                          
+                              <span
+                                className={`font-semibold ${
+                                  isPositiveChild
+                                    ? "text-green-400"
+                                    : "text-red-400"
+                                }`}
+                              >
+                                {isPositiveChild ? "+" : "-"}
+                                {Number(child.amount).toLocaleString("en-BD")} Tk
+                              </span>
+                          
+                            </div>
+                          
                           </div>
                         </div>
                       );
