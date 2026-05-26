@@ -184,12 +184,12 @@ export default function TransactionsPage() {
         >
           Delete All
         </button>
-      </div>
+      </div>      
 
-      <div className="bg-black border border-zinc-900 rounded-3xl overflow-hidden">
+      <div className="bg-white dark:bg-black border border-gray-200 dark:border-zinc-900 rounded-3xl overflow-hidden">
 
         {/* HEADER */}
-        <div className="grid grid-cols-5 px-4 py-4 text-xs uppercase tracking-wider text-zinc-500 border-b border-zinc-900">
+        <div className="grid grid-cols-5 px-4 py-4 text-xs uppercase tracking-wider text-gray-500 dark:text-zinc-500 border-b border-gray-200 dark:border-zinc-900">
           <div>Name</div>
           <div>Date</div>
           <div>Type</div>
