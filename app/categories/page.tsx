@@ -79,18 +79,23 @@ export default function CategoriesPage() {
       {/* =========================
           CREATE CATEGORY
       ========================= */}
-      <div className="bg-gray-100 dark:bg-slate-900 p-4 rounded-2xl mb-6 flex gap-2">
+      
+      <div className="bg-zinc-950 border border-zinc-900 p-4 rounded-3xl mb-6 flex gap-3">
         <input
           placeholder="Category name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="p-2 rounded w-full bg-gray-200 dark:bg-slate-800"
+          className="w-full bg-black border border-zinc-800
+          rounded-2xl px-4 py-3 text-white placeholder:text-zinc-500
+          outline-none focus:border-zinc-700 transition"
         />
 
         <select
           value={type}
           onChange={(e) => setType(e.target.value)}
-          className="p-2 rounded bg-gray-200 dark:bg-slate-800"
+          className="bg-black border border-zinc-800 rounded-2xl
+          px-4 py-3 text-white outline-none focus:border-zinc-700
+          transition"
         >
           <option value="EXPENSE">Expense</option>
           <option value="INCOME">Income</option>
@@ -98,7 +103,8 @@ export default function CategoriesPage() {
 
         <button
           onClick={handleCreate}
-          className="px-4 py-2 bg-green-500 text-black rounded"
+          className="px-5 py-3 bg-green-500 hover:bg-green-400 active:scale-95
+          transition text-black font-semibold rounded-2xl"
         >
           Add
         </button>
@@ -106,11 +112,11 @@ export default function CategoriesPage() {
 
       {/* =========================
           CATEGORY TABLE
-      ========================= */}
-      <div className="bg-gray-100 dark:bg-slate-900 rounded-2xl overflow-hidden">
+      ========================= */}      
+      <div className="bg-black border border-zinc-900 rounded-3xl overflow-hidden">
         
         {/* HEADER */}
-        <div className="grid grid-cols-3 px-4 py-3 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-slate-800">
+        <div className="grid grid-cols-3 px-5 py-4 text-xs uppercase tracking-wider text-zinc-500 border-b border-zinc-900">
           <div>Category</div>
           <div>Type</div>
           <div className="text-right">Total Expense</div>
@@ -120,11 +126,13 @@ export default function CategoriesPage() {
         {categoryTotals.map((item, i) => (
           <div
             key={i}
-            className="grid grid-cols-3 px-4 py-3 border-b border-gray-200 dark:border-slate-800 hover:bg-gray-200 dark:hover:bg-slate-800 transition"
-          >
-            <div className="font-medium">{item.name}</div>
+            className="grid grid-cols-3 px-5 py-4 border-b border-zinc-900 hover:bg-zinc-950/60 transition-all duration-200"
+          >            
+            <div className="font-semibold text-white">
+              {item.name}
+            </div>
 
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-zinc-500">
               {item.type}
             </div>
 
@@ -136,7 +144,7 @@ export default function CategoriesPage() {
 
         {/* EMPTY */}
         {categoryTotals.length === 0 && (
-          <div className="p-6 text-center text-gray-400">
+          <div className="p-10 text-center text-zinc-500">
             No categories yet
           </div>
         )}
