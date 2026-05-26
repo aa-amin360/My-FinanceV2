@@ -202,321 +202,331 @@ export default function TransactionsPage() {
           {/* DESKTOP TABLE */}
           <div className="hidden md:block">
             {roots.map((parent) => {
-                const children = sortedTransactions.filter(
-                  (c) => c.parent_id === parent.id
-                );
-          
-                const isExpanded = expanded[parent.id];
-          
-                const isPositive =
-                  parent.type === "INCOME" ||
-                  parent.type === "DEBT_TAKEN" ||
-                  parent.type === "RECEIVABLE_RECEIVED";
-          
-                const finalAmount = Number(parent.amount);
-          
-                return (
-                  <div key={parent.id}>
-                    {/* ================= PARENT ================= */}
-                    <div
-                      className="
-                      grid grid-cols-5 items-center
-                      px-4 py-4
-                      border-b border-zinc-900
-                      text-sm
-                      hover:bg-zinc-950/60
-                      transition-all duration-200
-                      "
-                      >
-          
-                      {/* NAME */}
-                      <div className="font-semibold text-gray-900 dark:text-white text-base flex items-center">
-                        {parent.has_child && (
-                          <span
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleExpand(parent.id);
-                            }}
-                            className="mr-2 cursor-pointer text-gray-400"
-                          >
-                            {isExpanded ? (
-                              <ChevronDown size={16} />
-                            ) : (
-                              <ChevronRight size={16} />
-                            )}
-                          </span>
-                        )}
-          
-                        <span>{getDisplayName(parent)}</span>
-                      </div>
-          
-                      {/* DATE */}
-                      <div className="text-xs text-gray-500">
-                        {new Date(parent.date).toLocaleDateString("en-US", {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          timeZone: "UTC",
-                        })}
-                      </div>
-          
-                      {/* TYPE */}
-                      <div>
+              const children = sortedTransactions.filter(
+                (c) => c.parent_id === parent.id
+              );
+        
+              const isExpanded = expanded[parent.id];
+        
+              const isPositive =
+                parent.type === "INCOME" ||
+                parent.type === "DEBT_TAKEN" ||
+                parent.type === "RECEIVABLE_RECEIVED";
+        
+              const finalAmount = Number(parent.amount);
+        
+              return (
+                <div key={parent.id}>
+                  {/* ================= PARENT ================= */}
+                  <div
+                    className="
+                    grid grid-cols-5 items-center
+                    px-4 py-4
+                    border-b border-gray-200 dark:border-zinc-900
+                    text-sm
+                    hover:bg-gray-100 dark:hover:bg-zinc-950/60
+                    transition-all duration-200
+                    "
+                  >
+        
+                    {/* NAME */}
+                    <div className="font-semibold text-black dark:text-white text-base flex items-center">
+                      {parent.has_child && (
                         <span
-                          className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
-                            parent.type
-                          )}`}
-                        >
-                          {formatType(parent.type)}
-                        </span>
-                      </div>
-          
-                      {/* AMOUNT */}
-                      <div
-                        className={`text-right font-semibold ${
-                          isPositive ? "text-green-500" : "text-red-500"
-                        }`}
-                      >
-                        {(isPositive ? "+" : "-") +
-                          finalAmount.toLocaleString("en-BD")}{" "}
-                        Tk
-                      </div>
-          
-                      {/* ACTIONS */}
-                      <div className="flex justify-center items-center gap-2">          
-                        <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setDeleteId(parent.id);
+                            toggleExpand(parent.id);
                           }}
-                          className="p-2 rounded-full hover:bg-red-500/20 text-red-400 hover:text-red-300 transition"
+                          className="mr-2 cursor-pointer text-gray-400 dark:text-zinc-500"
                         >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
+                          {isExpanded ? (
+                            <ChevronDown size={16} />
+                          ) : (
+                            <ChevronRight size={16} />
+                          )}
+                        </span>
+                      )}
+        
+                      <span>{getDisplayName(parent)}</span>
                     </div>
-          
-                    {/* ================= CHILDREN ================= */}
-                    {isExpanded &&
-                      children.map((child) => {
-                        const isPositiveChild =
-                          child.type === "INCOME" ||
-                          child.type === "DEBT_TAKEN" ||
-                          child.type === "RECEIVABLE_RECEIVED";
-          
-                        return (
-                          <div
-                            key={child.id}
-                            className="
-                            grid grid-cols-5 items-center
-                            px-4 py-3 pl-10
-                            border-b border-zinc-900
-                            text-sm text-zinc-500
-                            bg-zinc-950/30
-                            "
-                          >
-                            {/* NAME */}
-                            <div className="flex items-center gap-2">
-                              <CornerDownRight size={14} className="text-zinc-500" />
-                              <span>{getDisplayName(child)}</span>
-                            </div>
-          
-                            {/* DATE */}
-                            <div className="text-xs">
-                              {new Date(child.date).toLocaleDateString("en-US", {
-                                weekday: "short",
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                                timeZone: "UTC",
-                              })}
-                            </div>
-          
-                            {/* TYPE */}
-                            <div>
-                              <span
-                                className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
-                                  child.type
-                                )}`}
-                              >
-                                {formatType(child.type)}
-                              </span>
-                            </div>
-          
-                            {/* AMOUNT */}
-                            <div
-                              className={`text-right font-semibold ${
-                                isPositiveChild ? "text-green-500" : "text-red-500"
-                              }`}
-                            >
-                              {(isPositiveChild ? "+" : "-") +
-                                Number(child.amount).toLocaleString("en-BD")}{" "}
-                              Tk
-                            </div>
-          
-                            <div />
-                          </div>
-                        );
+        
+                    {/* DATE */}
+                    <div className="text-xs text-gray-500 dark:text-zinc-500">
+                      {new Date(parent.date).toLocaleDateString("en-US", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                        timeZone: "UTC",
                       })}
+                    </div>
+        
+                    {/* TYPE */}
+                    <div>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
+                          parent.type
+                        )}`}
+                      >
+                        {formatType(parent.type)}
+                      </span>
+                    </div>
+        
+                    {/* AMOUNT */}
+                    <div
+                      className={`text-right font-semibold ${
+                        isPositive ? "text-green-500" : "text-red-500"
+                      }`}
+                    >
+                      {(isPositive ? "+" : "-") +
+                        finalAmount.toLocaleString("en-BD")}{" "}
+                      Tk
+                    </div>
+        
+                    {/* ACTIONS */}
+                    <div className="flex justify-center items-center gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteId(parent.id);
+                        }}
+                        className="
+                        p-2 rounded-full
+                        hover:bg-red-500/20
+                        text-red-400 hover:text-red-300
+                        transition
+                        "
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
-                );
-              })}
+        
+                  {/* ================= CHILDREN ================= */}
+                  {isExpanded &&
+                    children.map((child) => {
+                      const isPositiveChild =
+                        child.type === "INCOME" ||
+                        child.type === "DEBT_TAKEN" ||
+                        child.type === "RECEIVABLE_RECEIVED";
+        
+                      return (
+                        <div
+                          key={child.id}
+                          className="
+                          grid grid-cols-5 items-center
+                          px-4 py-3 pl-10
+                          border-b border-gray-200 dark:border-zinc-900
+                          text-sm
+                          text-gray-500 dark:text-zinc-500
+                          bg-gray-50 dark:bg-zinc-950/30
+                          "
+                        >
+                          {/* NAME */}
+                          <div className="flex items-center gap-2">
+                            <CornerDownRight
+                              size={14}
+                              className="text-gray-400 dark:text-zinc-500"
+                            />
+                            <span>{getDisplayName(child)}</span>
+                          </div>
+        
+                          {/* DATE */}
+                          <div className="text-xs">
+                            {new Date(child.date).toLocaleDateString("en-US", {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                              timeZone: "UTC",
+                            })}
+                          </div>
+        
+                          {/* TYPE */}
+                          <div>
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
+                                child.type
+                              )}`}
+                            >
+                              {formatType(child.type)}
+                            </span>
+                          </div>
+        
+                          {/* AMOUNT */}
+                          <div
+                            className={`text-right font-semibold ${
+                              isPositiveChild ? "text-green-500" : "text-red-500"
+                            }`}
+                          >
+                            {(isPositiveChild ? "+" : "-") +
+                              Number(child.amount).toLocaleString("en-BD")}{" "}
+                            Tk
+                          </div>
+        
+                          <div />
+                        </div>
+                      );
+                    })}
+                </div>
+              );
+            })}
           </div>
-
-          
+        
           {/* MOBILE CARD */}
           <div className="md:hidden space-y-3">
             {roots.map((parent) => {
-                const children = sortedTransactions.filter(
-                  (c) => c.parent_id === parent.id
-                );
-          
-                const isExpanded = expanded[parent.id];
-          
-                const isPositive =
-                  parent.type === "INCOME" ||
-                  parent.type === "DEBT_TAKEN" ||
-                  parent.type === "RECEIVABLE_RECEIVED";
-          
-                const finalAmount = Number(parent.amount);
-          
-                return (
-                  <div key={parent.id} className="space-y-2">
-          
-                    {/* ===== PARENT CARD ===== */}
-                    <div
-                      className="
-                      bg-zinc-950
-                      border border-zinc-900
-                      p-4 rounded-2xl
-                      "
-                    >
-                      <div className="flex justify-between items-start">
-                    
-                        {/* LEFT */}
-                        <div className="flex items-start gap-2">
-                    
-                          {parent.has_child && (
-                            <button
-                              onClick={() => toggleExpand(parent.id)}
-                              className="
-                              mt-0.5
-                              w-6 h-6
-                              rounded-full
-                              bg-zinc-900
-                              flex items-center justify-center
-                              text-zinc-400
-                              "
-                            >
-                              {isExpanded ? (
-                                <ChevronDown size={14} />
-                              ) : (
-                                <ChevronRight size={14} />
-                              )}
-                            </button>
-                          )}
-                    
-                          <div>
-                            <div className="font-semibold text-white">
-                              {getDisplayName(parent)}
-                            </div>
-                    
-                            <div className="mt-1 text-xs text-zinc-500">
-                              {new Date(parent.date).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                timeZone: "UTC",
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                    
-                        {/* RIGHT */}
-                        <div className="flex flex-col items-end gap-2">
-                    
-                          <div
-                            className={`font-semibold ${
-                              isPositive ? "text-green-500" : "text-red-500"
-                            }`}
+              const children = sortedTransactions.filter(
+                (c) => c.parent_id === parent.id
+              );
+        
+              const isExpanded = expanded[parent.id];
+        
+              const isPositive =
+                parent.type === "INCOME" ||
+                parent.type === "DEBT_TAKEN" ||
+                parent.type === "RECEIVABLE_RECEIVED";
+        
+              const finalAmount = Number(parent.amount);
+        
+              return (
+                <div key={parent.id} className="space-y-2">
+        
+                  {/* ===== PARENT CARD ===== */}
+                  <div
+                    className="
+                    bg-white dark:bg-zinc-950
+                    border border-gray-200 dark:border-zinc-900
+                    p-4 rounded-2xl
+                    "
+                  >
+                    <div className="flex justify-between items-start">
+        
+                      {/* LEFT */}
+                      <div className="flex items-start gap-2">
+        
+                        {parent.has_child && (
+                          <button
+                            onClick={() => toggleExpand(parent.id)}
+                            className="
+                            mt-0.5
+                            w-6 h-6
+                            rounded-full
+                            bg-gray-100 dark:bg-zinc-900
+                            flex items-center justify-center
+                            text-gray-500 dark:text-zinc-400
+                            "
                           >
-                            {isPositive ? "+" : "-"}
-                            {finalAmount.toLocaleString("en-BD")} Tk
+                            {isExpanded ? (
+                              <ChevronDown size={14} />
+                            ) : (
+                              <ChevronRight size={14} />
+                            )}
+                          </button>
+                        )}
+        
+                        <div>
+                          <div className="font-semibold text-black dark:text-white">
+                            {getDisplayName(parent)}
                           </div>
-                    
-                          <div className="flex items-center gap-2">
-                    
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
-                                parent.type
-                              )}`}
-                            >
-                              {formatType(parent.type)}
-                            </span>
-                    
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDeleteId(parent.id);
-                              }}
-                              className="
-                              w-8 h-8 rounded-full
-                              bg-zinc-900
-                              flex items-center justify-center
-                              text-red-400
-                              "
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                    
+        
+                          <div className="mt-1 text-xs text-gray-500 dark:text-zinc-500">
+                            {new Date(parent.date).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              timeZone: "UTC",
+                            })}
                           </div>
                         </div>
                       </div>
-                    </div>
-          
-                    {/* ===== CHILDREN ===== */}
-                    {isExpanded &&
-                      children.map((child) => {
-                        const isPositiveChild =
-                          child.type === "INCOME" ||
-                          child.type === "DEBT_TAKEN" ||
-                          child.type === "RECEIVABLE_RECEIVED";
-          
-                        return (
-                          <div
-                            key={child.id}
+        
+                      {/* RIGHT */}
+                      <div className="flex flex-col items-end gap-2">
+        
+                        <div
+                          className={`font-semibold ${
+                            isPositive ? "text-green-500" : "text-red-500"
+                          }`}
+                        >
+                          {isPositive ? "+" : "-"}
+                          {finalAmount.toLocaleString("en-BD")} Tk
+                        </div>
+        
+                        <div className="flex items-center gap-2">
+        
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
+                              parent.type
+                            )}`}
+                          >
+                            {formatType(parent.type)}
+                          </span>
+        
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteId(parent.id);
+                            }}
                             className="
-                            bg-zinc-950/60
-                            border border-zinc-900
-                            p-3 rounded-xl
-                            ml-4 text-zinc-500
+                            w-8 h-8 rounded-full
+                            bg-gray-100 dark:bg-zinc-900
+                            flex items-center justify-center
+                            text-red-400
                             "
                           >
-                            <div className="flex justify-between">
-                              <div className="flex items-center gap-2">
-                                <CornerDownRight size={14} />
-                                <span>{getDisplayName(child)}</span>
-                              </div>
-          
-                              <span
-                                className={`${
-                                  isPositiveChild ? "text-green-400" : "text-red-400"
-                                }`}
-                              >
-                                {isPositiveChild ? "+" : "-"}
-                                {Number(child.amount).toLocaleString("en-BD")} Tk
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
+                            <Trash2 size={14} />
+                          </button>
+        
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                );
-              })}
+        
+                  {/* ===== CHILDREN ===== */}
+                  {isExpanded &&
+                    children.map((child) => {
+                      const isPositiveChild =
+                        child.type === "INCOME" ||
+                        child.type === "DEBT_TAKEN" ||
+                        child.type === "RECEIVABLE_RECEIVED";
+        
+                      return (
+                        <div
+                          key={child.id}
+                          className="
+                          bg-gray-50 dark:bg-zinc-950/60
+                          border border-gray-200 dark:border-zinc-900
+                          p-3 rounded-xl
+                          ml-4
+                          text-gray-500 dark:text-zinc-500
+                          "
+                        >
+                          <div className="flex justify-between">
+                            <div className="flex items-center gap-2">
+                              <CornerDownRight size={14} />
+                              <span>{getDisplayName(child)}</span>
+                            </div>
+        
+                            <span
+                              className={`${
+                                isPositiveChild
+                                  ? "text-green-400"
+                                  : "text-red-400"
+                              }`}
+                            >
+                              {isPositiveChild ? "+" : "-"}
+                              {Number(child.amount).toLocaleString("en-BD")} Tk
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              );
+            })}
           </div>
         </div>
-
-
+        
         {/* EMPTY */}
         {transactions.length === 0 && (
           <div className="p-6 text-center text-gray-400">
