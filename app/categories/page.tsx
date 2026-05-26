@@ -74,28 +74,52 @@ export default function CategoriesPage() {
 
   return (
     <DashboardLayout>
-      <h1 className="text-2xl font-bold mb-6">Categories</h1>
+      <h1 className="text-2xl font-bold mb-6 text-black dark:text-white">
+        Categories
+      </h1>
 
       {/* =========================
           CREATE CATEGORY
       ========================= */}
-      
-      <div className="bg-zinc-950 border border-zinc-900 p-4 rounded-3xl mb-6 flex gap-3">
+
+      <div
+        className="
+        bg-white dark:bg-zinc-950
+        border border-gray-200 dark:border-zinc-900
+        p-4 rounded-3xl mb-6 flex gap-3
+        "
+      >
         <input
           placeholder="Category name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full bg-black border border-zinc-800
-          rounded-2xl px-4 py-3 text-white placeholder:text-zinc-500
-          outline-none focus:border-zinc-700 transition"
+          className="
+          w-full
+          bg-white dark:bg-black
+          border border-gray-300 dark:border-zinc-800
+          rounded-2xl
+          px-4 py-3
+          text-black dark:text-white
+          placeholder:text-gray-400 dark:placeholder:text-zinc-500
+          outline-none
+          focus:border-zinc-700
+          transition
+          "
         />
 
         <select
           value={type}
           onChange={(e) => setType(e.target.value)}
-          className="bg-black border border-zinc-800 rounded-2xl
-          px-4 py-3 text-white outline-none focus:border-zinc-700
-          transition"
+          className="
+          bg-white dark:bg-black
+          border border-gray-300 dark:border-zinc-800
+          rounded-2xl
+          px-4 py-3
+          text-black dark:text-white
+          outline-none
+          focus:border-zinc-700
+          transition
+          "
         >
           <option value="EXPENSE">Expense</option>
           <option value="INCOME">Income</option>
@@ -103,8 +127,16 @@ export default function CategoriesPage() {
 
         <button
           onClick={handleCreate}
-          className="px-5 py-3 bg-green-500 hover:bg-green-400 active:scale-95
-          transition text-black font-semibold rounded-2xl"
+          className="
+          px-5 py-3
+          bg-green-500
+          hover:bg-green-400
+          active:scale-95
+          transition
+          text-black
+          font-semibold
+          rounded-2xl
+          "
         >
           Add
         </button>
@@ -112,11 +144,25 @@ export default function CategoriesPage() {
 
       {/* =========================
           CATEGORY TABLE
-      ========================= */}      
-      <div className="bg-black border border-zinc-900 rounded-3xl overflow-hidden">
-        
+      ========================= */}
+
+      <div
+        className="
+        bg-white dark:bg-black
+        border border-gray-200 dark:border-zinc-900
+        rounded-3xl overflow-hidden
+        "
+      >
         {/* HEADER */}
-        <div className="grid grid-cols-3 px-5 py-4 text-xs uppercase tracking-wider text-zinc-500 border-b border-zinc-900">
+        <div
+          className="
+          grid grid-cols-3
+          px-5 py-4
+          text-xs uppercase tracking-wider
+          text-gray-500 dark:text-zinc-500
+          border-b border-gray-200 dark:border-zinc-900
+          "
+        >
           <div>Category</div>
           <div>Type</div>
           <div className="text-right">Total Expense</div>
@@ -126,13 +172,19 @@ export default function CategoriesPage() {
         {categoryTotals.map((item, i) => (
           <div
             key={i}
-            className="grid grid-cols-3 px-5 py-4 border-b border-zinc-900 hover:bg-zinc-950/60 transition-all duration-200"
-          >            
-            <div className="font-semibold text-white">
+            className="
+            grid grid-cols-3
+            px-5 py-4
+            border-b border-gray-200 dark:border-zinc-900
+            hover:bg-gray-100 dark:hover:bg-zinc-950/60
+            transition-all duration-200
+            "
+          >
+            <div className="font-semibold text-black dark:text-white">
               {item.name}
             </div>
 
-            <div className="text-sm text-zinc-500">
+            <div className="text-sm text-gray-500 dark:text-zinc-500">
               {item.type}
             </div>
 
@@ -144,7 +196,7 @@ export default function CategoriesPage() {
 
         {/* EMPTY */}
         {categoryTotals.length === 0 && (
-          <div className="p-10 text-center text-zinc-500">
+          <div className="p-10 text-center text-gray-500 dark:text-zinc-500">
             No categories yet
           </div>
         )}
