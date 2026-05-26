@@ -101,69 +101,123 @@ export default function ReceivableDetailPage() {
 
   return (
     <DashboardLayout>
+      {/* HEADER */}
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => router.push("/receivables")}
-          className="p-2 rounded-lg bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 transition active:scale-95"
+          className="
+          p-2 rounded-xl
+          bg-gray-100 dark:bg-zinc-900
+          border border-gray-200 dark:border-zinc-800
+          hover:bg-gray-200 dark:hover:bg-zinc-800
+          transition active:scale-95
+          "
         >
-          <ArrowLeft size={18} />
+          <ArrowLeft
+            size={18}
+            className="text-black dark:text-white"
+          />
         </button>
       
-        <h1 className="text-2xl font-bold">Receivable Details</h1>
+        <h1 className="text-2xl font-bold text-black dark:text-white">
+          Receivable Details
+        </h1>
       </div>
-
+      
       {/* SUMMARY CARD */}
-      <div className="bg-gray-100 dark:bg-slate-900 p-5 rounded-2xl mb-6">
+      <div
+        className="
+        bg-white dark:bg-black
+        border border-gray-200 dark:border-zinc-900
+        p-6 rounded-3xl mb-6
+        "
+      >
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">
+          <h3 className="text-xl font-semibold text-black dark:text-white">
             {formatName(name)}
           </h3>
-
+      
           <button
             onClick={handleReceive}
-            className="px-3 py-1 rounded bg-blue-500 text-black text-sm"
+            className="
+            px-4 py-2 rounded-xl
+            bg-blue-500 hover:bg-blue-400
+            text-black text-sm font-medium
+            transition active:scale-95
+            "
           >
             Receive
           </button>
         </div>
-
-        <div className="mt-4 text-sm flex justify-between text-gray-600 dark:text-gray-400">
-          <span>Total Given:</span>
-          <span>{totalGiven.toFixed(2)} Tk</span>
-        </div>
-
-        <div className="text-sm flex justify-between text-gray-600 dark:text-gray-400">
-          <span>Total Received:</span>
-          <span>{totalReceived.toFixed(2)} Tk</span>
-        </div>
-
-        <div className="text-sm flex justify-between">
-          <span>Remaining:</span>
-          <span className="text-yellow-500 font-semibold">
-            {remaining.toFixed(2)} Tk
-          </span>
+      
+        <div className="mt-6 space-y-3">
+      
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-500 dark:text-zinc-500">
+              Total Given
+            </span>
+      
+            <span className="text-black dark:text-white font-medium">
+              {totalGiven.toFixed(2)} Tk
+            </span>
+          </div>
+      
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-500 dark:text-zinc-500">
+              Total Received
+            </span>
+      
+            <span className="text-black dark:text-white font-medium">
+              {totalReceived.toFixed(2)} Tk
+            </span>
+          </div>
+      
+          <div className="flex justify-between pt-3 border-t border-gray-200 dark:border-zinc-900">
+            <span className="text-black dark:text-white font-medium">
+              Remaining
+            </span>
+      
+            <span className="text-yellow-500 font-semibold">
+              {remaining.toFixed(2)} Tk
+            </span>
+          </div>
+      
         </div>
       </div>
-
+      
       {/* TRANSACTIONS */}
       <div className="flex flex-col gap-3">
         {transactions.map((t) => {
           const amount = Number(t.amount);
-
+      
           return (
             <div
               key={t.id}
-              className="flex justify-between p-4 rounded-xl bg-gray-200 dark:bg-slate-800"
+              className="
+              flex justify-between items-center
+              p-4 rounded-2xl
+              bg-white dark:bg-zinc-950
+              border border-gray-200 dark:border-zinc-900
+              hover:bg-gray-50 dark:hover:bg-zinc-900/60
+              transition
+              "
             >
               <div>
-                <div className="text-sm font-medium">
+                <div className="text-sm font-semibold text-black dark:text-white">
                   {t.type.replace("_", " ")}
                 </div>
-                <div className="text-xs text-gray-500">
-                  {new Date(t.date).toDateString()}
+      
+                <div className="text-xs text-gray-500 dark:text-zinc-500 mt-1">
+                  {new Date(t.date).toLocaleDateString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    timeZone: "UTC",
+                  })}
                 </div>
               </div>
-
+      
               <div
                 className={`font-semibold ${
                   t.type === "RECEIVABLE_RECEIVED"
@@ -178,7 +232,7 @@ export default function ReceivableDetailPage() {
           );
         })}
       </div>
-
+      
       {transactions.length === 0 && (
         <div className="text-center text-gray-400 mt-10">
           No transactions found
