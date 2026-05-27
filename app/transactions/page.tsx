@@ -415,92 +415,96 @@ export default function TransactionsPage() {
                     p-4 rounded-2xl
                     "
                   >
-                    <div className="space-y-3">
+                    <div className="flex justify-between gap-3">
                     
-                      {/* TOP */}
-                      <div className="flex items-start gap-2">
+                      {/* LEFT CONTENT */}
+                      <div className="flex-1 min-w-0 space-y-3">
                     
-                        {parent.has_child && (
-                          <button
-                            onClick={() => toggleExpand(parent.id)}
-                            className="
-                            mt-0.5
-                            w-6 h-6
-                            rounded-full
-                            bg-gray-100 dark:bg-zinc-900
-                            flex items-center justify-center
-                            text-gray-500 dark:text-zinc-400
-                            "
-                          >
-                            {isExpanded ? (
-                              <ChevronDown size={14} />
-                            ) : (
-                              <ChevronRight size={14} />
-                            )}
-                          </button>
-                        )}
-                    
-                        <div className="font-semibold text-black dark:text-white">
-                          {getDisplayName(parent)}
-                        </div>
-                      </div>
-                    
-                      {/* MIDDLE */}
-                      <div className="flex items-center justify-between">
-                    
-                        <div className="text-xs text-gray-500 dark:text-zinc-500">
-                          {new Date(parent.date).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            timeZone: "UTC",
-                          })}
-                        </div>
-                    
+                        {/* ROW 1 */}
                         <div className="flex items-center gap-2">
                     
+                          {parent.has_child && (
+                            <button
+                              onClick={() => toggleExpand(parent.id)}
+                              className="
+                              w-6 h-6 rounded-full
+                              bg-gray-100 dark:bg-zinc-900
+                              flex items-center justify-center
+                              text-gray-500 dark:text-zinc-400
+                              shrink-0
+                              "
+                            >
+                              {isExpanded ? (
+                                <ChevronDown size={14} />
+                              ) : (
+                                <ChevronRight size={14} />
+                              )}
+                            </button>
+                          )}
+                    
+                          <div className="font-semibold text-black dark:text-white truncate">
+                            {getDisplayName(parent)}
+                          </div>
+                    
+                        </div>
+                    
+                        {/* ROW 2 */}
+                        <div className="flex items-center justify-between gap-3">
+                    
+                          <div className="text-xs text-gray-500 dark:text-zinc-500">
+                            {new Date(parent.date).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              timeZone: "UTC",
+                            })}
+                          </div>
+                    
+                          <div
+                            className={`font-semibold whitespace-nowrap ${
+                              isPositive ? "text-green-500" : "text-red-500"
+                            }`}
+                          >
+                            {isPositive ? "+" : "-"}
+                            {finalAmount.toLocaleString("en-BD")} Tk
+                          </div>
+                    
+                        </div>
+                    
+                        {/* ROW 3 */}
+                        <div className="flex items-center justify-between gap-3">
+                    
+                          <div className="text-xs text-gray-500 dark:text-zinc-500 truncate">
+                            {parent.note || "No note"}
+                          </div>
+                    
                           <span
-                            className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
+                            className={`px-2 py-1 rounded-full text-xs whitespace-nowrap ${getTypeStyle(
                               parent.type
                             )}`}
                           >
                             {formatType(parent.type)}
                           </span>
                     
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteId(parent.id);
-                            }}
-                            className="
-                            w-8 h-8 rounded-full
-                            bg-gray-100 dark:bg-zinc-900
-                            flex items-center justify-center
-                            text-red-400
-                            "
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                    
-                        </div>
-                      </div>
-                    
-                      {/* BOTTOM */}
-                      <div className="flex items-end justify-between">
-                    
-                        <div className="text-sm text-gray-500 dark:text-zinc-500 truncate">
-                          {parent.note || "No note"}
-                        </div>
-                    
-                        <div
-                          className={`font-semibold ${
-                            isPositive ? "text-green-500" : "text-red-500"
-                          }`}
-                        >
-                          {isPositive ? "+" : "-"}
-                          {finalAmount.toLocaleString("en-BD")} Tk
                         </div>
                     
                       </div>
+                    
+                      {/* RIGHT ACTION */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteId(parent.id);
+                        }}
+                        className="
+                        w-10 h-10 rounded-full
+                        bg-gray-100 dark:bg-zinc-900
+                        flex items-center justify-center
+                        text-red-400
+                        shrink-0 self-start
+                        "
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     
                     </div>
                   </div>
@@ -530,16 +534,16 @@ export default function TransactionsPage() {
                             <div className="flex items-center gap-2">
                               <CornerDownRight
                                 size={14}
-                                className="text-gray-400 dark:text-zinc-500"
+                                className="text-gray-400 dark:text-zinc-500 shrink-0"
                               />
                           
-                              <span className="text-black dark:text-white">
+                              <span className="text-black dark:text-white truncate">
                                 {getDisplayName(child)}
                               </span>
                             </div>
                           
                             {/* MIDDLE */}
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between gap-3">
                           
                               <div className="text-xs text-gray-500 dark:text-zinc-500">
                                 {new Date(child.date).toLocaleDateString("en-US", {
@@ -550,24 +554,7 @@ export default function TransactionsPage() {
                               </div>
                           
                               <span
-                                className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
-                                  child.type
-                                )}`}
-                              >
-                                {formatType(child.type)}
-                              </span>
-                          
-                            </div>
-                          
-                            {/* BOTTOM */}
-                            <div className="flex items-end justify-between">
-                          
-                              <div className="text-xs text-gray-500 dark:text-zinc-500 truncate">
-                                {child.note || "No note"}
-                              </div>
-                          
-                              <span
-                                className={`font-semibold ${
+                                className={`font-semibold whitespace-nowrap ${
                                   isPositiveChild
                                     ? "text-green-400"
                                     : "text-red-400"
@@ -575,6 +562,23 @@ export default function TransactionsPage() {
                               >
                                 {isPositiveChild ? "+" : "-"}
                                 {Number(child.amount).toLocaleString("en-BD")} Tk
+                              </span>
+                          
+                            </div>
+                          
+                            {/* BOTTOM */}
+                            <div className="flex items-center justify-between gap-3">
+                          
+                              <div className="text-xs text-gray-500 dark:text-zinc-500 truncate">
+                                {child.note || "No note"}
+                              </div>
+                          
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs whitespace-nowrap ${getTypeStyle(
+                                  child.type
+                                )}`}
+                              >
+                                {formatType(child.type)}
                               </span>
                           
                             </div>
