@@ -500,7 +500,7 @@ export default function TransactionsPage() {
                         bg-gray-100 dark:bg-zinc-900
                         flex items-center justify-center
                         text-red-400
-                        shrink-0 self-start
+                        shrink-0 self-center
                         "
                       >
                         <Trash2 size={16} />
