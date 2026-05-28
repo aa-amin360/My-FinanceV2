@@ -17,66 +17,29 @@ export async function GET() {
   }
 
   const userId = session.user.email;
-
   const client = await pool.connect();
 
   try {
+    // 🔥 Let PostgreSQL compute the exact cash and bank balances in a single, fast operation
     const result = await client.query(
       `
       SELECT 
-        t.amount,
-        fa.name AS from_account,
-        ta.name AS to_account
+        COALESCE(SUM(CASE WHEN LOWER(TRIM(ta.name)) = 'cash' THEN t.amount ELSE 0 END), 0) -
+        COALESCE(SUM(CASE WHEN LOWER(TRIM(fa.name)) = 'cash' THEN t.amount ELSE 0 END), 0) AS cash_balance,
+        COALESCE(SUM(CASE WHEN LOWER(TRIM(ta.name)) = 'bank' THEN t.amount ELSE 0 END), 0) -
+        COALESCE(SUM(CASE WHEN LOWER(TRIM(fa.name)) = 'bank' THEN t.amount ELSE 0 END), 0) AS bank_balance
       FROM transactions t
       LEFT JOIN accounts fa ON t.from_account = fa.id
       LEFT JOIN accounts ta ON t.to_account = ta.id
       WHERE t.user_id = $1
-      AND t.parent_id IS NULL
+        AND t.parent_id IS NULL
       `,
       [userId]
     );
 
-    let balance = 0;
-    let cashBalance = 0;
-    let bankBalance = 0;
-
-    for (const row of result.rows) {
-      const amount = Number(row.amount) || 0;
-
-      const from = row.from_account
-        ? row.from_account.toLowerCase().trim()
-        : null;
-
-      const to = row.to_account
-        ? row.to_account.toLowerCase().trim()
-        : null;
-
-      // =========================
-      // CASH
-      // =========================
-      if (to === "cash") {
-        cashBalance += amount;
-        balance += amount;
-      }
-
-      if (from === "cash") {
-        cashBalance -= amount;
-        balance -= amount;
-      }
-
-      // =========================
-      // BANK
-      // =========================
-      if (to === "bank") {
-        bankBalance += amount;
-        balance += amount;
-      }
-
-      if (from === "bank") {
-        bankBalance -= amount;
-        balance -= amount;
-      }
-    }
+    const cashBalance = Number(result.rows[0]?.cash_balance || 0);
+    const bankBalance = Number(result.rows[0]?.bank_balance || 0);
+    const balance = cashBalance + bankBalance;
 
     return NextResponse.json({
       success: true,
