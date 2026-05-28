@@ -28,19 +28,33 @@ export default function Home() {
 
   // ================= LOAD DATA =================
   const loadData = async () => {
-    const tx = await fetch("/api/transactions", { cache: "no-store" }).then((r) => r.json());
-    setTransactions(tx.data || []);
+    try {
+      // Fire all requests at the exact same time
+      const [txRes, bRes, dRes, rRes] = await Promise.all([
+        fetch("/api/transactions", { cache: "no-store" }),
+        fetch("/api/balance", { cache: "no-store" }),
+        fetch("/api/debts", { cache: "no-store" }),
+        fetch("/api/receivables", { cache: "no-store" }),
+      ]);
 
-    const b = await fetch("/api/balance", { cache: "no-store" }).then((r) => r.json());    
-    setBalance(Number(b.balance || 0));
-    setCashBalance(Number(b.cashBalance || 0));
-    setBankBalance(Number(b.bankBalance || 0));
+      // Parse all JSON responses in parallel
+      const [txData, bData, dData, rData] = await Promise.all([
+        txRes.json(),
+        bRes.json(),
+        dRes.json(),
+        rRes.json(),
+      ]);
 
-    const d = await fetch("/api/debts", { cache: "no-store" }).then((r) => r.json());
-    setDebt(Number(d.total || 0));
-
-    const r = await fetch("/api/receivables", { cache: "no-store" }).then((r) => r.json());
-    setReceivable(Number(r.total || 0));
+      // Set state all at once
+      setTransactions(txData.data || []);
+      setBalance(Number(bData.balance || 0));
+      setCashBalance(Number(bData.cashBalance || 0));
+      setBankBalance(Number(bData.bankBalance || 0));
+      setDebt(Number(dData.total || 0));
+      setReceivable(Number(rData.total || 0));
+    } catch (err) {
+      console.error("Failed to load dashboard data in parallel:", err);
+    }
   };
 
   useRefresh(loadData);
