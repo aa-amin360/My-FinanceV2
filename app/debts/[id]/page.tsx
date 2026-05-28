@@ -26,27 +26,32 @@ export default function DebtDetailPage() {
   // LOAD DATA
   // =========================
   const loadData = async () => {
-    // 1. Get correct entity name
-    const res1 = await fetch("/api/debts/details", { cache: "no-store" });
-    const debtData = await res1.json();
-  
-    const entity = (debtData.data || []).find(
-      (d: any) => d.entity_id === id
-    );
-  
-    setName(entity?.name || "");
-  
-    // 2. Load transactions
-    const res2 = await fetch("/api/transactions", { cache: "no-store" });
-    const txData = await res2.json();
-  
-    const filtered = (txData.data || []).filter(
-      (t: Transaction) =>
-        t.entity_id === id &&
-        (t.type === "DEBT_TAKEN" || t.type === "DEBT_REPAID")
-    );
-  
-    setTransactions(filtered);
+    try {
+      // Fire requests in parallel
+      const [detailsRes, txRes] = await Promise.all([
+        fetch("/api/debts/details", { cache: "no-store" }),
+        fetch("/api/transactions", { cache: "no-store" }),
+      ]);
+
+      const [debtData, txData] = await Promise.all([
+        detailsRes.json(),
+        txRes.json(),
+      ]);
+
+      const entity = (debtData.data || []).find(
+        (d: any) => d.entity_id === id
+      );
+      setName(entity?.name || "");
+
+      const filtered = (txData.data || []).filter(
+        (t: Transaction) =>
+          t.entity_id === id &&
+          (t.type === "DEBT_TAKEN" || t.type === "DEBT_REPAID")
+      );
+      setTransactions(filtered);
+    } catch (err) {
+      console.error("Failed to load debt details in parallel:", err);
+    }
   };
 
   useRefresh(loadData);
