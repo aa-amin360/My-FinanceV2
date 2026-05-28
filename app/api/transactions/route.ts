@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { Pool } from "pg";
+import pool from "@/lib/db";
 
 import { resolveAccounts } from "@/lib/transactions/accounts";
 import { resolveEntity } from "@/lib/transactions/entity";
@@ -14,10 +14,6 @@ import { checkBalance } from "@/lib/transactions/balance";
 import { insertTransaction } from "@/lib/transactions/insert";
 import { handleDebt } from "@/lib/transactions/debt";
 import { handleReceivable } from "@/lib/transactions/receivable";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 const TYPE_META = {
   INCOME: { flow: "IN", group: "BALANCE" },
