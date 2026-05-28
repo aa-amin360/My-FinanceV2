@@ -101,9 +101,17 @@ export async function DELETE(
         `
         SELECT * FROM transactions
         WHERE entity_id = $1 AND user_id = $2
+          AND (
+            parent_id IS NOT NULL
+            OR id NOT IN (
+              SELECT DISTINCT parent_id 
+              FROM transactions 
+              WHERE parent_id IS NOT NULL AND user_id = $3
+            )
+          )
         ORDER BY date ASC, created_at ASC
         `,
-        [t.entity_id, userId]
+        [t.entity_id, userId, userId]
       );
 
       for (const h of history.rows) {
