@@ -1,9 +1,5 @@
 import GoogleProvider from "next-auth/providers/google";
-import { Pool } from "pg";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+import pool from "@/lib/db";
 
 export const authOptions = {
   providers: [
