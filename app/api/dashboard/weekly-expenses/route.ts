@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
-import { Pool } from "pg";
+import pool from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 export async function GET() {
   const session = await getServerSession(authOptions);
