@@ -26,28 +26,33 @@ export default function ReceivableDetailPage() {
   // LOAD DATA
   // =========================
   const loadData = async () => {
-    // 1. load receivable list
-    const res1 = await fetch("/api/receivables/details", { cache: "no-store" });
-    const receivableData = await res1.json();
-  
-    const entity = (receivableData.data || []).find(
-      (e: any) => e.entity_id === id
-    );
-  
-    setName(entity?.name || "");
-  
-    // 2. load transactions
-    const res2 = await fetch("/api/transactions", { cache: "no-store" });
-    const txData = await res2.json();
-  
-    const filtered = (txData.data || []).filter(
-      (t: Transaction) =>
-        t.entity_id === id &&
-        (t.type === "RECEIVABLE_GIVEN" ||
-          t.type === "RECEIVABLE_RECEIVED")
-    );
-  
-    setTransactions(filtered);
+    try {
+      // Fire requests in parallel
+      const [detailsRes, txRes] = await Promise.all([
+        fetch("/api/receivables/details", { cache: "no-store" }),
+        fetch("/api/transactions", { cache: "no-store" }),
+      ]);
+
+      const [receivableData, txData] = await Promise.all([
+        detailsRes.json(),
+        txRes.json(),
+      ]);
+
+      const entity = (receivableData.data || []).find(
+        (e: any) => e.entity_id === id
+      );
+      setName(entity?.name || "");
+
+      const filtered = (txData.data || []).filter(
+        (t: Transaction) =>
+          t.entity_id === id &&
+          (t.type === "RECEIVABLE_GIVEN" ||
+            t.type === "RECEIVABLE_RECEIVED")
+      );
+      setTransactions(filtered);
+    } catch (err) {
+      console.error("Failed to load receivable details in parallel:", err);
+    }
   };
 
   useRefresh(loadData);
