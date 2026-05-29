@@ -95,11 +95,9 @@ export async function handleDebt({
         ]
       );
 
-      // ✅ 3. CLEAR DEBT
+      // ✅ 3. CLEAR DEBT 
       await client.query(
-        `UPDATE debts
-         SET total_amount = 0,
-             remaining_amount = 0
+        `DELETE FROM debts
          WHERE entity_id = $1 AND user_id = $2`,
         [entity_id, userId]
       );
