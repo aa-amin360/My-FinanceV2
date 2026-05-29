@@ -24,6 +24,7 @@ import {
   PanelLeftClose,
   PanelRightClose,
   Home,
+  CalendarDays,
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -91,7 +92,7 @@ export default function DashboardLayout({
             )}
           </button>
         </div>
-
+        
         <div className={`flex-1 overflow-y-auto ${collapsed ? "px-1" : "px-2"}`}>
           <nav className={`flex flex-col ${collapsed ? "gap-3 mt-2" : "gap-2 mt-2"}`}>
             <Item icon={LayoutDashboard} label="Dashboard" href="/" pathname={pathname} collapsed={collapsed} />
@@ -123,12 +124,22 @@ export default function DashboardLayout({
             </h1>
           </div>
 
-          <button
-            onClick={toggleTheme}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 hover:scale-105 transition"
-          >
-            {theme === "dark" ? "🌙" : "☀️"}
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/calendar"
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 hover:scale-105 transition"
+            >
+              <CalendarDays size={18} />
+            </Link>
+          
+            <button
+              onClick={toggleTheme}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 hover:scale-105 transition"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? "🌙" : "☀️"}
+            </button>
+          </div>
         </div>
 
         {/* PAGE CONTENT */}
