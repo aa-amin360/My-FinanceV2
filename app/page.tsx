@@ -14,6 +14,8 @@ type Transaction = {
   amount: string;
   date: string;
   note: string | null;
+  parent_id?: string | null;
+  has_child?: boolean;
 };
 
 export default function Home() {
