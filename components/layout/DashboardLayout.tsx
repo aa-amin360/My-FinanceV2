@@ -127,7 +127,7 @@ export default function DashboardLayout({
 
           <div className="flex items-center gap-2">
             <Link
-              to="/calendar"
+              href="/calendar"
               className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 hover:scale-105 transition"
             >
               <CalendarDays size={18} />
