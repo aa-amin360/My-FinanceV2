@@ -201,7 +201,7 @@ export default function CalendarPage() {
                   "
                 >
                   {/* Day Number */}
-                  <span className="text-lg sm:text-sm font-bold text-gray-700 dark:text-zinc-300 self-end leading-none">
+                  <span className="text-lg sm:text-xl font-bold text-gray-700 dark:text-zinc-300 self-end leading-none">
                     {day}
                   </span>
 
