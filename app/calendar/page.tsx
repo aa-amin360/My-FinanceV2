@@ -40,29 +40,20 @@ export default function CalendarPage() {
   // CALENDAR CALCULATION HELPERS
   // =========================
   const year = currentDate.getFullYear();
-  const month = currentDate.getMonth(); // 0-indexed (0 = Jan, 11 = Dec)
+  const month = currentDate.getMonth();
 
   const monthName = currentDate.toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
   });
 
-  // Get total days in currently viewed month
   const totalDays = new Date(year, month + 1, 0).getDate();
-
-  // Get which day of the week (0-6) the 1st of the month lands on
   const firstDayIndex = new Date(year, month, 1).getDay();
 
-  // Generate blank padding cells for days from previous month
   const paddingCells = Array.from({ length: firstDayIndex }, (_, i) => null);
-
-  // Generate array [1, 2, ..., totalDays]
   const dayCells = Array.from({ length: totalDays }, (_, i) => i + 1);
-
-  // Combine both arrays to form our full grid cells
   const gridCells = [...paddingCells, ...dayCells];
 
-  // Month navigation
   const handlePrevMonth = () => {
     setCurrentDate(new Date(year, month - 1, 1));
   };
@@ -71,7 +62,6 @@ export default function CalendarPage() {
     setCurrentDate(new Date(year, month + 1, 1));
   };
 
-  // Convert month/day index to a standard YYYY-MM-DD string key for matching
   const getFormattedDateString = (day: number) => {
     const yStr = year.toString();
     const mStr = (month + 1).toString().padStart(2, "0");
@@ -80,14 +70,25 @@ export default function CalendarPage() {
   };
 
   // =========================
+  // COMPACT NUMBER FORMATTER
+  // =========================
+  const formatCompact = (num: number) => {
+    if (num >= 100000) {
+      return (num / 1000).toFixed(0) + "K";
+    }
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+    }
+    return num.toString();
+  };
+
+  // =========================
   // DAILY TRANSACTION AGGREGATOR
   // =========================
   const getDailyTotals = (day: number) => {
     const dateStr = getFormattedDateString(day);
 
-    // Filter active transactions for this day
     const dayTxs = transactions.filter((t) => {
-      // Handle timestamp dates securely by checking prefix match
       const txDatePrefix = t.date.substring(0, 10);
       return txDatePrefix === dateStr && !t.parent_id;
     });
@@ -107,7 +108,6 @@ export default function CalendarPage() {
     return { income, expense, count: dayTxs.length };
   };
 
-  // Get details of transactions for the clicked day
   const getSelectedDayTransactions = () => {
     if (!selectedDateStr) return [];
     return transactions.filter((t) => {
@@ -116,7 +116,6 @@ export default function CalendarPage() {
     });
   };
 
-  // Helpers to resolve names correctly in list
   const formatName = (name: string) => {
     return name
       .split(" ")
@@ -138,47 +137,47 @@ export default function CalendarPage() {
           1. MONTH VIEW (CALENDAR GRID)
           ============================================== */}
       {!selectedDateStr ? (
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto px-1 sm:px-4">
           {/* Header Controls */}
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-2xl font-bold flex items-center gap-2 text-black dark:text-white">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2 text-black dark:text-white">
               <span className="text-green-500">📅</span> {monthName}
             </h1>
 
             <div className="flex gap-2">
               <button
                 onClick={handlePrevMonth}
-                className="flex items-center gap-1 px-4 py-2 text-sm font-semibold rounded-xl bg-gray-100 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-800 transition active:scale-95 text-black dark:text-white"
+                className="flex items-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl bg-gray-100 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-800 transition active:scale-95 text-black dark:text-white"
               >
-                <ChevronLeft size={16} /> Prev
+                <ChevronLeft size={14} className="sm:w-4 sm:h-4" /> Prev
               </button>
 
               <button
                 onClick={handleNextMonth}
-                className="flex items-center gap-1 px-4 py-2 text-sm font-semibold rounded-xl bg-gray-100 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-800 transition active:scale-95 text-black dark:text-white"
+                className="flex items-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl bg-gray-100 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-800 transition active:scale-95 text-black dark:text-white"
               >
-                Next <ChevronRight size={16} />
+                Next <ChevronRight size={14} className="sm:w-4 sm:h-4" />
               </button>
             </div>
           </div>
 
           {/* Weekday Labels */}
-          <div className="grid grid-cols-7 text-center mb-2">
+          <div className="grid grid-cols-7 text-center mb-1">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <span key={day} className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500 py-2">
+              <span key={day} className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500 py-1">
                 {day}
               </span>
             ))}
           </div>
 
           {/* Grid Cells */}
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
             {gridCells.map((day, idx) => {
               if (day === null) {
                 return (
                   <div
                     key={`empty-${idx}`}
-                    className="aspect-square bg-gray-50/50 dark:bg-zinc-950/20 rounded-2xl border border-transparent"
+                    className="aspect-square bg-gray-50/20 dark:bg-zinc-950/10 rounded-xl sm:rounded-2xl border border-transparent"
                   />
                 );
               }
@@ -191,31 +190,47 @@ export default function CalendarPage() {
                   key={`day-${day}`}
                   onClick={() => setSelectedDateStr(dateKey)}
                   className="
-                    aspect-square p-2 rounded-2xl cursor-pointer transition flex flex-col justify-between
-                    bg-white dark:bg-zinc-950/60
+                    aspect-square p-1 sm:p-2 rounded-xl sm:rounded-2xl cursor-pointer transition flex flex-col justify-between
+                    bg-white dark:bg-zinc-950/40
                     border border-gray-200 dark:border-zinc-900/80
+                    shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_1.5px_3px_rgba(255,255,255,0.03)]
                     hover:border-green-500 dark:hover:border-green-500/80
                     hover:bg-gray-50 dark:hover:bg-zinc-900/30
+                    hover:scale-[1.02]
                     active:scale-95
                   "
                 >
                   {/* Day Number */}
-                  <span className="text-lg font-bold text-gray-700 dark:text-zinc-300 self-end">
+                  <span className="text-lg sm:text-sm font-bold text-gray-700 dark:text-zinc-300 self-end">
                     {day}
                   </span>
 
-                  {/* Tiny Glimpse of Income/Expense */}
-                  <div className="flex flex-col gap-0.5 mt-auto">
+                  {/* Daily Income/Expense Glimpse */}
+                  <div className="flex flex-col gap-0.5 mt-auto text-left w-full overflow-hidden">
                     {income > 0 && (
-                      <span className="text-xs font-bold text-green-500 truncate leading-tight">
-                        +{income.toLocaleString()}
-                      </span>
+                      <div className="text-green-600 dark:text-green-400 font-semibold truncate leading-tight">
+                        {/* Mobile Compact View */}
+                        <span className="md:hidden text-[7.5px] tracking-tighter block">
+                          +{formatCompact(income)}
+                        </span>
+                        {/* Desktop Full View */}
+                        <span className="hidden md:block text-xs">
+                          +{income.toLocaleString()}
+                        </span>
+                      </div>
                     )}
 
                     {expense > 0 && (
-                      <span className="text-[10px] font-bold text-red-500 truncate leading-tight">
-                        -{expense.toLocaleString()}
-                      </span>
+                      <div className="text-red-500 dark:text-red-400 font-semibold truncate leading-tight">
+                        {/* Mobile Compact View */}
+                        <span className="md:hidden text-[7.5px] tracking-tighter block">
+                          -{formatCompact(expense)}
+                        </span>
+                        {/* Desktop Full View */}
+                        <span className="hidden md:block text-[10px]">
+                          -{expense.toLocaleString()}
+                        </span>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -227,7 +242,7 @@ export default function CalendarPage() {
         /* ==============================================
             2. DAILY DETAIL VIEW
             ============================================== */
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto px-2 sm:px-4">
           {/* Header Controls */}
           <div className="flex items-center gap-3 mb-8">
             <button
@@ -243,7 +258,7 @@ export default function CalendarPage() {
               <ArrowLeft size={18} className="text-black dark:text-white" />
             </button>
 
-            <h1 className="text-2xl font-bold text-black dark:text-white">
+            <h1 className="text-lg sm:text-2xl font-bold text-black dark:text-white">
               {new Date(selectedDateStr + "T00:00:00").toLocaleDateString("en-US", {
                 weekday: "long",
                 month: "long",
@@ -275,33 +290,31 @@ export default function CalendarPage() {
                     bg-white dark:bg-zinc-950
                     border border-gray-200 dark:border-zinc-900
                     rounded-2xl
-                    px-5 py-4
+                    px-4 sm:px-5 py-3.5 sm:py-4
                     flex justify-between items-center
                     hover:bg-gray-50 dark:hover:bg-zinc-900/50
                     transition-all duration-200
                   "
                 >
-                  {/* Left */}
                   <div className="min-w-0 flex-1 pr-4">
-                    <div className="font-semibold text-black dark:text-white truncate">
+                    <div className="font-semibold text-sm sm:text-base text-black dark:text-white truncate">
                       {getDisplayName(t)}
                     </div>
 
-                    <div className="text-xs text-gray-500 dark:text-zinc-500 mt-1 truncate">
+                    <div className="text-[11px] sm:text-xs text-gray-500 dark:text-zinc-500 mt-1 truncate">
                       {t.note || "No note added"}
                     </div>
                   </div>
 
-                  {/* Right */}
                   <div className="text-right shrink-0">
-                    <div className={`font-bold text-base ${isPositive ? "text-green-500" : "text-red-500"}`}>
+                    <div className={`font-bold text-sm sm:text-base ${isPositive ? "text-green-500" : "text-red-500"}`}>
                       {isPositive ? "+" : "-"}
                       {amount.toLocaleString("en-BD")} Tk
                     </div>
 
                     <div className="mt-1">
                       <span
-                        className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                        className={`text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full font-medium ${
                           t.type === "INCOME"
                             ? "bg-green-500/10 text-green-400"
                             : t.type === "EXPENSE"
@@ -321,9 +334,8 @@ export default function CalendarPage() {
               );
             })}
 
-            {/* Empty State */}
             {selectedTxs.length === 0 && (
-              <div className="text-center text-gray-400 dark:text-zinc-500 py-16">
+              <div className="text-center text-gray-400 dark:text-zinc-500 py-16 text-sm">
                 Transactions for this day will appear here.
               </div>
             )}
