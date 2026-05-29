@@ -200,14 +200,14 @@ export default function CalendarPage() {
                   "
                 >
                   {/* Day Number */}
-                  <span className="text-sm font-bold text-gray-700 dark:text-zinc-300 self-end">
+                  <span className="text-lg font-bold text-gray-700 dark:text-zinc-300 self-end">
                     {day}
                   </span>
 
                   {/* Tiny Glimpse of Income/Expense */}
                   <div className="flex flex-col gap-0.5 mt-auto">
                     {income > 0 && (
-                      <span className="text-[10px] font-bold text-green-500 truncate leading-tight">
+                      <span className="text-xs font-bold text-green-500 truncate leading-tight">
                         +{income.toLocaleString()}
                       </span>
                     )}
