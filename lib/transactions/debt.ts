@@ -136,49 +136,97 @@ export async function handleDebt({
     }
 
     // ================
-    // ✅ NORMAL REPAY 
+    // ✅ NORMAL REPAY
     // ================
     
-    // 1. CREATE PARENT
-    const parentTx = await client.query(
-      `INSERT INTO transactions
-       (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id, user_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-       RETURNING id`,
-      [
-        "DEBT_REPAID",
-        amountNumber,
-        from_account,
-        to_account,
-        entity_id,
-        category_id || null,
-        date,
-        note,
-        null,
-        userId,
-      ]
+    // Try to find the parent transaction that originally created this debt
+    const parentTxRes = await client.query(
+      `
+      SELECT t.id 
+      FROM transactions t
+      WHERE t.entity_id = $1 
+        AND t.user_id = $2
+        AND t.parent_id IS NULL
+        AND (
+          t.type = 'DEBT_TAKEN' 
+          OR (
+            t.type = 'RECEIVABLE_RECEIVED' 
+            AND EXISTS (
+              SELECT 1 FROM transactions t2 
+              WHERE t2.parent_id = t.id AND t2.type = 'DEBT_TAKEN'
+            )
+          )
+        )
+      ORDER BY t.date DESC, t.created_at DESC
+      LIMIT 1
+      `,
+      [entity_id, userId]
     );
-    
-    const parentId = parentTx.rows[0].id;
-    
-    // 2. CHILD → ACTUAL REPAY
-    await client.query(
-      `INSERT INTO transactions
-       (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id, user_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-      [
-        "DEBT_REPAID",
-        amountNumber,
-        from_account,
-        to_account,
-        entity_id,
-        category_id || null,
-        date,
-        note,
-        parentId,
-        userId,
-      ]
-    );
+
+    let parentId = null;
+
+    if (parentTxRes.rows.length > 0) {
+      parentId = parentTxRes.rows[0].id;
+
+      // Connect directly to the previous transaction as a child
+      await client.query(
+        `INSERT INTO transactions
+         (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id, user_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+        [
+          "DEBT_REPAID",
+          amountNumber,
+          from_account,
+          to_account,
+          entity_id,
+          category_id || null,
+          date,
+          note,
+          parentId,
+          userId,
+        ]
+      );
+    } else {
+      // Fallback: If no previous transaction is found, create a new parent-child chain
+      const parentTx = await client.query(
+        `INSERT INTO transactions
+         (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id, user_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+         RETURNING id`,
+        [
+          "DEBT_REPAID",
+          amountNumber,
+          from_account,
+          to_account,
+          entity_id,
+          category_id || null,
+          date,
+          note,
+          null,
+          userId,
+        ]
+      );
+
+      parentId = parentTx.rows[0].id;
+
+      await client.query(
+        `INSERT INTO transactions
+         (type, amount, from_account, to_account, entity_id, category_id, date, note, parent_id, user_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+        [
+          "DEBT_REPAID",
+          amountNumber,
+          from_account,
+          to_account,
+          entity_id,
+          category_id || null,
+          date,
+          note,
+          parentId,
+          userId,
+        ]
+      );
+    }
     
     // 3. UPDATE DEBT
     await client.query(
