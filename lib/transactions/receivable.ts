@@ -96,11 +96,9 @@ export async function handleReceivable({
         ]
       );
 
-      // ✅ 3. CLEAR RECEIVABLE
+      // ✅ 3. CLEAR RECEIVABLE (DELETE so it does not show up as 0 on the Receivables page)
       await client.query(
-        `UPDATE receivables
-         SET total_amount = 0,
-             remaining_amount = 0
+        `DELETE FROM receivables
          WHERE entity_id = $1 AND user_id = $2`,
         [entity_id, userId]
       );
