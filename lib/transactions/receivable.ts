@@ -124,8 +124,8 @@ export async function handleReceivable({
           [
             "DEBT_TAKEN",
             extra,
-            null,
             debtId,
+            to_account,
             entity_id,
             date,
             "Auto conversion",
