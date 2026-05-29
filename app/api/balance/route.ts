@@ -20,7 +20,7 @@ export async function GET() {
   const client = await pool.connect();
 
   try {
-    // 🔥 Let PostgreSQL compute the exact cash and bank balances in a single, fast operation
+    // Compute cash and bank balances dynamically from active ledger states
     const result = await client.query(
       `
       SELECT 
@@ -32,7 +32,14 @@ export async function GET() {
       LEFT JOIN accounts fa ON t.from_account = fa.id
       LEFT JOIN accounts ta ON t.to_account = ta.id
       WHERE t.user_id = $1
-        AND t.parent_id IS NULL
+        AND (
+          t.parent_id IS NOT NULL
+          OR t.id NOT IN (
+            SELECT DISTINCT parent_id 
+            FROM transactions 
+            WHERE parent_id IS NOT NULL AND user_id = $1
+          )
+        )
       `,
       [userId]
     );
