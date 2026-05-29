@@ -75,10 +75,18 @@ export default function Home() {
     }
   });
 
-  let runningBalance = 0;
+let runningBalance = 0;
+
+  // Filter out parents with children to prevent double-counting, leaving only active nodes
+  const parentIdsWithChildren = new Set(
+    transactions.map((t) => t.parent_id).filter(Boolean)
+  );
+
+  const activeTransactions = transactions.filter(
+    (t) => t.parent_id || !parentIdsWithChildren.has(t.id)
+  );
   
-  const chartData = transactions
-    .filter((t: any) => !t.parent_id)
+  const chartData = activeTransactions
     .sort(
       (a, b) =>
         new Date(a.date).getTime() -
