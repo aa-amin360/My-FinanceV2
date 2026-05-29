@@ -163,6 +163,20 @@ export async function DELETE(
           );
         }
       }
+      
+      // ✅ Clean up any fully settled records so they don't show up with 0 amounts after rebuilds
+      await client.query(
+        `DELETE FROM debts
+         WHERE entity_id = $1 AND user_id = $2 AND remaining_amount <= 0`,
+        [t.entity_id, userId]
+      );
+
+      await client.query(
+        `DELETE FROM receivables
+         WHERE entity_id = $1 AND user_id = $2 AND remaining_amount <= 0`,
+        [t.entity_id, userId]
+      );
+      
     }
 
     await client.query("COMMIT");
