@@ -190,10 +190,10 @@ export default function CalendarPage() {
                   key={`day-${day}`}
                   onClick={() => setSelectedDateStr(dateKey)}
                   className="
-                    aspect-square p-1 sm:p-2 rounded-xl sm:rounded-2xl cursor-pointer transition flex flex-col justify-between
+                    aspect-square p-1.5 rounded-xl sm:rounded-2xl cursor-pointer transition flex flex-col justify-between
                     bg-white dark:bg-zinc-950/40
                     border border-gray-200 dark:border-zinc-900/80
-                    shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_1.5px_3px_rgba(255,255,255,0.03)]
+                    shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.06)]
                     hover:border-green-500 dark:hover:border-green-500/80
                     hover:bg-gray-50 dark:hover:bg-zinc-900/30
                     hover:scale-[1.02]
@@ -201,37 +201,43 @@ export default function CalendarPage() {
                   "
                 >
                   {/* Day Number */}
-                  <span className="text-lg sm:text-sm font-bold text-gray-700 dark:text-zinc-300 self-end">
+                  <span className="text-lg sm:text-sm font-bold text-gray-700 dark:text-zinc-300 self-end leading-none">
                     {day}
                   </span>
 
-                  {/* Daily Income/Expense Glimpse */}
-                  <div className="flex flex-col gap-0.5 mt-auto text-left w-full overflow-hidden">
-                    {income > 0 && (
-                      <div className="text-green-600 dark:text-green-400 font-semibold truncate leading-tight">
-                        {/* Mobile Compact View */}
-                        <span className="md:hidden text-[7.5px] tracking-tighter block">
-                          +{formatCompact(income)}
-                        </span>
-                        {/* Desktop Full View */}
-                        <span className="hidden md:block text-xs">
-                          +{income.toLocaleString()}
-                        </span>
-                      </div>
-                    )}
+                  {/* Fixed-Height Metric Container (prevents cells from stretching) */}
+                  <div className="h-6 sm:h-8 flex flex-col justify-end text-left w-full overflow-hidden mt-auto">
+                    {/* Income Slot */}
+                    <div className="h-3 sm:h-4 flex items-center">
+                      {income > 0 ? (
+                        <div className="text-green-600 dark:text-green-400 font-semibold truncate leading-none w-full">
+                          <span className="md:hidden text-[7.5px] tracking-tighter block leading-none">
+                            +{formatCompact(income)}
+                          </span>
+                          <span className="hidden md:block text-xs leading-none">
+                            +{income.toLocaleString()}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="h-full w-full" />
+                      )}
+                    </div>
 
-                    {expense > 0 && (
-                      <div className="text-red-500 dark:text-red-400 font-semibold truncate leading-tight">
-                        {/* Mobile Compact View */}
-                        <span className="md:hidden text-[7.5px] tracking-tighter block">
-                          -{formatCompact(expense)}
-                        </span>
-                        {/* Desktop Full View */}
-                        <span className="hidden md:block text-[10px]">
-                          -{expense.toLocaleString()}
-                        </span>
-                      </div>
-                    )}
+                    {/* Expense Slot */}
+                    <div className="h-3 sm:h-4 flex items-center">
+                      {expense > 0 ? (
+                        <div className="text-red-500 dark:text-red-400 font-semibold truncate leading-none w-full">
+                          <span className="md:hidden text-[7.5px] tracking-tighter block leading-none">
+                            -{formatCompact(expense)}
+                          </span>
+                          <span className="hidden md:block text-xs leading-none">
+                            -{expense.toLocaleString()}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="h-full w-full" />
+                      )}
+                    </div>
                   </div>
                 </div>
               );
