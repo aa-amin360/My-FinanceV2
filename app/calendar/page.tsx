@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
+import { useRouter } from "next/navigation";
 
 type Transaction = {
   id: string;
@@ -20,6 +21,8 @@ export default function CalendarPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [selectedDateStr, setSelectedDateStr] = useState<string | null>(null);
+
+  const router = useRouter();
 
   // =========================
   // LOAD TRANSACTIONS
@@ -140,10 +143,29 @@ export default function CalendarPage() {
         <div className="max-w-4xl mx-auto px-1 sm:px-4">
           {/* Header Controls */}
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2 text-black dark:text-white">
-              <span className="text-green-500">📅</span> {monthName}
-            </h1>
-
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.back()}
+                className="
+                  p-2 rounded-xl
+                  bg-gray-100 dark:bg-zinc-900
+                  border border-gray-200 dark:border-zinc-800
+                  hover:bg-gray-200 dark:hover:bg-zinc-800
+                  transition active:scale-95
+                "
+              >
+                <ArrowLeft
+                  size={18}
+                  className="text-black dark:text-white"
+                />
+              </button>
+          
+              <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2 text-black dark:text-white">
+                <span className="text-green-500">📅</span>
+                {monthName}
+              </h1>
+            </div>
+          
             <div className="flex gap-2">
               <button
                 onClick={handlePrevMonth}
