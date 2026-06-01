@@ -19,6 +19,14 @@ export async function checkBalance(
     FROM transactions
     WHERE user_id = $2
       AND (to_account = $1 OR from_account = $1)
+      AND (
+        parent_id IS NOT NULL
+        OR id NOT IN (
+          SELECT DISTINCT parent_id 
+          FROM transactions 
+          WHERE parent_id IS NOT NULL AND user_id = $2
+        )
+      )
     `,
     [accountId, userId]
   );
