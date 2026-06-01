@@ -11,6 +11,7 @@ type Transaction = {
   amount: string;
   date: string;
   category_name?: string;
+  parent_id?: string | null;
 };
 
 export default function ReportsPage() {
@@ -73,21 +74,29 @@ export default function ReportsPage() {
   }));
 
   // ================= CHART =================
-  const chartData = filteredTx
+  const parentIdsWithChildren = new Set(
+    filteredTx.map((t) => t.parent_id).filter(Boolean)
+  );
+  
+  const activeFilteredTx = filteredTx.filter(
+    (t) => t.parent_id || !parentIdsWithChildren.has(t.id)
+  );
+  
+  const chartData = activeFilteredTx
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .map((t, index, arr) => {
       const isPositive =
         t.type === "INCOME" ||
         t.type === "DEBT_TAKEN" ||
         t.type === "RECEIVABLE_RECEIVED";
-
+  
       const amount = Number(t.amount);
-
+  
       const prev = index === 0 ? 0 : (arr[index - 1] as any).balance || 0;
       const balance = isPositive ? prev + amount : prev - amount;
-
+  
       (t as any).balance = balance;
-
+  
       return {
         date: new Date(t.date).toLocaleDateString("en-US", {
           month: "short",
