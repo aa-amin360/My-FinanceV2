@@ -161,7 +161,6 @@ export default function CalendarPage() {
               </button>
           
               <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2 text-black dark:text-white">
-                <span className="text-green-500">📅</span>
                 {monthName}
               </h1>
             </div>
