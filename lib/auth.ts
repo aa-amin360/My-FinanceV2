@@ -2,6 +2,7 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import pool from "@/lib/db";
 import crypto from "crypto";
+import { AuthOptions } from "next-auth"; // Added AuthOptions
 
 // ==========================================
 // AUTOMATIC SCHEMA MIGRATIONS
@@ -33,7 +34,7 @@ export function verifyPassword(password: string, storedValue: string): boolean {
 // ==========================================
 // NEXTAUTH CONFIGURATION OPTIONS
 // ==========================================
-export const authOptions: any = {
+export const authOptions: AuthOptions = {
   providers: [
     // 1. Google Provider
     GoogleProvider({
