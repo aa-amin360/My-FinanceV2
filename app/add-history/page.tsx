@@ -204,7 +204,7 @@ export default function AddHistoryPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-8 pb-12">
+      <div className="max-w-4xl mx-auto space-y-8 pb-12 px-1 sm:px-4">
         
         {/* HEADER */}
         <div className="space-y-1">
@@ -220,7 +220,7 @@ export default function AddHistoryPage() {
             {/* ==========================================
                 1. OPENING BALANCES SECTION
                 ========================================== */}
-            <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
               <h3 className="text-lg font-bold text-black dark:text-white">Opening Balances</h3>
               
               {isBalancesInitialized ? (
@@ -232,7 +232,7 @@ export default function AddHistoryPage() {
                     <p className="opacity-90">
                       Opening balances can only be created once. Already configured values:
                     </p>
-                    <div className="flex gap-6 pt-1 font-mono font-bold">
+                    <div className="flex flex-wrap gap-x-6 gap-y-1 pt-1 font-mono font-bold">
                       <span>Cash: {configuredCash?.toLocaleString("en-BD")} Tk</span>
                       <span>Bank: {configuredBank?.toLocaleString("en-BD")} Tk</span>
                     </div>
@@ -278,29 +278,29 @@ export default function AddHistoryPage() {
             {/* ==========================================
                 2. EXISTING DEBTS SECTION
                 ========================================== */}
-            <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
               <h3 className="text-lg font-bold text-black dark:text-white">Existing Debts</h3>
               
               <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
                 {debts.map((row, index) => (
-                  <div key={index} className="flex gap-2 items-center">
+                  <div key={index} className="flex gap-1.5 sm:gap-2 items-center w-full">
                     <input
                       type="text"
                       placeholder="Name (e.g. Rahim)"
                       value={row.name}
                       onChange={(e) => updateRow("DEBTS", index, "name", e.target.value)}
-                      className="flex-1 px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                      className="flex-grow min-w-0 px-2.5 sm:px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                     />
                     <input
                       type="number"
                       placeholder="Amount"
                       value={row.amount}
                       onChange={(e) => updateRow("DEBTS", index, "amount", e.target.value)}
-                      className="w-24 sm:w-32 px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                      className="w-20 sm:w-32 px-2 sm:px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm shrink-0"
                     />
                     <button
                       onClick={() => removeRow("DEBTS", index)}
-                      className="p-2 rounded-xl text-red-500 hover:bg-red-500/10 transition shrink-0"
+                      className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-red-500 hover:bg-red-500/10 transition shrink-0"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -335,29 +335,29 @@ export default function AddHistoryPage() {
             {/* ==========================================
                 3. EXISTING RECEIVABLES SECTION
                 ========================================== */}
-            <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
               <h3 className="text-lg font-bold text-black dark:text-white">Existing Receivables</h3>
               
               <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
                 {receivables.map((row, index) => (
-                  <div key={index} className="flex gap-2 items-center">
+                  <div key={index} className="flex gap-1.5 sm:gap-2 items-center w-full">
                     <input
                       type="text"
                       placeholder="Name (e.g. Rahim)"
                       value={row.name}
                       onChange={(e) => updateRow("RECEIVABLES", index, "name", e.target.value)}
-                      className="flex-1 px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                      className="flex-grow min-w-0 px-2.5 sm:px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                     />
                     <input
                       type="number"
                       placeholder="Amount"
                       value={row.amount}
                       onChange={(e) => updateRow("RECEIVABLES", index, "amount", e.target.value)}
-                      className="w-24 sm:w-32 px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                      className="w-20 sm:w-32 px-2 sm:px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm shrink-0"
                     />
                     <button
                       onClick={() => removeRow("RECEIVABLES", index)}
-                      className="p-2 rounded-xl text-red-500 hover:bg-red-500/10 transition shrink-0"
+                      className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-red-500 hover:bg-red-500/10 transition shrink-0"
                     >
                       <Trash2 size={16} />
                     </button>
