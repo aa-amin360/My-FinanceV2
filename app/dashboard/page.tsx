@@ -7,6 +7,7 @@ import WeeklyChartCard from "@/components/dashboard/WeeklyChartCard";
 import Link from "next/link";
 import { Trash2, Wallet, Landmark } from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
+import { useRouter } from "next/navigation";
 
 type Transaction = {
   id: string;
@@ -19,6 +20,7 @@ type Transaction = {
 };
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balance, setBalance] = useState(0);
   const [cashBalance, setCashBalance] = useState(0);
@@ -27,6 +29,22 @@ export default function DashboardPage() {
   const [receivable, setReceivable] = useState(0);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+
+  //Intercept and redirect first-time users to onboarding if not yet initialized
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      try {
+        const res = await fetch("/api/auth/onboarding");
+        const json = await res.json();
+        if (json.success && json.history_initialized === false) {
+          router.push("/onboarding");
+        }
+      } catch (err) {
+        console.error("Onboarding check failed:", err);
+      }
+    };
+    checkOnboardingStatus();
+  }, [router]);
 
   // ================= LOAD DATA =================
   const loadData = async () => {
