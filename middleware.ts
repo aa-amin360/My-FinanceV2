@@ -2,18 +2,22 @@ import { withAuth } from "next-auth/middleware";
 
 export default withAuth({
   pages: {
-    signIn: "/login",
+    signIn: "/", // Redirect unauthenticated users back to your root Landing Page
   },
 });
 
 export const config = {
   matcher: [
-    /*
-      Protect everything except:
-      - api/auth (next-auth)
-      - login page
-      - static files
-    */
-    "/((?!api/auth|login|_next/static|_next/image|favicon.ico).*)",
+    // Protect all private internal financial app routes
+    "/dashboard/:path*",
+    "/transactions/:path*",
+    "/categories/:path*",
+    "/debts/:path*",
+    "/receivables/:path*",
+    "/reports/:path*",
+    "/savings/:path*",
+    "/calendar/:path*",
+    "/add-history/:path*",
+    "/onboarding/:path*",
   ],
 };
