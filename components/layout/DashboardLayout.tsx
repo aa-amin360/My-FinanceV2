@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Space_Grotesk } from "next/font/google";
+import { signOut } from "next-auth/react"; // NextAuth session sign-out handler
 
 import TransactionModal from "@/components/modal/TransactionModal";
 
@@ -24,7 +25,8 @@ import {
   PanelRightClose,
   Home,
   CalendarDays,
-  History, // Added History icon
+  History,
+  LogOut, // LogOut icon imported from Lucide
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -34,9 +36,6 @@ export default function DashboardLayout({
 }) {
   const { toggleTheme, theme } = useTheme();
   const pathname = usePathname();
-
-  const [cashBalance, setCashBalance] = useState(0);
-  const [bankBalance, setBankBalance] = useState(0);
 
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
@@ -48,22 +47,6 @@ export default function DashboardLayout({
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", String(collapsed));
   }, [collapsed]);
-
-  // ================= LOAD BALANCE =================
-  useEffect(() => {
-    const loadBalance = async () => {
-      const res = await fetch("/api/balance");
-      const data = await res.json();
-
-      setCashBalance(Number(data.cashBalance || 0));
-      setBankBalance(Number(data.bankBalance || 0));
-    };
-
-    loadBalance();
-
-    window.addEventListener("refreshData", loadBalance);
-    return () => window.removeEventListener("refreshData", loadBalance);
-  }, []);
 
   return (
     <div className="flex h-screen overflow-hidden bg-white text-black dark:bg-black dark:text-white transition-colors duration-300">
@@ -95,7 +78,6 @@ export default function DashboardLayout({
         
         <div className={`flex-1 overflow-y-auto ${collapsed ? "px-1" : "px-2"}`}>
           <nav className={`flex flex-col ${collapsed ? "gap-3 mt-2" : "gap-2 mt-2"}`}>
-            {/* 🔥 Updated path from "/" to "/dashboard" */}
             <Item icon={LayoutDashboard} label="Dashboard" href="/dashboard" pathname={pathname} collapsed={collapsed} />
             <Item icon={ArrowLeftRight} label="Transactions" href="/transactions" pathname={pathname} collapsed={collapsed} />
             <Item icon={Tag} label="Categories" href="/categories" pathname={pathname} collapsed={collapsed} />
@@ -103,7 +85,6 @@ export default function DashboardLayout({
             <Item icon={CreditCard} label="Debt" href="/debts" pathname={pathname} collapsed={collapsed} />
             <Item icon={Wallet} label="Receivable" href="/receivables" pathname={pathname} collapsed={collapsed} />
             <Item icon={BarChart3} label="Reports" href="/reports" pathname={pathname} collapsed={collapsed} />
-            {/* ✅ Added Add History to Desktop Sidebar */}
             <Item icon={History} label="Add History" href="/add-history" pathname={pathname} collapsed={collapsed} />
           </nav>
         </div>
@@ -113,7 +94,7 @@ export default function DashboardLayout({
       <div className="flex flex-col flex-1 h-full">
         
         {/* HEADER */}
-        <div className="h-16 flex items-center justify-between px-6 bg-white dark:bg-black border-b border-gray-200 dark:border-zinc-900">
+        <div className="h-16 flex items-center justify-between px-6 bg-white dark:bg-black border-b border-gray-200 dark:border-zinc-900 animate-fadeIn">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-green-500 flex items-center justify-center overflow-hidden">
               <img
@@ -127,21 +108,33 @@ export default function DashboardLayout({
             </h1>
           </div>
           
-          {/* ✅ Calendar placement is kept exactly as is */}
+          {/* HEADER CONTROLS */}
           <div className="flex items-center gap-2">
+            {/* 1. Calendar Button */}
             <Link
               href="/calendar"
               className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 hover:scale-105 transition"
+              aria-label="Calendar view"
             >
               <CalendarDays size={18} />
             </Link>
           
+            {/* 2. Theme Toggle Button */}
             <button
               onClick={toggleTheme}
               className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 hover:scale-105 transition"
               aria-label="Toggle theme"
             >
               {theme === "dark" ? "🌙" : "☀️"}
+            </button>
+
+            {/* 3. Red Logout Button */}
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 hover:scale-105 transition"
+              aria-label="Log out"
+            >
+              <LogOut size={18} />
             </button>
           </div>
         </div>
@@ -152,7 +145,7 @@ export default function DashboardLayout({
         </main>
       </div>
 
-      {/* ================= MOBILE NAV ================= */}
+      {/* ================= MOBILE NAV (SCROLLABLE PILL) ================= */}
       <FloatingNav pathname={pathname} />
 
       {/* ================= FAB ================= */}
@@ -173,7 +166,7 @@ export default function DashboardLayout({
         +
       </button>
 
-      {/* ✅ MODAL (EXTERNAL NOW) */}
+      {/* MODAL */}
       <TransactionModal />
     </div>
   );
@@ -207,17 +200,17 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
 
 function FloatingNav({ pathname }: { pathname: string }) {
   const items = [
-    { label: "Home", href: "/dashboard", icon: Home }, // Updated target to "/dashboard"
+    { label: "Home", href: "/dashboard", icon: Home },
     { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
     { label: "Categories", href: "/categories", icon: Tag },
     { label: "Debt", href: "/debts", icon: CreditCard },
     { label: "Receivable", href: "/receivables", icon: Wallet },
-    { label: "Add History", href: "/add-history", icon: History }, // Added Add History route
+    { label: "Add History", href: "/add-history", icon: History },
     { label: "Reports", href: "/reports", icon: BarChart3 },
   ];
 
   return (
-    <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md">
+    <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md animate-fadeIn">
       {/* Scrollable Container with Hidden Scrollbars */}
       <div className="
         flex gap-3 items-center w-full px-4 py-2.5 rounded-full 
@@ -242,7 +235,7 @@ function FloatingNav({ pathname }: { pathname: string }) {
                 }`}
               >
                 <Icon size={20} />
-                <span className={`${isActive ? "block ml-1 font-semibold text-xs" : "hidden"}`}>
+                <span className={`${isActive ? "block ml-1 font-semibold text-xs animate-fadeIn" : "hidden"}`}>
                   {item.label}
                 </span>
               </div>
