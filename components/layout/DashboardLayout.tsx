@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Space_Grotesk } from "next/font/google";
-import { signOut } from "next-auth/react"; // NextAuth session sign-out handler
+import { signOut } from "next-auth/react";
 
 import TransactionModal from "@/components/modal/TransactionModal";
 
@@ -26,7 +26,7 @@ import {
   Home,
   CalendarDays,
   History,
-  LogOut, // LogOut icon imported from Lucide
+  LogOut,
 } from "lucide-react";
 
 export default function DashboardLayout({
