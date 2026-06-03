@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { Space_Grotesk } from "next/font/google";
 
 import TransactionModal from "@/components/modal/TransactionModal";
-import AmbientPlayer from "@/components/audio/AmbientPlayer";
 
 const space = Space_Grotesk({
   subsets: ["latin"],
@@ -25,6 +24,7 @@ import {
   PanelRightClose,
   Home,
   CalendarDays,
+  History, // Added History icon
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -68,7 +68,7 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen overflow-hidden bg-white text-black dark:bg-black dark:text-white transition-colors duration-300">
       
-      {/* ================= SIDEBAR ================= */}
+      {/* ================= SIDEBAR (DESKTOP) ================= */}
       <aside
         className={`hidden md:flex ${
           collapsed ? "w-16" : "w-56"
@@ -95,13 +95,16 @@ export default function DashboardLayout({
         
         <div className={`flex-1 overflow-y-auto ${collapsed ? "px-1" : "px-2"}`}>
           <nav className={`flex flex-col ${collapsed ? "gap-3 mt-2" : "gap-2 mt-2"}`}>
-            <Item icon={LayoutDashboard} label="Dashboard" href="/" pathname={pathname} collapsed={collapsed} />
+            {/* 🔥 Updated path from "/" to "/dashboard" */}
+            <Item icon={LayoutDashboard} label="Dashboard" href="/dashboard" pathname={pathname} collapsed={collapsed} />
             <Item icon={ArrowLeftRight} label="Transactions" href="/transactions" pathname={pathname} collapsed={collapsed} />
             <Item icon={Tag} label="Categories" href="/categories" pathname={pathname} collapsed={collapsed} />
             <Item icon={Wallet} label="Savings" href="/savings" pathname={pathname} collapsed={collapsed} />
             <Item icon={CreditCard} label="Debt" href="/debts" pathname={pathname} collapsed={collapsed} />
             <Item icon={Wallet} label="Receivable" href="/receivables" pathname={pathname} collapsed={collapsed} />
             <Item icon={BarChart3} label="Reports" href="/reports" pathname={pathname} collapsed={collapsed} />
+            {/* ✅ Added Add History to Desktop Sidebar */}
+            <Item icon={History} label="Add History" href="/add-history" pathname={pathname} collapsed={collapsed} />
           </nav>
         </div>
       </aside>
@@ -124,7 +127,7 @@ export default function DashboardLayout({
             </h1>
           </div>
           
-
+          {/* ✅ Calendar placement is kept exactly as is */}
           <div className="flex items-center gap-2">
             <Link
               href="/calendar"
@@ -176,7 +179,7 @@ export default function DashboardLayout({
   );
 }
 
-// ================= COMPONENTS ================= //
+// ================= SIDEBAR COMPONENTS ================= //
 
 function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
   const isActive =
@@ -200,19 +203,28 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
   );
 }
 
+// ================= MOBILE NAV (HORIZONTALLY SCROLLABLE) ================= //
+
 function FloatingNav({ pathname }: { pathname: string }) {
   const items = [
-    { label: "Home", href: "/", icon: Home },
+    { label: "Home", href: "/dashboard", icon: Home }, // Updated target to "/dashboard"
     { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
     { label: "Categories", href: "/categories", icon: Tag },
     { label: "Debt", href: "/debts", icon: CreditCard },
     { label: "Receivable", href: "/receivables", icon: Wallet },
+    { label: "Add History", href: "/add-history", icon: History }, // Added Add History route
     { label: "Reports", href: "/reports", icon: BarChart3 },
   ];
 
   return (
-    <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full px-4">
-      <div className="flex justify-around items-center w-full max-w-md mx-auto px-2 py-2 rounded-full bg-white/80 dark:bg-black/80 border border-gray-200 dark:border-slate-700 backdrop-blur-xl shadow-xl">
+    <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md">
+      {/* Scrollable Container with Hidden Scrollbars */}
+      <div className="
+        flex gap-3 items-center w-full px-4 py-2.5 rounded-full 
+        bg-white/80 dark:bg-black/80 border border-gray-200 dark:border-slate-700 
+        backdrop-blur-xl shadow-xl overflow-x-auto whitespace-nowrap
+        [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]
+      ">
         {items.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -221,16 +233,16 @@ function FloatingNav({ pathname }: { pathname: string }) {
           const Icon = item.icon;
 
           return (
-            <Link key={item.href} href={item.href}>
+            <Link key={item.href} href={item.href} className="shrink-0">
               <div
-                className={`flex items-center justify-center gap-2 py-2 rounded-full transition ${
+                className={`flex items-center justify-center gap-2 py-2 rounded-full transition shrink-0 ${
                   isActive
                     ? "bg-green-500 text-black px-4 scale-105"
                     : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-200 dark:hover:bg-zinc-900 w-10 h-10"
                 }`}
               >
                 <Icon size={20} />
-                <span className={`${isActive ? "block ml-1 font-semibold" : "hidden"}`}>
+                <span className={`${isActive ? "block ml-1 font-semibold text-xs" : "hidden"}`}>
                   {item.label}
                 </span>
               </div>
