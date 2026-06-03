@@ -46,7 +46,6 @@ export default function OnboardingPage() {
       const trimmed = line.trim();
       if (!trimmed) continue;
 
-      // Extract the last space-separated word as the amount, rest as the name
       const lastSpaceIndex = trimmed.lastIndexOf(" ");
       if (lastSpaceIndex === -1) continue;
 
@@ -65,10 +64,9 @@ export default function OnboardingPage() {
     const parsed = parseBulkText(bulkDebtsText);
     if (parsed.length === 0) return alert("No valid entries found to parse. Format: Name Amount (e.g. Rahim 5000)");
     
-    // Filter out initial empty row if it exists
     const cleanCurrent = debts.filter(d => d.name || d.amount);
     setDebts([...cleanCurrent, ...parsed]);
-    setBulkDebtsText(""); // Clear textarea
+    setBulkDebtsText("");
   };
 
   const handleBulkParseReceivables = () => {
@@ -77,7 +75,7 @@ export default function OnboardingPage() {
 
     const cleanCurrent = receivables.filter(r => r.name || r.amount);
     setReceivables([...cleanCurrent, ...parsed]);
-    setBulkReceivablesText(""); // Clear textarea
+    setBulkReceivablesText("");
   };
 
   // ==========================================
@@ -188,7 +186,6 @@ export default function OnboardingPage() {
     };
 
     try {
-      // 1. Save starting positions inside single DB transaction block
       const saveRes = await fetch("/api/transactions/history", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -200,7 +197,6 @@ export default function OnboardingPage() {
         throw new Error(errData.error || "Failed to save starting positions.");
       }
 
-      // 2. Mark onboarding completed flag on user's column
       const onboardingRes = await fetch("/api/auth/onboarding", {
         method: "POST",
       });
@@ -209,7 +205,6 @@ export default function OnboardingPage() {
         throw new Error("Balances saved, but onboarding completion flag failed to write.");
       }
 
-      // Refresh frontend and redirect to dashboard
       window.dispatchEvent(new Event("refreshData"));
       router.push("/dashboard");
 
@@ -220,10 +215,10 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 flex items-center justify-center p-6 transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 flex items-center justify-center p-4 transition-colors duration-300">
       
-      {/* CARD MAIN WRAPPER */}
-      <div className="w-full max-w-xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col gap-6">
+      {/* CARD MAIN WRAPPER (Updated responsive padding) */}
+      <div className="w-full max-w-xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 rounded-3xl p-4 sm:p-8 shadow-xl flex flex-col gap-6">
         
         {/* PROGRESS STEP DOTS */}
         <div className="flex justify-between items-center px-4">
@@ -298,27 +293,27 @@ export default function OnboardingPage() {
               <p className="text-sm text-slate-500 dark:text-zinc-400">Enter any outstanding loans or debts you currently owe. Press Next if you don't have any.</p>
             </div>
 
-            {/* Dynamic Manual Rows */}
+            {/* Dynamic Manual Rows (Updated with mobile responsive gap and flex input sizes) */}
             <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
               {debts.map((row, index) => (
-                <div key={index} className="flex gap-2 items-center">
+                <div key={index} className="flex gap-1.5 sm:gap-2 items-center w-full">
                   <input
                     type="text"
                     placeholder="Name (e.g. Rahim)"
                     value={row.name}
                     onChange={(e) => updateRow("DEBTS", index, "name", e.target.value)}
-                    className="flex-1 px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                    className="flex-grow min-w-0 px-2.5 sm:px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                   />
                   <input
                     type="number"
                     placeholder="Amount"
                     value={row.amount}
                     onChange={(e) => updateRow("DEBTS", index, "amount", e.target.value)}
-                    className="w-24 sm:w-32 px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                    className="w-20 sm:w-32 px-2 sm:px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm shrink-0"
                   />
                   <button
                     onClick={() => removeRow("DEBTS", index)}
-                    className="p-2 rounded-xl text-red-500 hover:bg-red-500/10 transition shrink-0"
+                    className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-red-500 hover:bg-red-500/10 transition shrink-0"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -388,27 +383,27 @@ export default function OnboardingPage() {
               <p className="text-sm text-slate-500 dark:text-zinc-400">Enter details of money lent out. If you don't have any receivables, press Finish.</p>
             </div>
 
-            {/* Dynamic Manual Rows */}
+            {/* Dynamic Manual Rows (Updated with mobile responsive gap and flex input sizes) */}
             <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
               {receivables.map((row, index) => (
-                <div key={index} className="flex gap-2 items-center">
+                <div key={index} className="flex gap-1.5 sm:gap-2 items-center w-full">
                   <input
                     type="text"
                     placeholder="Name (e.g. Rahim)"
                     value={row.name}
                     onChange={(e) => updateRow("RECEIVABLES", index, "name", e.target.value)}
-                    className="flex-1 px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                    className="flex-grow min-w-0 px-2.5 sm:px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                   />
                   <input
                     type="number"
                     placeholder="Amount"
                     value={row.amount}
                     onChange={(e) => updateRow("RECEIVABLES", index, "amount", e.target.value)}
-                    className="w-24 sm:w-32 px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                    className="w-20 sm:w-32 px-2 sm:px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm shrink-0"
                   />
                   <button
                     onClick={() => removeRow("RECEIVABLES", index)}
-                    className="p-2 rounded-xl text-red-500 hover:bg-red-500/10 transition shrink-0"
+                    className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-red-500 hover:bg-red-500/10 transition shrink-0"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -481,12 +476,10 @@ export default function OnboardingPage() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white/95 dark:bg-black/90 border border-slate-200 dark:border-zinc-800 backdrop-blur-xl rounded-3xl p-6 w-full max-w-[340px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn">
             
-            {/* Modal Title */}
             <h3 className="text-lg font-bold text-black dark:text-white">
               {modal.startsWith("SKIP") ? "Are you sure?" : "Discard Changes?"}
             </h3>
 
-            {/* Modal Body Description */}
             <p className="text-sm text-slate-500 dark:text-zinc-400 leading-relaxed">
               {modal === "SKIP_BALANCES" && "Skipping means your account will start with zero balances. You can add existing balances later from Add History."}
               {modal === "SKIP_DEBTS" && "No debt records will be created. You can add them later from Add History."}
@@ -494,9 +487,7 @@ export default function OnboardingPage() {
               {modal.startsWith("BACK") && "You have unsaved entries. Going back will discard them."}
             </p>
 
-            {/* Modal Actions */}
             <div className="flex gap-3 justify-center mt-2">
-              {/* Skip / Discard Action */}
               <button
                 onClick={() => {
                   if (modal === "SKIP_BALANCES") {
@@ -524,7 +515,6 @@ export default function OnboardingPage() {
                 {modal.startsWith("SKIP") ? "Skip" : "Discard"}
               </button>
 
-              {/* Cancel Action */}
               <button
                 onClick={() => setModal(null)}
                 className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-semibold text-sm transition active:scale-95"
