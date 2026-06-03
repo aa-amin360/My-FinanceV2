@@ -26,6 +26,62 @@ async function getOrCreateEntityId(client: any, name: string, type: string, user
 }
 
 // ==========================================
+// GET HISTORICAL BALANCES STATUS
+// ==========================================
+export async function GET() {
+  const session: any = await getServerSession(authOptions);
+
+  if (!session || !session.user?.email) {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
+  const userId = session.user.email;
+  const client = await pool.connect();
+
+  try {
+    const res = await client.query(
+      `
+      SELECT t.amount, a.name AS account_name
+      FROM transactions t
+      JOIN accounts a ON t.to_account = a.id
+      WHERE t.user_id = $1 AND t.note = 'Opening Balance'
+      `,
+      [userId]
+    );
+
+    let cashValue: number | null = null;
+    let bankValue: number | null = null;
+    const isInitialized = res.rows.length > 0;
+
+    for (const row of res.rows) {
+      const amt = Number(row.amount);
+      const name = row.account_name.toLowerCase();
+      if (name === "cash") cashValue = amt;
+      if (name === "bank") bankValue = amt;
+    }
+
+    return NextResponse.json({
+      success: true,
+      isInitialized,
+      cashValue,
+      bankValue,
+    });
+
+  } catch (err: any) {
+    console.error("GET HISTORY STATUS ERROR:", err);
+    return NextResponse.json(
+      { error: "Failed to check historical balance status." },
+      { status: 500 }
+    );
+  } finally {
+    client.release();
+  }
+}
+
+// ==========================================
 // POST HISTORICAL ENTRIES
 // ==========================================
 export async function POST(req: Request) {
