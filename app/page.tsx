@@ -12,6 +12,7 @@ import {
   Wallet,
   Activity,
   ArrowUpRight,
+  ArrowRight,
   Play,
   Users,
   CheckCircle2,
