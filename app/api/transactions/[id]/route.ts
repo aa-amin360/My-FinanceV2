@@ -102,7 +102,12 @@ export async function DELETE(
             OR id NOT IN (
               SELECT DISTINCT parent_id 
               FROM transactions 
-              WHERE parent_id IS NOT NULL AND user_id = $3
+              WHERE parent_id IS NOT NULL 
+                AND user_id = $3
+                AND parent_id IN (
+                  SELECT id FROM transactions 
+                  WHERE type IN ('DEBT_REPAID', 'RECEIVABLE_RECEIVED')
+                )
             )
           )
         ORDER BY date ASC, created_at ASC
