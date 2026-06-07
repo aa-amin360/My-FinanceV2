@@ -99,7 +99,18 @@ export default function DashboardPage() {
   
   // Filter out parents with children to prevent double-counting, leaving only active nodes
   const parentIdsWithChildren = new Set(
-    transactions.map((t) => t.parent_id).filter(Boolean)
+    transactions
+      .filter((t) => t.parent_id)
+      .map((t) => {
+        // Find the parent transaction object
+        const parent = transactions.find((p) => p.id === t.parent_id);
+        // Only exclude the parent if its type is a split (DEBT_REPAID or RECEIVABLE_RECEIVED)
+        if (parent && (parent.type === "DEBT_REPAID" || parent.type === "RECEIVABLE_RECEIVED")) {
+          return parent.id;
+        }
+        return null;
+      })
+      .filter(Boolean)
   );
 
   const activeTransactions = transactions.filter(
