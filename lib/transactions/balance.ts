@@ -24,7 +24,12 @@ export async function checkBalance(
         OR id NOT IN (
           SELECT DISTINCT parent_id 
           FROM transactions 
-          WHERE parent_id IS NOT NULL AND user_id = $2
+          WHERE parent_id IS NOT NULL 
+            AND user_id = $2
+            AND parent_id IN (
+              SELECT id FROM transactions 
+              WHERE type IN ('DEBT_REPAID', 'RECEIVABLE_RECEIVED')
+            )
         )
       )
     `,
