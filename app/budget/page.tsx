@@ -10,7 +10,6 @@ import {
   ChevronLeft, 
   ChevronRight, 
   TrendingUp, 
-  TrendingDown, 
   AlertTriangle,
   CheckCircle2,
   ArrowRightLeft,
@@ -42,10 +41,13 @@ export default function BudgetPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [entities, setEntities] = useState<string[]>([]);
 
+  // Modals & Forms State
   const [showAddModal, setShowAddModal] = useState(false);
   const [showQuickCategoryModal, setShowQuickCategoryModal] = useState(false);
   const [processingPlan, setProcessingPlan] = useState<Plan | null>(null);
+  const [planToDeleteId, setPlanToDeleteId] = useState<number | null>(null); // ✅ Added Custom Delete Modal State
 
+  // Form inputs
   const [date, setDate] = useState("");
   const [type, setType] = useState<"EXPENSE" | "INCOME" | "DEBT" | "RECEIVABLE">("EXPENSE");
   const [targetSearch, setTargetSearch] = useState("");
@@ -55,6 +57,14 @@ export default function BudgetPage() {
 
   const [showTargetDropdown, setShowTargetDropdown] = useState(false);
 
+  // Custom Mini Calendar Picker States
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [pickerDate, setPickerDate] = useState(() => new Date());
+
+  const [showReschedulePicker, setShowReschedulePicker] = useState(false);
+  const [reschedulePickerDate, setReschedulePickerDate] = useState(() => new Date());
+
+  // Process Modal Inputs
   const [processAccount, setAccount] = useState("Cash");
   const [partialAmount, setPartialAmount] = useState("");
   const [isPartial, setIsPartial] = useState(false);
@@ -72,6 +82,29 @@ export default function BudgetPage() {
     year: "numeric",
   });
 
+  // ==========================================
+  // CUSTOM DATE PICKER HELPERS
+  // ==========================================
+  const getPickerGridCells = (viewDate: Date) => {
+    const y = viewDate.getFullYear();
+    const m = viewDate.getMonth();
+    const totalDays = new Date(y, m + 1, 0).getDate();
+    const firstDayIndex = new Date(y, m, 1).getDay();
+    const padding = Array.from({ length: firstDayIndex }, () => null);
+    const days = Array.from({ length: totalDays }, (_, i) => i + 1);
+    return [...padding, ...days];
+  };
+
+  const isPastDay = (day: number, viewDate: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Strip hours to compare by dates only
+    const checkDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+    return checkDate < today;
+  };
+
+  // ==========================================
+  // LOAD PLANS AND LEDGER STATUS
+  // ==========================================
   const loadData = async () => {
     try {
       const balRes = await fetch("/api/balance", { cache: "no-store" });
@@ -181,8 +214,25 @@ export default function BudgetPage() {
     const targetName = selectedTarget ? selectedTarget.name : targetSearch.trim();
     const targetId = selectedTarget ? selectedTarget.id : null;
 
+    // 1. Validate required fields
     if (!targetName || !amount || !date) {
       setError("Please fill out all required fields.");
+      setLoading(false);
+      return;
+    }
+
+    // 2. Validate positive amount
+    const amountNumber = Number(amount);
+    if (isNaN(amountNumber) || amountNumber <= 0) {
+      setError("Amount must be a positive number greater than 0.");
+      setLoading(false);
+      return;
+    }
+
+    // 3. Programmatic Safeguard: Block scheduling plans in the past
+    const todayStr = new Date().toLocaleDateString("en-CA");
+    if (date < todayStr) {
+      setError("Scheduled date cannot be in the past.");
       setLoading(false);
       return;
     }
@@ -193,7 +243,7 @@ export default function BudgetPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type,
-          amount: Number(amount),
+          amount: amountNumber,
           target_id: targetId,
           target_name: targetName,
           date,
@@ -378,6 +428,7 @@ export default function BudgetPage() {
       setProcessingPlan(null);
       setIsRescheduling(false);
       setRescheduleDate("");
+      setShowReschedulePicker(false);
       loadData();
     } catch (err: any) {
       setError(err.message);
@@ -386,11 +437,14 @@ export default function BudgetPage() {
     }
   };
 
+  // Process Deletions via the clean Custom Modal state (no confirm popup!)
   const handleDeletePlan = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this planned item?")) return;
     try {
       const res = await fetch(`/api/budget/${id}`, { method: "DELETE" });
-      if (res.ok) loadData();
+      if (res.ok) {
+        setPlanToDeleteId(null);
+        loadData();
+      }
     } catch (err) {
       console.error("Failed to delete plan:", err);
     }
@@ -431,7 +485,7 @@ export default function BudgetPage() {
               </button>
             </div>
 
-            {/* Add Plan Trigger (Optimized to stay on one line) */}
+            {/* Add Plan Trigger */}
             <button
               onClick={() => setShowAddModal(true)}
               className="px-4 py-2.5 rounded-2xl bg-green-500 hover:bg-green-400 text-black font-bold text-xs sm:text-sm transition active:scale-95 flex items-center gap-1.5 whitespace-nowrap shrink-0"
@@ -447,7 +501,6 @@ export default function BudgetPage() {
         <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 p-4 sm:p-6 rounded-3xl shadow-sm space-y-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_1.5px_3px_rgba(255,255,255,0.02)]">
           <h2 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block">Projections for {monthName}</h2>
           
-          {/* Responsive columns matching size constraints */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 pt-1">
             <ProjectionBlock label="Current Balance" val={currentBalance} color="text-zinc-700 dark:text-zinc-300" />
             <ProjectionBlock label="Expected Income" val={expectedIncome} color="text-green-500" prefix="+" />
@@ -531,8 +584,9 @@ export default function BudgetPage() {
                       </span>
                     )}
 
+                    {/* Trigger Custom Delete Modal instead of browser alert */}
                     <button
-                      onClick={() => handleDeletePlan(p.id)}
+                      onClick={() => setPlanToDeleteId(p.id)}
                       className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition shrink-0 ml-1"
                     >
                       <Trash2 size={14} />
@@ -551,7 +605,7 @@ export default function BudgetPage() {
           </div>
         </div>
 
-        {/* MOBILE CARD VIEW (No text squeezing, completely responsive) */}
+        {/* MOBILE CARD VIEW */}
         <div className="md:hidden space-y-3">
           {plans.map((p) => {
             const amt = Number(p.amount);
@@ -605,7 +659,7 @@ export default function BudgetPage() {
                     )}
 
                     <button
-                      onClick={() => handleDeletePlan(p.id)}
+                      onClick={() => setPlanToDeleteId(p.id)} // Trigger Custom Delete Modal on Mobile Card
                       className="p-1 rounded-lg text-red-400 hover:bg-red-500/10 transition"
                     >
                       <Trash2 size={13} />
@@ -721,29 +775,100 @@ export default function BudgetPage() {
                 )}
               </div>
 
-              {/* Amount */}
+              {/* Amount input (Protected against negative values, Spinners Hidden) */}
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Amount</label>
                 <input
                   type="number"
                   required
+                  min="0.01" 
+                  step="any"
                   placeholder="0.00"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-xs sm:text-sm text-black dark:text-white"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "" || Number(val) >= 0) {
+                      setAmount(val);
+                    }
+                  }}
+                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-xs sm:text-sm text-black dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
 
-              {/* Date */}
-              <div className="flex flex-col gap-1">
+              {/* Custom Mini Calendar Date Picker */}
+              <div className="relative flex flex-col gap-1">
                 <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Scheduled Date</label>
-                <input
-                  type="date"
-                  required
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-xs sm:text-sm text-black dark:text-white"
-                />
+                <div
+                  onClick={() => setShowDatePicker(!showDatePicker)}
+                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none text-xs sm:text-sm text-slate-500 dark:text-zinc-400 cursor-pointer flex justify-between items-center"
+                >
+                  <span>
+                    {date 
+                      ? new Date(date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) 
+                      : "Select expected date..."
+                    }
+                  </span>
+                  <span className="text-zinc-400">📅</span>
+                </div>
+
+                {/* Floating Custom Mini Calendar Dropdown */}
+                {showDatePicker && (
+                  <div className="absolute top-full left-0 w-full mt-1.5 p-3 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl z-50 flex flex-col gap-2 animate-modalIn" onClick={(e) => e.stopPropagation()}>
+                    {/* Header */}
+                    <div className="flex justify-between items-center text-[11px] font-bold text-black dark:text-white leading-none">
+                      <button type="button" onClick={() => setPickerDate(new Date(pickerDate.getFullYear(), pickerDate.getMonth() - 1, 1))} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-900 transition">
+                        <ChevronLeft size={12} />
+                      </button>
+                      <span>{pickerDate.toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>
+                      <button type="button" onClick={() => setPickerDate(new Date(pickerDate.getFullYear(), pickerDate.getMonth() + 1, 1))} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-900 transition">
+                        <ChevronRight size={12} />
+                      </button>
+                    </div>
+
+                    {/* Weekdays */}
+                    <div className="grid grid-cols-7 gap-1 text-center text-[8px] font-bold text-zinc-400">
+                      {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => <span key={i}>{d}</span>)}
+                    </div>
+
+                    {/* Grid Days */}
+                    <div className="grid grid-cols-7 gap-1">
+                      {getPickerGridCells(pickerDate).map((day, idx) => {
+                        if (day === null) {
+                          return <div key={`empty-${idx}`} className="aspect-square" />;
+                        }
+                        
+                        const isPast = isPastDay(day, pickerDate);
+                        const isSelected = date === `${pickerDate.getFullYear()}-${(pickerDate.getMonth() + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+
+                        return (
+                          <button
+                            key={day}
+                            type="button"
+                            disabled={isPast}
+                            onClick={() => {
+                              const y = pickerDate.getFullYear();
+                              const m = (pickerDate.getMonth() + 1).toString().padStart(2, "0");
+                              const d = day.toString().padStart(2, "0");
+                              setDate(`${y}-${m}-${d}`);
+                              setShowDatePicker(false);
+                            }}
+                            className={`
+                              aspect-square text-[9px] font-bold rounded-lg transition-all flex items-center justify-center
+                              ${isPast 
+                                ? "text-zinc-300 dark:text-zinc-700 cursor-not-allowed opacity-50" 
+                                : isSelected
+                                ? "bg-green-500 text-black shadow-sm"
+                                : "text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-900"
+                              }
+                            `}
+                          >
+                            {day}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Optional Note */}
@@ -818,7 +943,7 @@ export default function BudgetPage() {
           DUE EVENT PROCESSING DIALOG (PROCESS MODAL)
           ========================================== */}
       {processingPlan && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => { setProcessingPlan(null); setIsPartial(false); setIsRescheduling(false); }}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => { setProcessingPlan(null); setIsPartial(false); setIsRescheduling(false); setShowReschedulePicker(false); }}>
           <div className="bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 w-full max-w-[360px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
             
             <div className="border-b border-slate-100 dark:border-zinc-900 pb-3 flex justify-between items-center text-left">
@@ -828,7 +953,7 @@ export default function BudgetPage() {
                   Due amount: {Number(processingPlan.amount).toLocaleString("en-BD")} Tk
                 </span>
               </div>
-              <button onClick={() => { setProcessingPlan(null); setIsPartial(false); setIsRescheduling(false); }} className="p-1 text-slate-400 hover:text-black dark:hover:text-white transition rounded-full hover:bg-slate-100 dark:hover:bg-zinc-900">
+              <button onClick={() => { setProcessingPlan(null); setIsPartial(false); setIsRescheduling(false); setShowReschedulePicker(false); }} className="p-1 text-slate-400 hover:text-black dark:hover:text-white transition rounded-full hover:bg-slate-100 dark:hover:bg-zinc-900">
                 <X size={14} />
               </button>
             </div>
@@ -872,7 +997,7 @@ export default function BudgetPage() {
                   placeholder="Partial Amount"
                   value={partialAmount}
                   onChange={(e) => setPartialAmount(e.target.value)}
-                  className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-green-500 text-xs text-black dark:text-white"
+                  className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-green-500 text-xs text-black dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
 
                 <div className="flex items-center justify-between bg-slate-50 dark:bg-zinc-900/60 p-2 rounded-xl border border-slate-200 dark:border-zinc-800">
@@ -896,25 +1021,126 @@ export default function BudgetPage() {
               /* RESCHEDULE WORKFLOW */
               <div className="flex flex-col gap-3">
                 <p className="text-xs text-slate-500 dark:text-zinc-400 font-bold text-left">Select new scheduled date:</p>
-                <input
-                  type="date"
-                  required
-                  value={rescheduleDate}
-                  onChange={(e) => setRescheduleDate(e.target.value)}
-                  className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-green-500 text-xs text-black dark:text-white"
-                />
+                
+                <div className="relative flex flex-col text-left">
+                  <div
+                    onClick={() => setShowReschedulePicker(!showReschedulePicker)}
+                    className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs text-black dark:text-white cursor-pointer flex justify-between items-center"
+                  >
+                    <span>
+                      {rescheduleDate 
+                        ? new Date(rescheduleDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) 
+                        : "Select new date..."
+                      }
+                    </span>
+                    <span className="text-zinc-400">📅</span>
+                  </div>
+
+                  {/* Reschedule Mini Calendar Dropdown */}
+                  {showReschedulePicker && (
+                    <div className="absolute bottom-full left-0 w-full mb-1.5 p-3 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl z-50 flex flex-col gap-2 animate-modalIn" onClick={(e) => e.stopPropagation()}>
+                      {/* Header */}
+                      <div className="flex justify-between items-center text-[11px] font-bold text-black dark:text-white leading-none">
+                        <button type="button" onClick={() => setReschedulePickerDate(new Date(reschedulePickerDate.getFullYear(), reschedulePickerDate.getMonth() - 1, 1))} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-900 transition">
+                          <ChevronLeft size={12} />
+                        </button>
+                        <span>{reschedulePickerDate.toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>
+                        <button type="button" onClick={() => setReschedulePickerDate(new Date(reschedulePickerDate.getFullYear(), reschedulePickerDate.getMonth() + 1, 1))} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-900 transition">
+                          <ChevronRight size={12} />
+                        </button>
+                      </div>
+
+                      {/* Weekdays */}
+                      <div className="grid grid-cols-7 gap-1 text-center text-[8px] font-bold text-zinc-400">
+                        {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => <span key={i}>{d}</span>)}
+                      </div>
+
+                      {/* Grid Days */}
+                      <div className="grid grid-cols-7 gap-1">
+                        {getPickerGridCells(reschedulePickerDate).map((day, idx) => {
+                          if (day === null) {
+                            return <div key={`empty-${idx}`} className="aspect-square" />;
+                          }
+                          
+                          const isPast = isPastDay(day, reschedulePickerDate);
+                          const isSelected = rescheduleDate === `${reschedulePickerDate.getFullYear()}-${(reschedulePickerDate.getMonth() + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+
+                          return (
+                            <button
+                              key={day}
+                              type="button"
+                              disabled={isPast}
+                              onClick={() => {
+                                const y = reschedulePickerDate.getFullYear();
+                                const m = (reschedulePickerDate.getMonth() + 1).toString().padStart(2, "0");
+                                const d = day.toString().padStart(2, "0");
+                                setRescheduleDate(`${y}-${m}-${d}`);
+                                setShowReschedulePicker(false);
+                              }}
+                              className={`
+                                aspect-square text-[9px] font-bold rounded-lg transition-all flex items-center justify-center
+                                ${isPast 
+                                  ? "text-zinc-300 dark:text-zinc-700 cursor-not-allowed opacity-50" 
+                                  : isSelected
+                                  ? "bg-green-500 text-black shadow-sm"
+                                  : "text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-900"
+                                }
+                              `}
+                            >
+                              {day}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 <div className="grid grid-cols-2 gap-2 mt-2">
                   <button onClick={handleReschedule} className="py-2.5 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold text-xs sm:text-sm transition">
                     Reschedule
                   </button>
-                  <button onClick={() => { setIsRescheduling(false); setRescheduleDate(""); }} className="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold text-xs sm:text-sm transition">
+                  <button onClick={() => { setIsRescheduling(false); setRescheduleDate(""); setShowReschedulePicker(false); }} className="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold text-xs sm:text-sm transition">
                     Back
                   </button>
                 </div>
               </div>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================
+          ✅ GORGEOUS CUSTOM DELETE CONFIRMATION MODAL 
+          ========================================== */}
+      {planToDeleteId && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" 
+          onClick={() => setPlanToDeleteId(null)}
+        >
+          <div 
+            className="bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-[320px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold text-black dark:text-white">Delete Planned Item?</h3>
+            <p className="text-sm text-slate-500 dark:text-zinc-400 leading-relaxed">
+              Are you sure you want to permanently delete this planned item? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-center mt-2">
+              <button
+                onClick={() => handleDeletePlan(planToDeleteId)}
+                className="px-5 py-2.5 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition active:scale-95 shadow-md"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setPlanToDeleteId(null)}
+                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-semibold text-sm transition"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
