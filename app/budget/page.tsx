@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react"; // Added useRef
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useRefresh } from "@/hooks/useRefresh";
 import { 
@@ -45,7 +45,7 @@ export default function BudgetPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showQuickCategoryModal, setShowQuickCategoryModal] = useState(false);
   const [processingPlan, setProcessingPlan] = useState<Plan | null>(null);
-  const [planToDeleteId, setPlanToDeleteId] = useState<number | null>(null); // ✅ Added Custom Delete Modal State
+  const [planToDeleteId, setPlanToDeleteId] = useState<number | null>(null);
 
   // Form inputs
   const [date, setDate] = useState("");
@@ -81,6 +81,35 @@ export default function BudgetPage() {
     month: "long",
     year: "numeric",
   });
+
+  // ==========================================
+  // REFERENCE HOOKS & CLICK OUTSIDE DETECTOR
+  // ==========================================
+  const autocompleteRef = useRef<HTMLDivElement | null>(null);
+  const datePickerRef = useRef<HTMLDivElement | null>(null);
+  const reschedulePickerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      // Closes categories dropdown if clicked anywhere outside the input/dropdown container
+      if (autocompleteRef.current && !autocompleteRef.current.contains(e.target as Node)) {
+        setShowTargetDropdown(false);
+      }
+      // Closes create-plan calendar if clicked outside
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
+        setShowDatePicker(false);
+      }
+      // Closes reschedule calendar if clicked outside
+      if (reschedulePickerRef.current && !reschedulePickerRef.current.contains(e.target as Node)) {
+        setShowReschedulePicker(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // ==========================================
   // CUSTOM DATE PICKER HELPERS
@@ -137,6 +166,31 @@ export default function BudgetPage() {
         const uniqueEntities = Array.from(new Set(txs.map((t: any) => t.entity_name).filter(Boolean))) as string[];
         setEntities(uniqueEntities);
       });
+  }, []);
+
+  // ==========================================
+  // CLICK OUTSIDE DETECTOR LISTENER (Added)
+  // ==========================================
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      // 1. Close autocomplete dropdown if clicked outside
+      if (autocompleteRef.current && !autocompleteRef.current.contains(e.target as Node)) {
+        setShowTargetDropdown(false);
+      }
+      // 2. Close custom date picker dropdown if clicked outside
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
+        setShowDatePicker(false);
+      }
+      // 3. Close custom reschedule picker dropdown if clicked outside
+      if (reschedulePickerRef.current && !reschedulePickerRef.current.contains(e.target as Node)) {
+        setShowReschedulePicker(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   const handlePrevMonth = () => {
@@ -437,7 +491,6 @@ export default function BudgetPage() {
     }
   };
 
-  // Process Deletions via the clean Custom Modal state (no confirm popup!)
   const handleDeletePlan = async (id: number) => {
     try {
       const res = await fetch(`/api/budget/${id}`, { method: "DELETE" });
@@ -584,7 +637,6 @@ export default function BudgetPage() {
                       </span>
                     )}
 
-                    {/* Trigger Custom Delete Modal instead of browser alert */}
                     <button
                       onClick={() => setPlanToDeleteId(p.id)}
                       className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition shrink-0 ml-1"
@@ -659,7 +711,7 @@ export default function BudgetPage() {
                     )}
 
                     <button
-                      onClick={() => setPlanToDeleteId(p.id)} // Trigger Custom Delete Modal on Mobile Card
+                      onClick={() => setPlanToDeleteId(p.id)}
                       className="p-1 rounded-lg text-red-400 hover:bg-red-500/10 transition"
                     >
                       <Trash2 size={13} />
@@ -684,7 +736,10 @@ export default function BudgetPage() {
           ========================================== */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAddModal(false)}>
-          <div className="bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 w-full max-w-[380px] shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
+          <div 
+            className="bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 w-full max-w-[380px] shadow-2xl flex flex-col gap-4 animate-modalIn relative" 
+            onClick={(e) => e.stopPropagation()}
+          >
             
             <div className="flex justify-between items-center border-b border-slate-100 dark:border-zinc-900 pb-3">
               <h3 className="text-lg font-bold text-black dark:text-white">Create Budget Plan</h3>
@@ -714,7 +769,7 @@ export default function BudgetPage() {
               </div>
 
               {/* Autocomplete Target Search Selector */}
-              <div className="flex flex-col gap-1 relative">
+              <div ref={autocompleteRef} className="flex flex-col gap-1 relative">
                 <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                   {type === "EXPENSE" ? "Expense Category" : type === "INCOME" ? "Income Category" : "Counterparty"}
                 </label>
@@ -796,7 +851,7 @@ export default function BudgetPage() {
               </div>
 
               {/* Custom Mini Calendar Date Picker */}
-              <div className="relative flex flex-col gap-1">
+              <div ref={datePickerRef} className="relative flex flex-col gap-1"> {/* ✅ Added ref={datePickerRef} */}
                 <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Scheduled Date</label>
                 <div
                   onClick={() => setShowDatePicker(!showDatePicker)}
@@ -1022,7 +1077,8 @@ export default function BudgetPage() {
               <div className="flex flex-col gap-3">
                 <p className="text-xs text-slate-500 dark:text-zinc-400 font-bold text-left">Select new scheduled date:</p>
                 
-                <div className="relative flex flex-col text-left">
+                {/* ✅ Added ref={reschedulePickerRef} to wrap the reschedule picker input so clicking outside closes it */}
+                <div ref={reschedulePickerRef} className="relative flex flex-col text-left">
                   <div
                     onClick={() => setShowReschedulePicker(!showReschedulePicker)}
                     className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs text-black dark:text-white cursor-pointer flex justify-between items-center"
