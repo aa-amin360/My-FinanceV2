@@ -6,15 +6,15 @@ import { useRefresh } from "@/hooks/useRefresh";
 import { 
   Plus, 
   Trash2, 
-  Check, 
   X, 
   ChevronLeft, 
   ChevronRight, 
   TrendingUp, 
   TrendingDown, 
   AlertTriangle,
-  Play,
-  ArrowRightLeft
+  CheckCircle2,
+  ArrowRightLeft,
+  Save
 } from "lucide-react";
 
 type Plan = {
@@ -39,16 +39,13 @@ export default function BudgetPage() {
   const [currentBalance, setCurrentBalance] = useState(0);
   const [currentDate, setCurrentDate] = useState(() => new Date());
   
-  // Lookup Lists for Autocomplete
   const [categories, setCategories] = useState<Category[]>([]);
   const [entities, setEntities] = useState<string[]>([]);
 
-  // Modals & Forms State
   const [showAddModal, setShowAddModal] = useState(false);
   const [showQuickCategoryModal, setShowQuickCategoryModal] = useState(false);
   const [processingPlan, setProcessingPlan] = useState<Plan | null>(null);
 
-  // Form inputs
   const [date, setDate] = useState("");
   const [type, setType] = useState<"EXPENSE" | "INCOME" | "DEBT" | "RECEIVABLE">("EXPENSE");
   const [targetSearch, setTargetSearch] = useState("");
@@ -58,7 +55,6 @@ export default function BudgetPage() {
 
   const [showTargetDropdown, setShowTargetDropdown] = useState(false);
 
-  // Process Modal Inputs
   const [processAccount, setAccount] = useState("Cash");
   const [partialAmount, setPartialAmount] = useState("");
   const [isPartial, setIsPartial] = useState(false);
@@ -69,24 +65,19 @@ export default function BudgetPage() {
   const [error, setError] = useState("");
 
   const year = currentDate.getFullYear();
-  const month = currentDate.getMonth() + 1; // 1-indexed (1-12)
+  const month = currentDate.getMonth() + 1;
 
   const monthName = currentDate.toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
   });
 
-  // ==========================================
-  // FETCH PLANS AND LEDGER STATUS
-  // ==========================================
   const loadData = async () => {
     try {
-      // 1. Fetch current cash balance
       const balRes = await fetch("/api/balance", { cache: "no-store" });
       const balJson = await balRes.json();
       setCurrentBalance(Number(balJson.balance || 0));
 
-      // 2. Fetch planned items for currently viewed month
       const planRes = await fetch(`/api/budget?month=${month}&year=${year}`, { cache: "no-store" });
       const planJson = await planRes.json();
       setPlans(planJson.data || []);
@@ -97,7 +88,10 @@ export default function BudgetPage() {
 
   useRefresh(loadData);
 
-  // Load Autocomplete Lookups once on mount
+  useEffect(() => {
+    loadData();
+  }, [currentDate]);
+
   useEffect(() => {
     fetch("/api/categories")
       .then(res => res.json())
@@ -112,7 +106,6 @@ export default function BudgetPage() {
       });
   }, []);
 
-  // Month navigation handlers
   const handlePrevMonth = () => {
     setCurrentDate(new Date(year, currentDate.getMonth() - 1, 1));
   };
@@ -121,9 +114,6 @@ export default function BudgetPage() {
     setCurrentDate(new Date(year, currentDate.getMonth() + 1, 1));
   };
 
-  // ==========================================
-  // AUTCOMPLETE LOGIC
-  // ==========================================
   const getFilteredSuggestions = () => {
     const cleanQuery = targetSearch.trim().toLowerCase();
     if (type === "EXPENSE" || type === "INCOME") {
@@ -142,7 +132,6 @@ export default function BudgetPage() {
     targetSearch.trim() !== "" && 
     !suggestions.some(s => s.name.toLowerCase() === targetSearch.trim().toLowerCase());
 
-  // Quick Category Save Inline Handler
   const handleQuickCategorySave = async () => {
     if (!targetSearch.trim()) return;
     try {
@@ -167,9 +156,6 @@ export default function BudgetPage() {
     }
   };
 
-  // ==========================================
-  // FORECAST CALCULATIONS
-  // ==========================================
   let expectedIncome = 0;
   let expectedExpenses = 0;
   let expectedDebts = 0;
@@ -187,9 +173,6 @@ export default function BudgetPage() {
   const projectedPosition = 
     currentBalance + expectedIncome - expectedExpenses - expectedDebts + expectedReceivables;
 
-  // ==========================================
-  // SAVE PLAN HANDLER
-  // ==========================================
   const handleCreatePlan = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -223,7 +206,6 @@ export default function BudgetPage() {
         throw new Error(errData.error || "Failed to save plan.");
       }
 
-      // Reset Form fields
       setDate("");
       setAmount("");
       setNote("");
@@ -239,11 +221,6 @@ export default function BudgetPage() {
     }
   };
 
-  // ==========================================
-  // PROCESS ACTION HANDLERS
-  // ==========================================
-
-  // A. CONFIRM (Converts planning item directly to real ledger transaction)
   const handleConfirm = async (amtToConfirm = Number(processingPlan?.amount)) => {
     if (!processingPlan) return;
     setLoading(true);
@@ -254,7 +231,7 @@ export default function BudgetPage() {
         type: processingPlan.type === "DEBT" ? "DEBT_TAKEN" : processingPlan.type === "RECEIVABLE" ? "RECEIVABLE_GIVEN" : processingPlan.type,
         amount: amtToConfirm,
         account: processAccount,
-        date: new Date().toLocaleDateString("en-CA"), // Processed on actual today date
+        date: new Date().toLocaleDateString("en-CA"),
         note: processingPlan.note ? `${processingPlan.note} (Planned)` : "Planned event confirmed",
       };
 
@@ -264,7 +241,6 @@ export default function BudgetPage() {
         txPayload.entity = processingPlan.target_name;
       }
 
-      // 1. Write actual transaction into standard ledger
       const txRes = await fetch("/api/transactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -276,7 +252,6 @@ export default function BudgetPage() {
         throw new Error(errData.error || "Failed to create transaction.");
       }
 
-      // 2. Update Plan Status to CONFIRMED
       const statusRes = await fetch(`/api/budget/${processingPlan.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -300,7 +275,6 @@ export default function BudgetPage() {
     }
   };
 
-  // B. PARTIAL (Logs transaction for partial amount, updates remaining on plan)
   const handlePartial = async () => {
     if (!processingPlan) return;
     const partialAmt = Number(partialAmount);
@@ -315,7 +289,6 @@ export default function BudgetPage() {
     setError("");
 
     try {
-      // 1. Write partial transaction into standard ledger
       const txPayload: any = {
         type: processingPlan.type === "DEBT" ? "DEBT_TAKEN" : processingPlan.type === "RECEIVABLE" ? "RECEIVABLE_GIVEN" : processingPlan.type,
         amount: partialAmt,
@@ -341,7 +314,6 @@ export default function BudgetPage() {
         throw new Error(errData.error || "Failed to create transaction.");
       }
 
-      // 2. Reduce the plan's amount to reflect remaining portion, leaving plan open
       const remainingAmount = planAmt - partialAmt;
       const statusRes = await fetch(`/api/budget/${processingPlan.id}`, {
         method: "PUT",
@@ -366,7 +338,6 @@ export default function BudgetPage() {
     }
   };
 
-  // C. SKIP
   const handleSkip = async () => {
     if (!processingPlan) return;
     setLoading(true);
@@ -390,7 +361,6 @@ export default function BudgetPage() {
     }
   };
 
-  // D. RESCHEDULE (Update date, updates forecasting calculations automatically)
   const handleReschedule = async () => {
     if (!processingPlan || !rescheduleDate) return;
     setLoading(true);
@@ -416,7 +386,6 @@ export default function BudgetPage() {
     }
   };
 
-  // E. DELETE
   const handleDeletePlan = async (id: number) => {
     if (!confirm("Are you sure you want to delete this planned item?")) return;
     try {
@@ -444,28 +413,28 @@ export default function BudgetPage() {
         {/* HEADER CONTROLS */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-extrabold text-black dark:text-white">Budget Planning</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-black dark:text-white">Budget Planning</h1>
             <p className="text-sm text-slate-500 dark:text-zinc-500">Plan ahead, schedule events, and forecast your actual projected month-end wealth.</p>
           </div>
 
           <div className="flex gap-2 items-center self-end sm:self-center">
             {/* Month Switches */}
-            <div className="flex items-center gap-1.5 p-1 bg-gray-100 dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800">
-              <button onClick={handlePrevMonth} className="p-2 rounded-xl hover:bg-white dark:hover:bg-zinc-800 transition text-zinc-500 hover:text-black dark:hover:text-white">
+            <div className="flex items-center gap-1.5 p-1 bg-gray-100 dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-inner">
+              <button onClick={handlePrevMonth} className="p-2 rounded-xl hover:bg-white dark:hover:bg-zinc-800 transition text-zinc-500 hover:text-black dark:hover:text-white active:scale-95">
                 <ChevronLeft size={16} />
               </button>
-              <span className="text-sm font-bold text-black dark:text-white px-2 min-w-[120px] text-center">
+              <span className="text-xs sm:text-sm font-bold text-black dark:text-white px-2 min-w-[110px] text-center">
                 {monthName}
               </span>
-              <button onClick={handleNextMonth} className="p-2 rounded-xl hover:bg-white dark:hover:bg-zinc-800 transition text-zinc-500 hover:text-black dark:hover:text-white">
+              <button onClick={handleNextMonth} className="p-2 rounded-xl hover:bg-white dark:hover:bg-zinc-800 transition text-zinc-500 hover:text-black dark:hover:text-white active:scale-95">
                 <ChevronRight size={16} />
               </button>
             </div>
 
-            {/* Add Plan trigger */}
+            {/* Add Plan Trigger (Optimized to stay on one line) */}
             <button
               onClick={() => setShowAddModal(true)}
-              className="px-4 py-2.5 rounded-2xl bg-green-500 hover:bg-green-400 text-black font-bold text-sm transition active:scale-95 flex items-center gap-1.5"
+              className="px-4 py-2.5 rounded-2xl bg-green-500 hover:bg-green-400 text-black font-bold text-xs sm:text-sm transition active:scale-95 flex items-center gap-1.5 whitespace-nowrap shrink-0"
             >
               <Plus size={16} /> Add Plan
             </button>
@@ -475,10 +444,11 @@ export default function BudgetPage() {
         {/* ==========================================
             FINANCIAL FORECASTING SUMMARY CARD
             ========================================== */}
-        <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 p-6 rounded-3xl shadow-sm space-y-4">
-          <h2 className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block">Projections for {monthName}</h2>
+        <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 p-4 sm:p-6 rounded-3xl shadow-sm space-y-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_1.5px_3px_rgba(255,255,255,0.02)]">
+          <h2 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block">Projections for {monthName}</h2>
           
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 pt-1">
+          {/* Responsive columns matching size constraints */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 pt-1">
             <ProjectionBlock label="Current Balance" val={currentBalance} color="text-zinc-700 dark:text-zinc-300" />
             <ProjectionBlock label="Expected Income" val={expectedIncome} color="text-green-500" prefix="+" />
             <ProjectionBlock label="Expected Expenses" val={expectedExpenses} color="text-red-500" prefix="-" />
@@ -487,19 +457,21 @@ export default function BudgetPage() {
           </div>
 
           <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-zinc-900/60 mt-2">
-            <span className="text-sm font-bold text-black dark:text-white">Projected Month-End Position</span>
-            <span className="text-lg sm:text-xl font-black text-green-500">
+            <span className="text-xs sm:text-sm font-bold text-slate-500 dark:text-zinc-400">Projected Month-End Position</span>
+            <span className="text-base sm:text-xl font-bold text-green-500">
               {projectedPosition.toLocaleString("en-BD")} Tk
             </span>
           </div>
         </div>
 
         {/* ==========================================
-            PLANNED ITEMS LEDGER GRID
+            PLANNED ITEMS LISTING (SPLIT LAYOUT)
             ========================================== */}
-        <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 rounded-3xl overflow-hidden">
+        
+        {/* DESKTOP TABLE VIEW */}
+        <div className="hidden md:block bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 rounded-3xl overflow-hidden shadow-sm">
           {/* HEADER */}
-          <div className="grid grid-cols-12 px-4 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-900 leading-none">
+          <div className="grid grid-cols-12 px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-900 leading-none">
             <div className="col-span-3">Target</div>
             <div className="col-span-2">Expected Date</div>
             <div className="col-span-2">Type</div>
@@ -512,10 +484,10 @@ export default function BudgetPage() {
             {plans.map((p) => {
               const amt = Number(p.amount);
               return (
-                <div key={p.id} className="grid grid-cols-12 items-center px-4 py-4 hover:bg-slate-50 dark:hover:bg-zinc-900/20 transition text-sm">
+                <div key={p.id} className="grid grid-cols-12 items-center px-5 py-4 hover:bg-slate-50 dark:hover:bg-zinc-900/10 transition text-sm">
                   
                   {/* Target Name */}
-                  <div className="col-span-3 font-bold text-black dark:text-white truncate">
+                  <div className="col-span-3 font-semibold text-black dark:text-white truncate">
                     {p.target_name}
                   </div>
 
@@ -535,32 +507,30 @@ export default function BudgetPage() {
                     </span>
                   </div>
 
-                  {/* Note / Description */}
+                  {/* Note */}
                   <div className="col-span-3 text-xs text-slate-400 dark:text-zinc-500 truncate pr-4">
                     {p.note || "—"}
                   </div>
 
-                  {/* Amount / Process controls */}
+                  {/* Amount / Action Controls */}
                   <div className="col-span-2 flex items-center justify-end gap-3 text-right">
-                    <span className="font-extrabold text-black dark:text-white shrink-0">
+                    <span className="font-bold text-black dark:text-white shrink-0">
                       {amt.toLocaleString("en-BD")} Tk
                     </span>
 
-                    {/* Actions if pending */}
                     {p.status === "PENDING" ? (
                       <button
                         onClick={() => setProcessingPlan(p)}
-                        className="px-2.5 py-1 rounded-lg bg-green-500 text-black hover:bg-green-400 text-xs font-black transition active:scale-95 shrink-0 shadow-sm"
+                        className="px-2.5 py-1 rounded-lg bg-green-500 text-black hover:bg-green-400 text-xs font-bold transition active:scale-95 shrink-0 shadow-sm"
                       >
                         Due
                       </button>
                     ) : (
-                      <span className={`text-[10px] font-black uppercase tracking-wider ${p.status === "CONFIRMED" ? "text-green-500" : "text-zinc-500"}`}>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${p.status === "CONFIRMED" ? "text-green-500" : "text-zinc-500"} shrink-0`}>
                         {p.status}
                       </span>
                     )}
 
-                    {/* Delete Plan */}
                     <button
                       onClick={() => handleDeletePlan(p.id)}
                       className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition shrink-0 ml-1"
@@ -581,6 +551,78 @@ export default function BudgetPage() {
           </div>
         </div>
 
+        {/* MOBILE CARD VIEW (No text squeezing, completely responsive) */}
+        <div className="md:hidden space-y-3">
+          {plans.map((p) => {
+            const amt = Number(p.amount);
+            return (
+              <div 
+                key={p.id} 
+                className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 rounded-2xl p-4 flex flex-col gap-3 shadow-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_1.5px_3px_rgba(255,255,255,0.02)]"
+              >
+                {/* Row 1: Target and Amount */}
+                <div className="flex justify-between items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-sm text-black dark:text-white truncate">{p.target_name}</p>
+                    <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5">
+                      {new Date(p.date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        timeZone: "UTC",
+                      })}
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="font-bold text-sm text-black dark:text-white">{amt.toLocaleString("en-BD")} Tk</p>
+                  </div>
+                </div>
+
+                {/* Row 2: Type, Notes and Action Button */}
+                <div className="flex justify-between items-center gap-3 pt-2 border-t border-slate-100 dark:border-zinc-900/50">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase shrink-0 ${getBadgeStyle(p.type)}`}>
+                      {p.type}
+                    </span>
+                    {p.note && (
+                      <span className="text-[11px] text-slate-400 dark:text-zinc-500 truncate max-w-[140px]">
+                        {p.note}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {p.status === "PENDING" ? (
+                      <button
+                        onClick={() => setProcessingPlan(p)}
+                        className="px-2.5 py-1 rounded-lg bg-green-500 text-black hover:bg-green-400 text-[10px] font-bold transition active:scale-95 shadow-sm"
+                      >
+                        Due
+                      </button>
+                    ) : (
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${p.status === "CONFIRMED" ? "text-green-500" : "text-zinc-500"}`}>
+                        {p.status}
+                      </span>
+                    )}
+
+                    <button
+                      onClick={() => handleDeletePlan(p.id)}
+                      className="p-1 rounded-lg text-red-400 hover:bg-red-500/10 transition"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {plans.length === 0 && (
+            <div className="p-12 text-center text-slate-400 dark:text-zinc-500 text-sm">
+              No planned items scheduled for {monthName}.
+            </div>
+          )}
+        </div>
+
       </div>
 
       {/* ==========================================
@@ -588,7 +630,7 @@ export default function BudgetPage() {
           ========================================== */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAddModal(false)}>
-          <div className="bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-[400px] shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 w-full max-w-[380px] shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
             
             <div className="flex justify-between items-center border-b border-slate-100 dark:border-zinc-900 pb-3">
               <h3 className="text-lg font-bold text-black dark:text-white">Create Budget Plan</h3>
@@ -600,7 +642,7 @@ export default function BudgetPage() {
             <form onSubmit={handleCreatePlan} className="flex flex-col gap-3">
               {/* Type Select */}
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Planning Type</label>
+                <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Planning Type</label>
                 <select
                   value={type}
                   onChange={(e) => {
@@ -608,7 +650,7 @@ export default function BudgetPage() {
                     setSelectedDateTarget(null);
                     setTargetSearch("");
                   }}
-                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm text-black dark:text-white"
+                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-xs sm:text-sm text-black dark:text-white"
                 >
                   <option value="EXPENSE">Expense</option>
                   <option value="INCOME">Income</option>
@@ -619,7 +661,7 @@ export default function BudgetPage() {
 
               {/* Autocomplete Target Search Selector */}
               <div className="flex flex-col gap-1 relative">
-                <label className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                   {type === "EXPENSE" ? "Expense Category" : type === "INCOME" ? "Income Category" : "Counterparty"}
                 </label>
                 
@@ -634,7 +676,7 @@ export default function BudgetPage() {
                     setSelectedDateTarget(null);
                     setShowTargetDropdown(true);
                   }}
-                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm text-black dark:text-white"
+                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-xs sm:text-sm text-black dark:text-white"
                 />
 
                 {/* Autocomplete dropdown suggestions */}
@@ -652,19 +694,19 @@ export default function BudgetPage() {
                             setTargetSearch(nameStr);
                             setShowTargetDropdown(false);
                           }}
-                          className="px-4 py-2.5 text-left text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-900 transition text-slate-700 dark:text-zinc-300"
+                          className="px-4 py-2.5 text-left text-xs font-semibold hover:bg-slate-50 dark:hover:bg-zinc-900 transition text-slate-700 dark:text-zinc-300"
                         >
                           {nameStr}
                         </button>
                       );
                     })}
 
-                    {/* Quick Create Category Modal trigger if category is missing */}
+                    {/* Quick Create Category Modal trigger */}
                     {showCreateCategoryTrigger && (
                       <button
                         type="button"
                         onClick={() => setShowQuickCategoryModal(true)}
-                        className="px-4 py-3 text-left text-xs font-bold text-green-500 hover:bg-green-500/10 transition leading-normal border-t border-slate-100 dark:border-zinc-900"
+                        className="px-4 py-3 text-left text-xs font-semibold text-green-500 hover:bg-green-500/10 transition leading-normal border-t border-slate-100 dark:border-zinc-900"
                       >
                         No category found. Create "{targetSearch}"?
                       </button>
@@ -681,38 +723,38 @@ export default function BudgetPage() {
 
               {/* Amount */}
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Amount</label>
+                <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Amount</label>
                 <input
                   type="number"
                   required
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm text-black dark:text-white"
+                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-xs sm:text-sm text-black dark:text-white"
                 />
               </div>
 
               {/* Date */}
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Scheduled Date</label>
+                <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Scheduled Date</label>
                 <input
                   type="date"
                   required
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm text-black dark:text-white"
+                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-xs sm:text-sm text-black dark:text-white"
                 />
               </div>
 
               {/* Optional Note */}
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Add Note (Optional)</label>
+                <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Add Note (Optional)</label>
                 <input
                   type="text"
                   placeholder="Add note..."
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm text-black dark:text-white"
+                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-xs sm:text-sm text-black dark:text-white"
                 />
               </div>
 
@@ -721,7 +763,7 @@ export default function BudgetPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 mt-2 rounded-xl bg-green-500 hover:bg-green-400 disabled:bg-slate-300 dark:disabled:bg-zinc-800 text-black font-extrabold text-sm transition active:scale-95 shadow-md"
+                className="w-full py-3 mt-2 rounded-xl bg-green-500 hover:bg-green-400 disabled:bg-slate-300 dark:disabled:bg-zinc-800 text-black font-bold text-xs sm:text-sm transition active:scale-95 shadow-md"
               >
                 {loading ? "Saving plan..." : "Create Plan"}
               </button>
@@ -777,7 +819,7 @@ export default function BudgetPage() {
           ========================================== */}
       {processingPlan && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => { setProcessingPlan(null); setIsPartial(false); setIsRescheduling(false); }}>
-          <div className="bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-[360px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 w-full max-w-[360px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
             
             <div className="border-b border-slate-100 dark:border-zinc-900 pb-3 flex justify-between items-center text-left">
               <div>
@@ -791,10 +833,8 @@ export default function BudgetPage() {
               </button>
             </div>
 
-            {/* ERROR OR STATUS MESSAGES */}
             {error && <div className="text-xs text-red-500 font-bold leading-normal">{error}</div>}
 
-            {/* NESTED CONTROLS FOR PARTIAL & RESCHEDULE */}
             {!isPartial && !isRescheduling ? (
               <div className="flex flex-col gap-2.5">
                 <p className="text-xs text-slate-500 dark:text-zinc-400 leading-normal">How do you want to handle this scheduled event?</p>
@@ -809,16 +849,16 @@ export default function BudgetPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 mt-2">
-                  <button onClick={() => handleConfirm()} className="py-2.5 rounded-xl bg-green-500 hover:bg-green-400 text-black font-extrabold text-xs transition">
+                  <button onClick={() => handleConfirm()} className="py-2.5 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold text-xs sm:text-sm transition">
                     Confirm
                   </button>
-                  <button onClick={() => setIsPartial(true)} className="py-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 font-bold text-xs border border-blue-500/20 transition">
+                  <button onClick={() => setIsPartial(true)} className="py-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 font-bold text-xs sm:text-sm border border-blue-500/20 transition">
                     Partial
                   </button>
-                  <button onClick={() => setIsRescheduling(true)} className="py-2.5 rounded-xl bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 font-bold text-xs border border-yellow-500/20 transition">
+                  <button onClick={() => setIsRescheduling(true)} className="py-2.5 rounded-xl bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 font-bold text-xs sm:text-sm border border-yellow-500/20 transition">
                     Reschedule
                   </button>
-                  <button onClick={handleSkip} className="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold text-xs border border-transparent dark:border-zinc-800/80 transition">
+                  <button onClick={handleSkip} className="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold text-xs sm:text-sm border border-transparent dark:border-zinc-800/80 transition">
                     Skip
                   </button>
                 </div>
@@ -844,10 +884,10 @@ export default function BudgetPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 mt-2">
-                  <button onClick={handlePartial} className="py-2.5 rounded-xl bg-green-500 hover:bg-green-400 text-black font-extrabold text-xs transition">
+                  <button onClick={handlePartial} className="py-2.5 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold text-xs sm:text-sm transition">
                     Save Partial
                   </button>
-                  <button onClick={() => { setIsPartial(false); setPartialAmount(""); }} className="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold text-xs transition">
+                  <button onClick={() => { setIsPartial(false); setPartialAmount(""); }} className="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold text-xs sm:text-sm transition">
                     Back
                   </button>
                 </div>
@@ -865,10 +905,10 @@ export default function BudgetPage() {
                 />
 
                 <div className="grid grid-cols-2 gap-2 mt-2">
-                  <button onClick={handleReschedule} className="py-2.5 rounded-xl bg-green-500 hover:bg-green-400 text-black font-extrabold text-xs transition">
+                  <button onClick={handleReschedule} className="py-2.5 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold text-xs sm:text-sm transition">
                     Reschedule
                   </button>
-                  <button onClick={() => { setIsRescheduling(false); setRescheduleDate(""); }} className="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold text-xs transition">
+                  <button onClick={() => { setIsRescheduling(false); setRescheduleDate(""); }} className="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold text-xs sm:text-sm transition">
                     Back
                   </button>
                 </div>
@@ -886,9 +926,9 @@ export default function BudgetPage() {
 // ================= COMPONENT =================
 function ProjectionBlock({ label, val, color, prefix = "" }: { label: string, val: number, color: string, prefix?: string }) {
   return (
-    <div className="bg-slate-50/50 dark:bg-zinc-950/30 border border-slate-100 dark:border-zinc-900/60 p-3 sm:p-4 rounded-2xl flex flex-col text-left">
-      <span className="text-[10px] sm:text-xs font-semibold text-slate-400 dark:text-zinc-500 leading-normal">{label}</span>
-      <span className={`text-sm sm:text-base font-black ${color} mt-1 truncate`}>
+    <div className="bg-slate-50/50 dark:bg-zinc-950/30 border border-slate-100 dark:border-zinc-900/60 p-2.5 sm:p-4 rounded-2xl flex flex-col text-left shadow-[inset_0_2px_4px_rgba(0,0,0,0.015)] dark:shadow-[inset_0_1.5px_3px_rgba(255,255,255,0.015)] w-full overflow-hidden">
+      <span className="text-[10px] sm:text-xs font-semibold text-slate-400 dark:text-zinc-500 leading-tight truncate">{label}</span>
+      <span className={`text-[11px] sm:text-sm md:text-base font-bold ${color} mt-1 whitespace-nowrap`}>
         {val > 0 ? prefix : ""}{val.toLocaleString("en-BD")} Tk
       </span>
     </div>
