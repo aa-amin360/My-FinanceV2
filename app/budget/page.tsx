@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react"; // Added useRef
+import { useEffect, useState, useRef } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useRefresh } from "@/hooks/useRefresh";
 import { 
@@ -83,33 +83,11 @@ export default function BudgetPage() {
   });
 
   // ==========================================
-  // REFERENCE HOOKS & CLICK OUTSIDE DETECTOR
+  // REFERENCE HOOKS (For Click Outside Detection)
   // ==========================================
   const autocompleteRef = useRef<HTMLDivElement | null>(null);
   const datePickerRef = useRef<HTMLDivElement | null>(null);
   const reschedulePickerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      // Closes categories dropdown if clicked anywhere outside the input/dropdown container
-      if (autocompleteRef.current && !autocompleteRef.current.contains(e.target as Node)) {
-        setShowTargetDropdown(false);
-      }
-      // Closes create-plan calendar if clicked outside
-      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
-        setShowDatePicker(false);
-      }
-      // Closes reschedule calendar if clicked outside
-      if (reschedulePickerRef.current && !reschedulePickerRef.current.contains(e.target as Node)) {
-        setShowReschedulePicker(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
 
   // ==========================================
   // CUSTOM DATE PICKER HELPERS
@@ -169,7 +147,7 @@ export default function BudgetPage() {
   }, []);
 
   // ==========================================
-  // CLICK OUTSIDE DETECTOR LISTENER (Added)
+  // CLICK OUTSIDE DETECTOR LISTENER
   // ==========================================
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -736,10 +714,7 @@ export default function BudgetPage() {
           ========================================== */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAddModal(false)}>
-          <div 
-            className="bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 w-full max-w-[380px] shadow-2xl flex flex-col gap-4 animate-modalIn relative" 
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 w-full max-w-[380px] shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
             
             <div className="flex justify-between items-center border-b border-slate-100 dark:border-zinc-900 pb-3">
               <h3 className="text-lg font-bold text-black dark:text-white">Create Budget Plan</h3>
@@ -769,7 +744,7 @@ export default function BudgetPage() {
               </div>
 
               {/* Autocomplete Target Search Selector */}
-              <div ref={autocompleteRef} className="flex flex-col gap-1 relative">
+              <div ref={autocompleteRef} className="flex flex-col gap-1 relative"> {/* ✅ Assigned ref here */}
                 <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                   {type === "EXPENSE" ? "Expense Category" : type === "INCOME" ? "Income Category" : "Counterparty"}
                 </label>
@@ -851,7 +826,7 @@ export default function BudgetPage() {
               </div>
 
               {/* Custom Mini Calendar Date Picker */}
-              <div ref={datePickerRef} className="relative flex flex-col gap-1"> {/* ✅ Added ref={datePickerRef} */}
+              <div ref={datePickerRef} className="relative flex flex-col gap-1"> {/* ✅ Assigned ref here */}
                 <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Scheduled Date</label>
                 <div
                   onClick={() => setShowDatePicker(!showDatePicker)}
@@ -957,7 +932,7 @@ export default function BudgetPage() {
           ========================================== */}
       {showQuickCategoryModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-[340px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn">
+          <div className="bg-white dark:bg-black border border-slate-200 dark:border-slate-800 rounded-3xl p-6 w-full max-w-[340px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn">
             <h3 className="text-lg font-bold text-black dark:text-white">Create Category</h3>
             
             <div className="text-left space-y-3">
@@ -1077,7 +1052,7 @@ export default function BudgetPage() {
               <div className="flex flex-col gap-3">
                 <p className="text-xs text-slate-500 dark:text-zinc-400 font-bold text-left">Select new scheduled date:</p>
                 
-                {/* ✅ Added ref={reschedulePickerRef} to wrap the reschedule picker input so clicking outside closes it */}
+                {/* ✅ Assigned ref={reschedulePickerRef} here */}
                 <div ref={reschedulePickerRef} className="relative flex flex-col text-left">
                   <div
                     onClick={() => setShowReschedulePicker(!showReschedulePicker)}
