@@ -10,6 +10,19 @@ import { AuthOptions } from "next-auth"; // Added AuthOptions
 pool.query(`
   ALTER TABLE users ADD COLUMN IF NOT EXISTS history_initialized BOOLEAN DEFAULT FALSE;
   ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
+
+  CREATE TABLE IF NOT EXISTS budget_plans (
+    id SERIAL PRIMARY KEY,
+    type VARCHAR(50) NOT NULL, -- 'EXPENSE' | 'INCOME' | 'DEBT' | 'RECEIVABLE'
+    amount NUMERIC(15, 2) NOT NULL,
+    target_id VARCHAR(255), -- references categories.id or entities.id
+    target_name VARCHAR(255) NOT NULL, -- display backup (e.g. 'Rent', 'Rahim')
+    date DATE NOT NULL,
+    note TEXT,
+    status VARCHAR(50) DEFAULT 'PENDING', -- 'PENDING' | 'CONFIRMED' | 'SKIPPED'
+    user_id VARCHAR(255) REFERENCES users(email) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
 `).catch((err) => {
   console.error("Database schema migration failed:", err);
 });

@@ -27,6 +27,7 @@ import {
   CalendarDays,
   History,
   LogOut,
+  TrendingUp,
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -37,16 +38,40 @@ export default function DashboardLayout({
   const { toggleTheme, theme } = useTheme();
   const pathname = usePathname();
 
-  const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("sidebar-collapsed") === "true";
-    }
-    return false;
-  });
+  const [cashBalance, setCashBalance] = useState(0);
+  const [bankBalance, setBankBalance] = useState(0);
 
+  // Safe default for both SSR and initial client-side hydration
+  const [collapsed, setCollapsed] = useState(false); 
+
+  // Run once on mount (client-only) to restore the saved state without hydration conflicts
   useEffect(() => {
-    localStorage.setItem("sidebar-collapsed", String(collapsed));
-  }, [collapsed]);
+    const saved = localStorage.getItem("sidebar-collapsed") === "true";
+    setCollapsed(saved);
+  }, []);
+
+  // Update localStorage only when the user explicitly clicks the button
+  const handleToggleCollapse = () => {
+    const nextState = !collapsed;
+    setCollapsed(nextState);
+    localStorage.setItem("sidebar-collapsed", String(nextState));
+  };
+
+  // ================= LOAD BALANCE =================
+  useEffect(() => {
+    const loadBalance = async () => {
+      const res = await fetch("/api/balance");
+      const data = await res.json();
+
+      setCashBalance(Number(data.cashBalance || 0));
+      setBankBalance(Number(data.bankBalance || 0));
+    };
+
+    loadBalance();
+
+    window.addEventListener("refreshData", loadBalance);
+    return () => window.removeEventListener("refreshData", loadBalance);
+  }, []);
 
   return (
     <div className="flex h-screen overflow-hidden bg-white text-black dark:bg-black dark:text-white transition-colors duration-300">
@@ -65,7 +90,7 @@ export default function DashboardLayout({
           )}
 
           <button
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={handleToggleCollapse} // Updated to custom toggle handler
             className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition"
           >
             {collapsed ? (
@@ -80,6 +105,7 @@ export default function DashboardLayout({
           <nav className={`flex flex-col ${collapsed ? "gap-3 mt-2" : "gap-2 mt-2"}`}>
             <Item icon={LayoutDashboard} label="Dashboard" href="/dashboard" pathname={pathname} collapsed={collapsed} />
             <Item icon={ArrowLeftRight} label="Transactions" href="/transactions" pathname={pathname} collapsed={collapsed} />
+            <Item icon={TrendingUp} label="Planning" href="/budget" pathname={pathname} collapsed={collapsed} />
             <Item icon={Tag} label="Categories" href="/categories" pathname={pathname} collapsed={collapsed} />
             <Item icon={Wallet} label="Savings" href="/savings" pathname={pathname} collapsed={collapsed} />
             <Item icon={CreditCard} label="Debt" href="/debts" pathname={pathname} collapsed={collapsed} />
@@ -110,7 +136,6 @@ export default function DashboardLayout({
           
           {/* HEADER CONTROLS */}
           <div className="flex items-center gap-2">
-            {/* 1. Calendar Button */}
             <Link
               href="/calendar"
               className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 hover:scale-105 transition"
@@ -119,7 +144,6 @@ export default function DashboardLayout({
               <CalendarDays size={18} />
             </Link>
           
-            {/* 2. Theme Toggle Button */}
             <button
               onClick={toggleTheme}
               className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 hover:scale-105 transition"
@@ -128,7 +152,6 @@ export default function DashboardLayout({
               {theme === "dark" ? "🌙" : "☀️"}
             </button>
 
-            {/* 3. Red Logout Button */}
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
               className="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 hover:scale-105 transition"
@@ -145,7 +168,7 @@ export default function DashboardLayout({
         </main>
       </div>
 
-      {/* ================= MOBILE NAV (SCROLLABLE PILL) ================= */}
+      {/* ================= MOBILE NAV ================= */}
       <FloatingNav pathname={pathname} />
 
       {/* ================= FAB ================= */}
@@ -202,6 +225,7 @@ function FloatingNav({ pathname }: { pathname: string }) {
   const items = [
     { label: "Home", href: "/dashboard", icon: Home },
     { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
+    { label: "Planning", href: "/budget", icon: TrendingUp },
     { label: "Categories", href: "/categories", icon: Tag },
     { label: "Debt", href: "/debts", icon: CreditCard },
     { label: "Receivable", href: "/receivables", icon: Wallet },
@@ -211,7 +235,6 @@ function FloatingNav({ pathname }: { pathname: string }) {
 
   return (
     <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md animate-fadeIn">
-      {/* Scrollable Container with Hidden Scrollbars */}
       <div className="
         flex gap-3 items-center w-full px-4 py-2.5 rounded-full 
         bg-white/80 dark:bg-black/80 border border-gray-200 dark:border-slate-700 
