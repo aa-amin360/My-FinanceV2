@@ -90,6 +90,13 @@ export async function POST(req: Request) {
       );
     }
 
+    if (type !== "EXPENSE" && type !== "INCOME") {
+      return NextResponse.json(
+        { error: "Invalid planning type. Only INCOME and EXPENSE are supported." },
+        { status: 400 }
+      );
+    }
+
     const result = await client.query(
       `
       INSERT INTO budget_plans (type, amount, target_id, target_name, date, note, user_id)

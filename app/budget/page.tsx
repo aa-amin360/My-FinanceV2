@@ -9,7 +9,6 @@ import {
   X, 
   ChevronLeft, 
   ChevronRight, 
-  TrendingUp, 
   AlertTriangle,
   CheckCircle2,
   ArrowRightLeft,
@@ -18,7 +17,7 @@ import {
 
 type Plan = {
   id: number;
-  type: "EXPENSE" | "INCOME" | "DEBT" | "RECEIVABLE";
+  type: "EXPENSE" | "INCOME";
   amount: string;
   target_id: string | null;
   target_name: string;
@@ -39,7 +38,6 @@ export default function BudgetPage() {
   const [currentDate, setCurrentDate] = useState(() => new Date());
   
   const [categories, setCategories] = useState<Category[]>([]);
-  const [entities, setEntities] = useState<string[]>([]);
 
   // Modals & Forms State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -49,7 +47,7 @@ export default function BudgetPage() {
 
   // Form inputs
   const [date, setDate] = useState("");
-  const [type, setType] = useState<"EXPENSE" | "INCOME" | "DEBT" | "RECEIVABLE">("EXPENSE");
+  const [type, setType] = useState<"EXPENSE" | "INCOME">("EXPENSE");
   const [targetSearch, setTargetSearch] = useState("");
   const [selectedTarget, setSelectedDateTarget] = useState<{ id: string | null; name: string } | null>(null);
   const [amount, setAmount] = useState("");
@@ -104,7 +102,7 @@ export default function BudgetPage() {
 
   const isPastDay = (day: number, viewDate: Date) => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Strip hours to compare by dates only
+    today.setHours(0, 0, 0, 0); 
     const checkDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
     return checkDate < today;
   };
@@ -132,18 +130,11 @@ export default function BudgetPage() {
     loadData();
   }, [currentDate]);
 
+  // Optimized: Only fetch categories on mount (no transaction history fetch needed anymore!)
   useEffect(() => {
     fetch("/api/categories")
       .then(res => res.json())
       .then(d => setCategories(d.data || []));
-
-    fetch("/api/transactions")
-      .then(res => res.json())
-      .then(d => {
-        const txs = d.data || [];
-        const uniqueEntities = Array.from(new Set(txs.map((t: any) => t.entity_name).filter(Boolean))) as string[];
-        setEntities(uniqueEntities);
-      });
   }, []);
 
   // ==========================================
@@ -151,15 +142,12 @@ export default function BudgetPage() {
   // ==========================================
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      // 1. Close autocomplete dropdown if clicked outside
       if (autocompleteRef.current && !autocompleteRef.current.contains(e.target as Node)) {
         setShowTargetDropdown(false);
       }
-      // 2. Close custom date picker dropdown if clicked outside
       if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
         setShowDatePicker(false);
       }
-      // 3. Close custom reschedule picker dropdown if clicked outside
       if (reschedulePickerRef.current && !reschedulePickerRef.current.contains(e.target as Node)) {
         setShowReschedulePicker(false);
       }
@@ -179,21 +167,16 @@ export default function BudgetPage() {
     setCurrentDate(new Date(year, currentDate.getMonth() + 1, 1));
   };
 
+  // Autocomplete filtered categories lookup
   const getFilteredSuggestions = () => {
     const cleanQuery = targetSearch.trim().toLowerCase();
-    if (type === "EXPENSE" || type === "INCOME") {
-      const filtered = categories.filter(c => c.type === type);
-      if (!cleanQuery) return filtered;
-      return filtered.filter(c => c.name.toLowerCase().includes(cleanQuery));
-    } else {
-      if (!cleanQuery) return entities;
-      return entities.filter(e => e.toLowerCase().includes(cleanQuery));
-    }
+    const filtered = categories.filter(c => c.type === type);
+    if (!cleanQuery) return filtered;
+    return filtered.filter(c => c.name.toLowerCase().includes(cleanQuery));
   };
 
   const suggestions = getFilteredSuggestions();
   const showCreateCategoryTrigger = 
-    (type === "EXPENSE" || type === "INCOME") && 
     targetSearch.trim() !== "" && 
     !suggestions.some(s => s.name.toLowerCase() === targetSearch.trim().toLowerCase());
 
@@ -221,22 +204,20 @@ export default function BudgetPage() {
     }
   };
 
+  // ==========================================
+  // FORECAST CALCULATIONS
+  // ==========================================
   let expectedIncome = 0;
   let expectedExpenses = 0;
-  let expectedDebts = 0;
-  let expectedReceivables = 0;
 
   plans.forEach(p => {
     if (p.status !== "PENDING") return;
     const amt = Number(p.amount);
     if (p.type === "INCOME") expectedIncome += amt;
     if (p.type === "EXPENSE") expectedExpenses += amt;
-    if (p.type === "DEBT") expectedDebts += amt;
-    if (p.type === "RECEIVABLE") expectedReceivables += amt;
   });
 
-  const projectedPosition = 
-    currentBalance + expectedIncome - expectedExpenses - expectedDebts + expectedReceivables;
+  const projectedPosition = currentBalance + expectedIncome - expectedExpenses;
 
   const handleCreatePlan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -246,14 +227,12 @@ export default function BudgetPage() {
     const targetName = selectedTarget ? selectedTarget.name : targetSearch.trim();
     const targetId = selectedTarget ? selectedTarget.id : null;
 
-    // 1. Validate required fields
     if (!targetName || !amount || !date) {
       setError("Please fill out all required fields.");
       setLoading(false);
       return;
     }
 
-    // 2. Validate positive amount
     const amountNumber = Number(amount);
     if (isNaN(amountNumber) || amountNumber <= 0) {
       setError("Amount must be a positive number greater than 0.");
@@ -261,7 +240,6 @@ export default function BudgetPage() {
       return;
     }
 
-    // 3. Programmatic Safeguard: Block scheduling plans in the past
     const todayStr = new Date().toLocaleDateString("en-CA");
     if (date < todayStr) {
       setError("Scheduled date cannot be in the past.");
@@ -310,18 +288,13 @@ export default function BudgetPage() {
 
     try {
       const txPayload: any = {
-        type: processingPlan.type === "DEBT" ? "DEBT_TAKEN" : processingPlan.type === "RECEIVABLE" ? "RECEIVABLE_GIVEN" : processingPlan.type,
+        type: processingPlan.type,
         amount: amtToConfirm,
         account: processAccount,
         date: new Date().toLocaleDateString("en-CA"),
         note: processingPlan.note ? `${processingPlan.note} (Planned)` : "Planned event confirmed",
+        category_id: processingPlan.target_id
       };
-
-      if (processingPlan.type === "INCOME" || processingPlan.type === "EXPENSE") {
-        txPayload.category_id = processingPlan.target_id;
-      } else {
-        txPayload.entity = processingPlan.target_name;
-      }
 
       const txRes = await fetch("/api/transactions", {
         method: "POST",
@@ -372,18 +345,13 @@ export default function BudgetPage() {
 
     try {
       const txPayload: any = {
-        type: processingPlan.type === "DEBT" ? "DEBT_TAKEN" : processingPlan.type === "RECEIVABLE" ? "RECEIVABLE_GIVEN" : processingPlan.type,
+        type: processingPlan.type,
         amount: partialAmt,
         account: processAccount,
         date: new Date().toLocaleDateString("en-CA"),
         note: processingPlan.note ? `${processingPlan.note} (Partial planned)` : "Partial planned event",
+        category_id: processingPlan.target_id
       };
-
-      if (processingPlan.type === "INCOME" || processingPlan.type === "EXPENSE") {
-        txPayload.category_id = processingPlan.target_id;
-      } else {
-        txPayload.entity = processingPlan.target_name;
-      }
 
       const txRes = await fetch("/api/transactions", {
         method: "POST",
@@ -482,13 +450,7 @@ export default function BudgetPage() {
   };
 
   const getBadgeStyle = (type: string) => {
-    switch (type) {
-      case "INCOME": return "bg-green-500/10 text-green-500";
-      case "EXPENSE": return "bg-red-500/10 text-red-500";
-      case "DEBT": return "bg-blue-500/10 text-blue-500";
-      case "RECEIVABLE": return "bg-yellow-500/10 text-yellow-500";
-      default: return "bg-zinc-800 text-zinc-400";
-    }
+    return type === "INCOME" ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500";
   };
 
   return (
@@ -532,12 +494,14 @@ export default function BudgetPage() {
         <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 p-4 sm:p-6 rounded-3xl shadow-sm space-y-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_1.5px_3px_rgba(255,255,255,0.02)]">
           <h2 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block">Projections for {monthName}</h2>
           
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 pt-1">
-            <ProjectionBlock label="Current Balance" val={currentBalance} color="text-zinc-700 dark:text-zinc-300" />
-            <ProjectionBlock label="Expected Income" val={expectedIncome} color="text-green-500" prefix="+" />
-            <ProjectionBlock label="Expected Expenses" val={expectedExpenses} color="text-red-500" prefix="-" />
-            <ProjectionBlock label="Expected Debts" val={expectedDebts} color="text-blue-500" prefix="-" />
-            <ProjectionBlock label="Expected Receivables" val={expectedReceivables} color="text-yellow-500" prefix="+" />
+          {/* Mobile: Current Balance full width, Income/Expense side by side */}
+          {/* Desktop: Original 3-column layout */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 pt-1">
+            <div className="col-span-2 sm:col-span-1">
+              <ProjectionBlock label="Current Balance" val={currentBalance} color="text-zinc-700 dark:text-zinc-300"/>
+            </div>
+            <ProjectionBlock label="Expected Income" val={expectedIncome} color="text-green-500" prefix="+"/>
+            <ProjectionBlock label="Expected Expenses" val={expectedExpenses} color="text-red-500" prefix="-"/>
           </div>
 
           <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-zinc-900/60 mt-2">
@@ -714,7 +678,7 @@ export default function BudgetPage() {
           ========================================== */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAddModal(false)}>
-          <div className="bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 w-full max-w-[380px] shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 w-full max-w-[380px] shadow-2xl flex flex-col gap-4 animate-modalIn relative" onClick={(e) => e.stopPropagation()}>
             
             <div className="flex justify-between items-center border-b border-slate-100 dark:border-zinc-900 pb-3">
               <h3 className="text-lg font-bold text-black dark:text-white">Create Budget Plan</h3>
@@ -738,21 +702,19 @@ export default function BudgetPage() {
                 >
                   <option value="EXPENSE">Expense</option>
                   <option value="INCOME">Income</option>
-                  <option value="DEBT">Debt</option>
-                  <option value="RECEIVABLE">Receivable</option>
                 </select>
               </div>
 
               {/* Autocomplete Target Search Selector */}
               <div ref={autocompleteRef} className="flex flex-col gap-1 relative"> {/* ✅ Assigned ref here */}
                 <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
-                  {type === "EXPENSE" ? "Expense Category" : type === "INCOME" ? "Income Category" : "Counterparty"}
+                  {type === "EXPENSE" ? "Expense Category" : "Income Category"}
                 </label>
                 
                 <input
                   type="text"
                   required
-                  placeholder={type === "EXPENSE" || type === "INCOME" ? "Search Category..." : "Person / Bank..."}
+                  placeholder="Search Category..."
                   value={targetSearch}
                   onFocus={() => setShowTargetDropdown(true)}
                   onChange={(e) => {
@@ -767,8 +729,8 @@ export default function BudgetPage() {
                 {showTargetDropdown && (
                   <div className="absolute top-full left-0 w-full mt-1.5 max-h-40 overflow-y-auto bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl z-50 flex flex-col divide-y divide-slate-100 dark:divide-zinc-900">
                     {suggestions.map((s, idx) => {
-                      const nameStr = typeof s === "string" ? s : s.name;
-                      const idStr = typeof s === "string" ? null : s.id;
+                      const nameStr = s.name;
+                      const idStr = s.id;
                       return (
                         <button
                           key={idx}
