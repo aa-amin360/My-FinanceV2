@@ -455,7 +455,7 @@ export default function BudgetPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-6 px-1 sm:px-4 pb-16">
+      <div className="w-full space-y-6 px-1 sm:px-4 pb-16">
         
         {/* HEADER CONTROLS */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
@@ -496,7 +496,7 @@ export default function BudgetPage() {
           
           {/* Mobile: Current Balance full width, Income/Expense side by side */}
           {/* Desktop: Original 3-column layout */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 pt-1">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6 pt-1">
             <div className="col-span-2 sm:col-span-1">
               <ProjectionBlock label="Current Balance" val={currentBalance} color="text-zinc-700 dark:text-zinc-300"/>
             </div>
@@ -539,13 +539,18 @@ export default function BudgetPage() {
                     {p.target_name}
                   </div>
 
-                  {/* Date */}
-                  <div className="col-span-2 text-xs text-slate-500 dark:text-zinc-500">
-                    {new Date(p.date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      timeZone: "UTC",
-                    })}
+                {/* Date (With pulsing warning indicator if overdue) */}
+                  <div className="col-span-2 text-xs text-slate-500 dark:text-zinc-500 flex items-center gap-1.5">
+                    <span>
+                      {new Date(p.date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        timeZone: "UTC",
+                      })}
+                    </span>
+                    {p.status === "PENDING" && p.date.substring(0, 10) < new Date().toLocaleDateString("en-CA") && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shrink-0" title="Overdue!" />
+                    )}
                   </div>
 
                   {/* Type */}
@@ -566,13 +571,22 @@ export default function BudgetPage() {
                       {amt.toLocaleString("en-BD")} Tk
                     </span>
 
-                    {p.status === "PENDING" ? (
-                      <button
-                        onClick={() => setProcessingPlan(p)}
-                        className="px-2.5 py-1 rounded-lg bg-green-500 text-black hover:bg-green-400 text-xs font-bold transition active:scale-95 shrink-0 shadow-sm"
-                      >
-                        Due
-                      </button>
+                      {p.status === "PENDING" ? (
+                      p.date.substring(0, 10) < new Date().toLocaleDateString("en-CA") ? (
+                        <button
+                          onClick={() => setProcessingPlan(p)}
+                          className="px-2.5 py-1 rounded-lg bg-red-500 hover:bg-red-400 text-white text-xs font-bold transition active:scale-95 shrink-0 shadow-sm"
+                        >
+                          Overdue
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setProcessingPlan(p)}
+                          className="px-2.5 py-1 rounded-lg bg-green-500 text-black hover:bg-green-400 text-xs font-bold transition active:scale-95 shrink-0 shadow-sm"
+                        >
+                          Due
+                        </button>
+                      )
                     ) : (
                       <span className={`text-[10px] font-bold uppercase tracking-wider ${p.status === "CONFIRMED" ? "text-green-500" : "text-zinc-500"} shrink-0`}>
                         {p.status}
@@ -612,12 +626,17 @@ export default function BudgetPage() {
                 <div className="flex justify-between items-start gap-2">
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-sm text-black dark:text-white truncate">{p.target_name}</p>
-                    <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5">
-                      {new Date(p.date).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        timeZone: "UTC",
-                      })}
+                    <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5 flex items-center gap-1.5">
+                      <span>
+                        {new Date(p.date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          timeZone: "UTC",
+                        })}
+                      </span>
+                      {p.status === "PENDING" && p.date.substring(0, 10) < new Date().toLocaleDateString("en-CA") && (
+                        <span className="w-1 h-1 rounded-full bg-red-500 animate-pulse shrink-0" />
+                      )}
                     </p>
                   </div>
                   <div className="text-right shrink-0">
@@ -640,12 +659,21 @@ export default function BudgetPage() {
 
                   <div className="flex items-center gap-1.5 shrink-0">
                     {p.status === "PENDING" ? (
-                      <button
-                        onClick={() => setProcessingPlan(p)}
-                        className="px-2.5 py-1 rounded-lg bg-green-500 text-black hover:bg-green-400 text-[10px] font-bold transition active:scale-95 shadow-sm"
-                      >
-                        Due
-                      </button>
+                      p.date.substring(0, 10) < new Date().toLocaleDateString("en-CA") ? (
+                        <button
+                          onClick={() => setProcessingPlan(p)}
+                          className="px-2.5 py-1 rounded-lg bg-red-500 hover:bg-red-400 text-white text-[10px] font-bold transition active:scale-95 shadow-sm"
+                        >
+                          Overdue
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setProcessingPlan(p)}
+                          className="px-2.5 py-1 rounded-lg bg-green-500 text-black hover:bg-green-400 text-[10px] font-bold transition active:scale-95 shadow-sm"
+                        >
+                          Due
+                        </button>
+                      )
                     ) : (
                       <span className={`text-[10px] font-bold uppercase tracking-wider ${p.status === "CONFIRMED" ? "text-green-500" : "text-zinc-500"}`}>
                         {p.status}
@@ -1145,9 +1173,9 @@ export default function BudgetPage() {
 // ================= COMPONENT =================
 function ProjectionBlock({ label, val, color, prefix = "" }: { label: string, val: number, color: string, prefix?: string }) {
   return (
-    <div className="bg-slate-50/50 dark:bg-zinc-950/30 border border-slate-100 dark:border-zinc-900/60 p-2.5 sm:p-4 rounded-2xl flex flex-col text-left shadow-[inset_0_2px_4px_rgba(0,0,0,0.015)] dark:shadow-[inset_0_1.5px_3px_rgba(255,255,255,0.015)] w-full overflow-hidden">
-      <span className="text-[10px] sm:text-xs font-semibold text-slate-400 dark:text-zinc-500 leading-tight truncate">{label}</span>
-      <span className={`text-[11px] sm:text-sm md:text-base font-bold ${color} mt-1 whitespace-nowrap`}>
+    <div className="bg-slate-50/50 dark:bg-zinc-950/30 border border-slate-100 dark:border-zinc-900/60 p-3 sm:p-5 rounded-2xl flex flex-col text-left shadow-[inset_0_2px_4px_rgba(0,0,0,0.015)] dark:shadow-[inset_0_1.5px_3px_rgba(255,255,255,0.015)] w-full overflow-hidden">
+      <span className="text-[11px] sm:text-xs md:text-sm font-semibold text-slate-400 dark:text-zinc-500 leading-tight truncate">{label}</span>
+      <span className={`text-sm sm:text-lg md:text-xl lg:text-2xl font-bold ${color} mt-1.5 whitespace-nowrap`}>
         {val > 0 ? prefix : ""}{val.toLocaleString("en-BD")} Tk
       </span>
     </div>
