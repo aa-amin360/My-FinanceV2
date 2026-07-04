@@ -208,8 +208,7 @@ export default function AddHistoryPage() {
         
         {/* HEADER */}
         <div className="space-y-1">
-          <h1 className="text-2xl font-extrabold text-black dark:text-white">Add History</h1>
-          <p className="text-sm text-slate-500 dark:text-zinc-400">Log forgotten starting balances, active debts, or receivables to keep your ledger starting position accurate.</p>
+          <h1 className="text-2xl font-bold text-black dark:text-white">Add History</h1>
         </div>
 
         {initChecking ? (
@@ -225,18 +224,11 @@ export default function AddHistoryPage() {
               
               {isBalancesInitialized ? (
                 /* Already Configured Panel */
-                <div className="flex gap-3 p-4 rounded-2xl bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20">
-                  <CheckCircle2 size={20} className="shrink-0 mt-0.5" />
-                  <div className="text-xs sm:text-sm space-y-1 leading-normal">
-                    <p className="font-bold">Balances are configured</p>
-                    <p className="opacity-90">
-                      Opening balances can only be created once. Already configured values:
-                    </p>
-                    <div className="flex flex-wrap gap-x-6 gap-y-1 pt-1 font-mono font-bold">
-                      <span>Cash: {configuredCash?.toLocaleString("en-BD")} Tk</span>
-                      <span>Bank: {configuredBank?.toLocaleString("en-BD")} Tk</span>
-                    </div>
-                  </div>
+                <div className="flex items-center gap-3 p-4 rounded-2xl bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20 animate-fadeIn">
+                  <CheckCircle2 size={18} className="shrink-0" />
+                  <span className="text-xs sm:text-sm font-semibold">
+                    Balances are configured
+                  </span>
                 </div>
               ) : (
                 /* Editable Balance Inputs */

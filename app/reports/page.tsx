@@ -126,7 +126,7 @@ export default function ReportsPage() {
       
         {/* HEADER */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-black dark:text-white">
+          <h1 className="text-2xl font-bold">
             Reports
           </h1>
       

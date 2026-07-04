@@ -460,8 +460,7 @@ export default function BudgetPage() {
         {/* HEADER CONTROLS */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-black dark:text-white">Budget Planning</h1>
-            <p className="text-sm text-slate-500 dark:text-zinc-500">Plan ahead, schedule events, and forecast your actual projected month-end wealth.</p>
+            <h1 className="text-2xl font-bold">Budget Planning</h1>
           </div>
 
           <div className="flex gap-2 items-center self-end sm:self-center">
