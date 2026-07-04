@@ -35,6 +35,7 @@ export default function TransactionsPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [confirmAll, setConfirmAll] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(false);
 
   // =========================
   // LOAD DATA
@@ -123,22 +124,32 @@ export default function TransactionsPage() {
   };
   
   const handleDelete = async (id: string) => {
-    const res = await fetch(`/api/transactions/${id}`, {
-      method: "DELETE",
-    });
-  
-    const data = await res.json();
-  
-    if (!res.ok) {
-      setDeleteId(null);
-      setErrorMessage(data.error || "Cannot delete transaction");
-      return;
+    setLoading(true); // ✅ Set loading to true
+    try {
+      const res = await fetch(`/api/transactions/${id}`, {
+        method: "DELETE",
+      });
+    
+      const data = await res.json();
+    
+      if (!res.ok) {
+        setDeleteId(null);
+        setErrorMessage(data.error || "Cannot delete transaction");
+        setLoading(false);
+        return;
+      }
+    
+      loadData();
+    } catch (err) {
+      console.error(err);
+      setErrorMessage("Something went wrong during deletion.");
+    } finally {
+      setLoading(false); // ✅ Turn off loading on complete
     }
-  
-    loadData();
   };
 
   const handleDeleteAll = async () => {
+    setLoading(true); // ✅ Set loading to true
     try {
       const res = await fetch("/api/transactions/all", {
         method: "DELETE",
@@ -155,6 +166,8 @@ export default function TransactionsPage() {
       console.error(err);
       setErrorMessage("Error deleting transactions");
       setConfirmAll(false);
+    } finally {
+      setLoading(false); // ✅ Turn off loading on complete
     }
   };
 
@@ -614,18 +627,20 @@ export default function TransactionsPage() {
             <div className="flex gap-3 justify-center">
               
               <button
+                disabled={loading} // ✅ Gray out when loading
                 onClick={async () => {
                   await handleDelete(deleteId);
                   setDeleteId(null);
                 }}
-                className="px-5 py-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition"
+                className="px-5 py-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition disabled:bg-slate-200 dark:disabled:bg-zinc-800 disabled:text-slate-400 dark:disabled:text-zinc-600 disabled:cursor-not-allowed flex items-center justify-center min-w-[100px]"
               >
-                Delete
+                {loading ? "Deleting..." : "Delete"} {/* ✅ Toggle button text */}
               </button>
       
               <button
+                disabled={loading} // ✅ Prevent cancel actions during active requests
                 onClick={() => setDeleteId(null)}
-                className="px-5 py-2 rounded-full bg-gray-200 dark:bg-slate-700 text-black dark:text-gray-300 hover:bg-slate-600 transition"
+                className="px-5 py-2 rounded-full bg-gray-200 dark:bg-slate-700 text-black dark:text-gray-300 hover:bg-slate-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
@@ -653,15 +668,17 @@ export default function TransactionsPage() {
       
             <div className="flex gap-3 justify-center">
               <button
+                disabled={loading} // ✅ Gray out when loading
                 onClick={handleDeleteAll}
-                className="px-5 py-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition"
+                className="px-5 py-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition disabled:bg-slate-200 dark:disabled:bg-zinc-800 disabled:text-slate-400 dark:disabled:text-zinc-600 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]"
               >
-                Delete All
+                {loading ? "Deleting..." : "Delete All"} {/* ✅ Toggle button text */}
               </button>
       
               <button
+                disabled={loading} // ✅ Prevent cancel actions during active requests
                 onClick={() => setConfirmAll(false)}
-                className="px-5 py-2 rounded-full bg-gray-200 dark:bg-slate-700 text-black dark:text-gray-300 hover:bg-slate-600 transition"
+                className="px-5 py-2 rounded-full bg-gray-200 dark:bg-slate-700 text-black dark:text-gray-300 hover:bg-slate-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
