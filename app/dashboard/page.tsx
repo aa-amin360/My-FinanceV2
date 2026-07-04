@@ -125,30 +125,30 @@ export default function DashboardPage() {
       <div className="w-full space-y-6 pb-12">
         
         {/* ==========================================
-            1. HERO BALANCE SUBTLE GREEN GRADIENT CARD
+            1. HERO BALANCE SUBTLE EMERALD GRADIENT CARD
             ========================================== */}
-        <div className="relative overflow-hidden rounded-3xl p-4 sm:p-5 border shadow-xl transition-all duration-300 bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-green-600/10 border-green-500/20 shadow-green-500/[0.03] dark:from-emerald-950/40 dark:via-green-950/20 dark:to-zinc-950/90 dark:border-green-500/15 dark:shadow-green-500/[0.01]">
-          {/* Subtle Ambient green blur inside card */}
-          <div className="absolute top-[-30%] right-[-10%] w-60 h-60 rounded-full bg-green-500/15 dark:bg-green-500/10 blur-[70px] pointer-events-none" />
+        <div className="relative overflow-hidden rounded-3xl p-4 sm:p-5 border shadow-xl transition-all duration-300 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-emerald-600/10 border-emerald-500/20 shadow-emerald-500/[0.03] dark:from-emerald-950/40 dark:via-emerald-950/20 dark:to-zinc-950/90 dark:border-emerald-500/15 dark:shadow-emerald-500/[0.01]">
+          {/* Subtle Ambient emerald blur inside card */}
+          <div className="absolute top-[-30%] right-[-10%] w-60 h-60 rounded-full bg-emerald-500/15 dark:bg-emerald-500/10 blur-[70px] pointer-events-none" />
 
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 relative z-10">
             {/* Balance Copy */}
             <div className="space-y-0.5">
-              <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 leading-none text-green-700/85 dark:text-green-400/80">
-                <Activity size={12} className="text-green-600 dark:text-green-400 animate-pulse" /> Ledger Available Balance
+              <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 leading-none text-emerald-700/85 dark:text-emerald-400/80">
+                Ledger Available Balance
               </span>
               
-              <h1 className="text-3xl font-extrabold tracking-tight pt-0.5 text-green-800 dark:text-white">
-                {Number(balance).toLocaleString("en-BD")} <span className="text-green-600 dark:text-green-400 text-xl font-bold">Tk</span>
+              <h1 className="text-3xl font-extrabold tracking-tight pt-0.5 text-emerald-800 dark:text-white">
+                {Number(balance).toLocaleString("en-BD")} <span className="text-emerald-600 dark:text-emerald-400 text-xl font-bold">Tk</span>
               </h1>
 
-              {/* In-Line Account Split (Pt-1.5 shaves off unused vertical height) */}
-              <div className="flex gap-4 pt-1.5 text-xs font-semibold font-mono text-green-700/80 dark:text-green-400/70 leading-none">
+              {/* In-Line Account Split */}
+              <div className="flex gap-4 pt-1.5 text-xs font-semibold font-mono text-emerald-700/80 dark:text-emerald-400/70 leading-none">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-600/60 dark:bg-green-500/40" /> Cash: {cashBalance.toLocaleString("en-BD")} Tk
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600/60 dark:bg-emerald-500/40" /> Cash: {cashBalance.toLocaleString("en-BD")} Tk
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-600/60 dark:bg-green-500/40" /> Bank: {bankBalance.toLocaleString("en-BD")} Tk
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600/60 dark:bg-emerald-500/40" /> Bank: {bankBalance.toLocaleString("en-BD")} Tk
                 </span>
               </div>
             </div>
@@ -156,9 +156,9 @@ export default function DashboardPage() {
             {/* Quick Action Link */}
             <Link 
               href="/add-history" 
-              className="self-start sm:self-center px-4 py-2 text-xs font-bold rounded-xl border transition flex items-center gap-1.5 hover:scale-[1.03] border-green-500/20 bg-green-500/10 text-green-700 hover:bg-green-500/20 dark:border-green-500/15 dark:bg-green-500/5 dark:text-green-300 dark:hover:bg-green-500/10"
+              className="self-start sm:self-center px-4 py-2 text-xs font-bold rounded-xl border transition flex items-center gap-1.5 hover:scale-[1.03] border-emerald-500/20 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:border-emerald-500/15 dark:bg-emerald-500/5 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
             >
-              Add History <ArrowUpRight size={13} className="text-green-600 dark:text-green-400" />
+              Add History <ArrowUpRight size={13} className="text-emerald-600 dark:text-emerald-400" />
             </Link>
           </div>
         </div>
@@ -201,8 +201,8 @@ export default function DashboardPage() {
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
               Recent Transactions
             </h3>
-            <Link href="/transactions" className="text-xs font-semibold text-green-500 hover:text-green-400 transition">
-              See All Transactions →
+            <Link href="/transactions" className="text-xs font-bold text-gray-500 hover:text-green-400 transition">
+              See All
             </Link>
           </div>
 
@@ -266,7 +266,8 @@ export default function DashboardPage() {
                     {/* RIGHT */}
                     <div className="flex items-center gap-4 shrink-0">
                       <div className="text-right">
-                        <div className={`font-bold text-base ${isPositive ? "text-green-500" : "text-red-500"}`}>
+
+                        <div className={`font-bold text-base ${isPositive ? "text-emerald-500" : "text-rose-500"}`}>
                           {isPositive ? "+" : "-"}
                           {Number(amount).toLocaleString("en-BD")} Tk
                         </div>
@@ -275,13 +276,13 @@ export default function DashboardPage() {
                           <span
                             className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                               t.type === "INCOME"
-                                ? "bg-green-500/10 text-green-400"
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                                 : t.type === "EXPENSE"
-                                ? "bg-red-500/10 text-red-400"
+                                ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
                                 : t.type.includes("DEBT")
-                                ? "bg-blue-500/10 text-blue-400"
+                                ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
                                 : t.type.includes("RECEIVABLE")
-                                ? "bg-yellow-500/10 text-yellow-400"
+                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                                 : "bg-zinc-800 text-zinc-400"
                             }`}
                           >
@@ -346,27 +347,27 @@ const getCardStyle = (type: string) => {
   switch (type) {
     case "income":
       return {
-        text: "text-green-600 dark:text-green-400",
-        bg: "bg-green-500/15 dark:bg-green-500/10",
-        border: "border-green-500/20 dark:border-green-500/15",
+        text: "text-green-700 dark:text-green-400",
+        bg: "bg-green-500/20 dark:bg-green-950/30",
+        border: "border-green-500/35 dark:border-green-500/25",
       };
     case "expense":
       return {
-        text: "text-red-600 dark:text-red-400",
-        bg: "bg-red-500/15 dark:bg-red-500/10",
-        border: "border-red-500/20 dark:border-red-500/15",
+        text: "text-red-700 dark:text-red-400",
+        bg: "bg-red-500/20 dark:bg-red-950/30",
+        border: "border-red-500/35 dark:border-red-500/25",
       };
     case "debt":
       return {
-        text: "text-cyan-600 dark:text-cyan-400",
-        bg: "bg-cyan-500/15 dark:bg-cyan-500/10",
-        border: "border-cyan-500/20 dark:border-cyan-500/15",
+        text: "text-cyan-700 dark:text-cyan-400",
+        bg: "bg-cyan-500/20 dark:bg-cyan-950/30",
+        border: "border-cyan-500/35 dark:border-cyan-500/25",
       };
     case "receivable":
       return {
-        text: "text-yellow-600 dark:text-yellow-400",
-        bg: "bg-yellow-500/15 dark:bg-yellow-500/10",
-        border: "border-yellow-500/20 dark:border-yellow-500/15",
+        text: "text-yellow-700 dark:text-yellow-400",
+        bg: "bg-yellow-500/20 dark:bg-yellow-950/30",
+        border: "border-yellow-500/35 dark:border-yellow-500/25",
       };
     default:
       return {

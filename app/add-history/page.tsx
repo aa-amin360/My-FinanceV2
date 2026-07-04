@@ -204,7 +204,7 @@ export default function AddHistoryPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-8 pb-12 px-1 sm:px-4">
+      <div className="w-full space-y-6 pb-12">
         
         {/* HEADER */}
         <div className="space-y-1">
