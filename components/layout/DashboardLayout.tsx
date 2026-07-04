@@ -80,9 +80,10 @@ export default function DashboardLayout({
       <aside
         className={`hidden md:flex ${
           collapsed ? "w-16" : "w-56"
-        } h-full bg-white dark:bg-black border-r border-gray-200 dark:border-zinc-900 flex-col transition-all duration-300`}
+        } h-full bg-slate-50/50 dark:bg-black border-r border-slate-100 dark:border-zinc-900 flex-col transition-all duration-300`}
       >
-        <div className="p-4 flex items-center justify-between">
+        {/* Adjusted justify and margins to center the toggle button perfectly when collapsed */}
+        <div className={`p-4 flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
           {!collapsed && (
             <h2 className="text-sm font-semibold text-gray-400 tracking-widest">
               MENU
@@ -90,8 +91,8 @@ export default function DashboardLayout({
           )}
 
           <button
-            onClick={handleToggleCollapse} // Updated to custom toggle handler
-            className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition"
+            onClick={handleToggleCollapse}
+            className={`w-9 h-9 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition active:scale-95 ${collapsed ? "mx-auto" : ""}`}
           >
             {collapsed ? (
               <PanelRightClose size={18} />
@@ -201,19 +202,24 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
   const isActive =
     pathname === href || pathname.startsWith(href + "/");
 
+  // Custom visual styles: Collapsed state uses a perfectly centered circular/squircle badge
+  const containerStyle = collapsed
+    ? `mx-auto w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 cursor-pointer ${
+        isActive
+          ? "bg-green-500/20 text-green-600 dark:text-green-400 shadow-[inset_0_1.5px_3px_rgba(34,197,94,0.06)] dark:shadow-[inset_0_1px_2.5px_rgba(255,255,255,0.04)] border border-green-500/10 scale-105"
+          : "text-slate-400 dark:text-zinc-500 hover:bg-slate-100/50 dark:hover:bg-zinc-900/50 hover:text-black dark:hover:text-white"
+      }`
+    : `group relative flex items-center gap-3 px-4 py-2.5 rounded-r-xl border-l-4 transition-all duration-200 cursor-pointer ${
+        isActive
+          ? "bg-green-500/20 dark:bg-green-500/10 border-green-500 text-green-700 dark:text-green-400 font-bold"
+          : "border-transparent text-slate-500 dark:text-zinc-400 hover:bg-slate-100/50 dark:hover:bg-zinc-900/50 hover:text-black dark:hover:text-white hover:translate-x-1"
+      }`;
+
   return (
     <Link href={href}>
-      <div
-        className={`flex items-center ${
-          collapsed ? "justify-center w-full" : "gap-3 px-3"
-        } py-2 rounded-lg cursor-pointer transition ${
-          isActive
-            ? "bg-green-500 text-black font-medium"
-            : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-900 hover:text-black dark:hover:text-white"
-        }`}
-      >
-        <Icon size={collapsed ? 20 : 18} />
-        {!collapsed && <span>{label}</span>}
+      <div className={containerStyle}>
+        <Icon size={collapsed ? 19 : 18} className="group-hover:scale-105 transition-transform duration-200 shrink-0" />
+        {!collapsed && <span className="text-xs sm:text-sm tracking-wide">{label}</span>}
       </div>
     </Link>
   );
