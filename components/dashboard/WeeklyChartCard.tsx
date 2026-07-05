@@ -16,7 +16,6 @@ export default function WeeklyChartCard() {
     try {
       const res = await fetch("/api/dashboard/weekly-expenses");
       const json = await res.json();
-  
       setData(json.data || []);
     } catch (err) {
       console.error(err);
@@ -25,7 +24,6 @@ export default function WeeklyChartCard() {
   
   useRefresh(loadWeeklyData);
 
-  // 🔥 FIX: use absolute values
   const maxAmount = Math.max(
     ...data.map((d) => Math.abs(d.amount)),
     1
@@ -34,31 +32,31 @@ export default function WeeklyChartCard() {
   const total = data.reduce((sum, item) => sum + item.amount, 0);
 
   return (
-    <div className="bg-white dark:bg-black rounded-3xl p-6 border border-gray-200 dark:border-zinc-900 shadow-sm">
+    // ✅ Updated card to standard translucent glassmorphism with subtle light/dark borders
+    <div className="bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md rounded-3xl p-6 shadow-sm shadow-black/[0.01] flex-1 flex flex-col justify-between">
     
       {/* HEADER */}
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h2 className="text-4xl font-bold text-black dark:text-white">
+          <h2 className="text-2xl font-bold tracking-tight text-black dark:text-white">
             {total.toLocaleString()} Tk
           </h2>
     
-          <p className="text-sm text-gray-500 dark:text-zinc-500 mt-1">
+          <p className="text-xs font-semibold text-gray-400 dark:text-zinc-500 mt-1">
             Weekly Flow
           </p>
         </div>
     
-        <button className="text-sm text-gray-500 dark:text-zinc-500">
+        <button className="text-xs font-semibold text-slate-400 dark:text-zinc-500">
           Week
         </button>
       </div>
     
       {/* CHART */}
-      <div className="h-52 flex items-end justify-between gap-3">
+      <div className="h-44 flex items-end justify-between gap-3">
     
         {data.map((item, index) => {
-          const normalized =
-            (Math.abs(item.amount) / maxAmount) * 100;
+          const normalized = (Math.abs(item.amount) / maxAmount) * 100;
     
           const today = new Date().toLocaleDateString("en-US", {
             weekday: "short",
@@ -76,41 +74,42 @@ export default function WeeklyChartCard() {
               onMouseLeave={() => setActiveIndex(null)}
             >
     
-              {/* PILL */}
+              {/* ✅ Updated active floating pill to a cohesive glassmorphic style */}
               {isActive && (
                 <div
                   className="
                   absolute top-0
-                  px-3 py-1
-                  rounded-full
-                  bg-black dark:bg-white
-                  text-white dark:text-black
-                  text-xs font-medium
+                  px-2.5 py-1
+                  rounded-xl
+                  bg-white/95 dark:bg-black/95
+                  border border-black/[0.05] dark:border-white/[0.05]
+                  text-black dark:text-white
+                  text-[10px] font-bold
                   whitespace-nowrap
-                  shadow-md z-10
+                  shadow-md z-10 animate-modalIn
                   "
                 >
                   {Math.abs(item.amount).toLocaleString()} Tk
                 </div>
               )}
     
-              {/* BAR AREA */}
-              <div className="flex items-end h-40 w-full">
-    
-                <div
-                  className={`w-full rounded-full transition-all duration-300 ${
-                    isActive
-                      ? "bg-black dark:bg-white"
-                      : "bg-gray-200 dark:bg-zinc-800"
-                  }`}
-                  style={{
-                    height: `${Math.max(normalized, 12)}%`,
-                  }}
-                />
-              </div>
+                {/* BAR AREA */}
+                  <div className="flex items-end h-40 w-full">
+        
+                    <div
+                      className={`w-8 sm:w-12 mx-auto rounded-full transition-all duration-300 ${
+                        isActive
+                          ? "bg-green-500 dark:bg-green-500" 
+                          : "bg-black/[0.08] dark:bg-white/[0.08]" 
+                      }`}
+                      style={{
+                        height: `${Math.max(normalized, 12)}%`,
+                      }}
+                    />
+                  </div>
     
               {/* LABEL */}
-              <span className="mt-3 text-xs text-gray-500 dark:text-zinc-500">
+              <span className="mt-3 text-[10px] sm:text-xs font-semibold text-gray-400 dark:text-zinc-500">
                 {item.day}
               </span>
             </div>

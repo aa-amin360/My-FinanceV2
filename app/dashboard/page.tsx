@@ -122,19 +122,20 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="w-full space-y-6 pb-12">
+      <div className="w-full space-y-6 pb-12 animate-fadeIn">
         
         {/* ==========================================
-            1. HERO BALANCE SUBTLE EMERALD GRADIENT CARD
+            1. HERO BALANCE EMERALD GLASS CARD
             ========================================== */}
-        <div className="relative overflow-hidden rounded-3xl p-4 sm:p-5 border shadow-xl transition-all duration-300 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-emerald-600/10 border-emerald-500/20 shadow-emerald-500/[0.03] dark:from-emerald-950/40 dark:via-emerald-950/20 dark:to-zinc-950/90 dark:border-emerald-500/15 dark:shadow-emerald-500/[0.01]">
+        {/* ✅ Updated to translucent glassmorphism with emerald gradients */}
+        <div className="relative overflow-hidden rounded-3xl p-4 sm:p-5 border shadow-xl transition-all duration-300 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-emerald-600/10 border-emerald-500/20 shadow-emerald-500/[0.03] dark:from-emerald-950/20 dark:via-emerald-950/15 dark:to-zinc-950/40 dark:border-emerald-500/15 dark:backdrop-blur-md">
           {/* Subtle Ambient emerald blur inside card */}
           <div className="absolute top-[-30%] right-[-10%] w-60 h-60 rounded-full bg-emerald-500/15 dark:bg-emerald-500/10 blur-[70px] pointer-events-none" />
 
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 relative z-10">
             {/* Balance Copy */}
             <div className="space-y-0.5">
-              <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 leading-none text-emerald-700/85 dark:text-emerald-400/80">
+              <span className="text-[10px] font-bold uppercase tracking-widest leading-none text-emerald-700/85 dark:text-emerald-400/80">
                 Ledger Available Balance
               </span>
               
@@ -156,7 +157,7 @@ export default function DashboardPage() {
             {/* Quick Action Link */}
             <Link 
               href="/add-history" 
-              className="self-start sm:self-center px-4 py-2 text-xs font-bold rounded-xl border transition flex items-center gap-1.5 hover:scale-[1.03] border-emerald-500/20 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:border-emerald-500/15 dark:bg-emerald-500/5 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
+              className="self-start sm:self-center px-4 py-2 text-xs font-bold rounded-xl border transition flex items-center gap-1.5 hover:scale-[1.03] border-emerald-500/20 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:border-emerald-500/15 dark:bg-emerald-500/5 dark:text-green-300 dark:hover:bg-emerald-500/10"
             >
               Add History <ArrowUpRight size={13} className="text-emerald-600 dark:text-emerald-400" />
             </Link>
@@ -164,25 +165,26 @@ export default function DashboardPage() {
         </div>
       
         {/* ==========================================
-            2. MINIMALIST FINANCIAL METRICS (Simplified - No Icons)
+            2. MINIMALIST METRICS ROW
             ========================================== */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard title="Income" value={income} type="income" />
-          <MetricCard title="Expenses" value={expense} type="expense" />
-          <MetricCard title="Debt" value={debt} type="debt" href="/debts" />
-          <MetricCard title="Receivable" value={receivable} type="receivable" href="/receivables" />
+          <Card title="Income" value={income} type="income" />
+          <Card title="Expenses" value={expense} type="expense" />
+          <Card title="Debt" value={debt} type="debt" href="/debts" />
+          <Card title="Receivable" value={receivable} type="receivable" href="/receivables" />
         </div>
       
         {/* ==========================================
-            3. CHARTS GRID (REPORTS & WEEKLY FLOW)
+            3. CHARTS GRID (FROSTED GLASS PANELS)
             ========================================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">          
           {/* Main Area curve chart */}
-          <div className="lg:col-span-7 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 rounded-3xl p-5 shadow-sm">
+          {/* ✅ Refined to a highly defined, deep black glassmorphic style */}
+          <div className="lg:col-span-7 bg-white/45 dark:bg-black/30 border border-black/[0.05] dark:border-white/[0.05] backdrop-blur-md rounded-3xl p-5 shadow-sm shadow-black/[0.01]">
             <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
               Balance History
             </h3>
-            <div className="bg-slate-50/50 dark:bg-[#04070e]/40 border border-slate-100 dark:border-zinc-900/60 rounded-2xl p-2 h-[260px] shadow-[inset_0_2px_4px_rgba(0,0,0,0.01)] dark:shadow-[inset_0_1px_3px_rgba(255,255,255,0.015)]">
+            <div className="bg-black/[0.01] dark:bg-white/[0.01] border border-black/[0.03] dark:border-white/[0.03] rounded-2xl p-2 h-[260px] shadow-[inset_0_2px_4px_rgba(0,0,0,0.01)] dark:shadow-[inset_0_1px_3px_rgba(255,255,255,0.015)]">
               <CashflowChart data={chartData} />
             </div>
           </div>
@@ -194,15 +196,15 @@ export default function DashboardPage() {
         </div>
 
         {/* ==========================================
-            4. RECENT TRANSACTIONS LEDGER LIST
+            4. RECENT TRANSACTIONS LEDGER LIST (GLASS LIST)
             ========================================== */}
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+          <div className="flex justify-between items-center px-1">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
               Recent Transactions
             </h3>
-            <Link href="/transactions" className="text-xs font-bold text-gray-500 hover:text-green-400 transition">
-              See All
+            <Link href="/transactions" className="text-xs font-semibold text-emerald-500 hover:text-emerald-400 transition">
+              See All Transactions →
             </Link>
           </div>
 
@@ -234,14 +236,16 @@ export default function DashboardPage() {
                 };
 
                 return (
+                  // ✅ Refined to a highly defined, deep black glassmorphic style
                   <div
                     key={t.id}
                     className="
-                      bg-white dark:bg-zinc-950
-                      border border-slate-200 dark:border-zinc-900
+                      bg-white/25 dark:bg-black/20
+                      border border-black/[0.04] dark:border-white/[0.04]
+                      backdrop-blur-sm
                       rounded-2xl px-5 py-4
                       flex justify-between items-center
-                      hover:bg-slate-50 dark:hover:bg-zinc-900/40
+                      hover:bg-white/35 dark:hover:bg-black/35
                       hover:translate-x-1
                       transition-all duration-200 shadow-sm
                     "
@@ -266,7 +270,6 @@ export default function DashboardPage() {
                     {/* RIGHT */}
                     <div className="flex items-center gap-4 shrink-0">
                       <div className="text-right">
-
                         <div className={`font-bold text-base ${isPositive ? "text-emerald-500" : "text-rose-500"}`}>
                           {isPositive ? "+" : "-"}
                           {Number(amount).toLocaleString("en-BD")} Tk
@@ -307,12 +310,13 @@ export default function DashboardPage() {
 
       </div>
 
-      {/* ==========================================
-          GORGEOUS CUSTOM DELETE CONFIRMATION MODAL
-          ========================================== */}
+      {/* =========================================================
+          GORGEOUS CUSTOM DELETE CONFIRMATION MODAL (FROSTED GLASS)
+          ========================================================= */}
       {deleteId && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setDeleteId(null)}>
-          <div className="bg-white/95 dark:bg-black/90 border border-slate-200 dark:border-zinc-800 backdrop-blur-xl rounded-3xl p-6 w-full max-w-[320px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
+          {/* ✅ Updated modal wrapper to heavy frosted glassmorphism */}
+          <div className="bg-white/75 dark:bg-black/60 border border-black/[0.05] dark:border-white/[0.05] text-black dark:text-white backdrop-blur-xl rounded-3xl p-6 w-full max-w-[320px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-black dark:text-white">Delete Transaction?</h3>
             <p className="text-sm text-slate-500 dark:text-zinc-400 leading-relaxed">
               Are you sure you want to permanently delete this transaction? This action cannot be undone.
@@ -348,6 +352,7 @@ const getCardStyle = (type: string) => {
     case "income":
       return {
         text: "text-green-700 dark:text-green-400",
+        // ✅ Updated cards to translucent, deep-saturated glassmorphic backgrounds
         bg: "bg-green-500/20 dark:bg-green-950/30",
         border: "border-green-500/35 dark:border-green-500/25",
       };
@@ -378,12 +383,13 @@ const getCardStyle = (type: string) => {
   }
 };
 
-function MetricCard({ title, value, type, href }: any) { // Renamed safely & removed Icon destructuring
+function Card({ title, value, type, href }: any) {
   const formatted = Number(value).toLocaleString("en-BD");
   const { text, bg, border } = getCardStyle(type);
 
   const content = (
-    <div className={`p-3.5 sm:p-4 rounded-2xl border transition hover:scale-[1.01] duration-200 ${bg} ${border} ${href ? "cursor-pointer" : ""}`}>
+    // ✅ Updated metrics cards to standard translucent glassmorphic style
+    <div className={`p-3.5 sm:p-4 rounded-2xl border transition hover:scale-[1.01] duration-200 backdrop-blur-md ${bg} ${border} ${href ? "cursor-pointer" : ""}`}>
       <div className="min-w-0">
         <span className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider block leading-none opacity-85 ${text}`}>
           {title}

@@ -74,14 +74,15 @@ export default function DashboardLayout({
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white text-black dark:bg-black dark:text-white transition-colors duration-300">
-      
+    <div className="flex h-screen overflow-hidden bg-[#E7EBED] text-black dark:bg-[#131B21] dark:text-white transition-colors duration-300">
+
       {/* ================= SIDEBAR (DESKTOP) ================= */}
       <aside
         className={`hidden md:flex ${
           collapsed ? "w-16" : "w-56"
-        } h-full bg-slate-50/50 dark:bg-black border-r border-slate-100 dark:border-zinc-900 flex-col transition-all duration-300`}
+        } h-full bg-slate-50/50 dark:bg-[#2A3439]/40 border-r border-slate-100 dark:border-zinc-900/60 flex-col transition-all duration-300`}
       >
+        
         {/* Adjusted justify and margins to center the toggle button perfectly when collapsed */}
         <div className={`p-4 flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
           {!collapsed && (
@@ -117,7 +118,7 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      {/* ================= MAIN ================= */}
+      {/* ================= MAIN PANEL ================= */}
       <div className="flex flex-col flex-1 h-full">
         
         {/* HEADER */}
@@ -207,7 +208,7 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
     ? `mx-auto w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 cursor-pointer ${
         isActive
           ? "bg-green-500/20 text-green-600 dark:text-green-400 shadow-[inset_0_1.5px_3px_rgba(34,197,94,0.06)] dark:shadow-[inset_0_1px_2.5px_rgba(255,255,255,0.04)] border border-green-500/10 scale-105"
-          : "text-slate-400 dark:text-zinc-500 hover:bg-slate-100/50 dark:hover:bg-zinc-900/50 hover:text-black dark:hover:text-white"
+          : "text-slate-400 dark:text-zinc-500 hover:bg-slate-100/50 dark:hover:bg-zinc-900/60 hover:text-black dark:hover:text-white"
       }`
     : `group relative flex items-center gap-3 px-4 py-2.5 rounded-r-xl border-l-4 transition-all duration-200 cursor-pointer ${
         isActive
@@ -225,7 +226,7 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
   );
 }
 
-// ================= MOBILE NAV (HORIZONTALLY SCROLLABLE) ================= //
+// ================= MOBILE NAV ================= //
 
 function FloatingNav({ pathname }: { pathname: string }) {
   const items = [
@@ -241,6 +242,7 @@ function FloatingNav({ pathname }: { pathname: string }) {
 
   return (
     <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md animate-fadeIn">
+      {/* Scrollable Container with Hidden Scrollbars */}
       <div className="
         flex gap-3 items-center w-full px-4 py-2.5 rounded-full 
         bg-white/80 dark:bg-black/80 border border-gray-200 dark:border-slate-700 
