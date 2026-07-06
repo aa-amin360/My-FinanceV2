@@ -12,8 +12,8 @@ const COLORS = ["#22c55e", "#ef4444", "#3b82f6", "#eab308", "#a855f7"];
 
 export default function CategoryDonut({ data, onSelect }: any) {
   return (
-    <div className="p-4 rounded-2xl">
-      <ResponsiveContainer width="100%" height={250}>
+    <div className="w-full h-full p-2 relative">
+      <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
             data={data}

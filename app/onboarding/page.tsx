@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider"; // Imported useTheme
 
 type EntryRow = {
   name: string;
@@ -19,6 +20,7 @@ type ModalType =
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme(); // Set up theme triggers
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [modal, setModal] = useState<ModalType>(null);
   const [loading, setLoading] = useState(false);
@@ -215,10 +217,51 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 flex items-center justify-center p-4 transition-colors duration-300">
+    // ✅ Updated background colors to support your Light Gunmetal Silver (#E7EBED) and Dark Charcoal Gunmetal (#131B21)
+    <div className="relative min-h-screen bg-[#E7EBED] dark:bg-[#131B21] text-slate-900 dark:text-slate-100 flex flex-col justify-between p-4 transition-colors duration-300">
       
-      {/* CARD MAIN WRAPPER (Updated responsive padding) */}
-      <div className="w-full max-w-xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 rounded-3xl p-4 sm:p-8 shadow-xl flex flex-col gap-6">
+      {/* ======================================================================
+          ✅ AMBIENT SPOTLIGHT BACKGROUND LAYER
+          ====================================================================== */}
+      <div className="
+        absolute inset-0 z-0 pointer-events-none overflow-hidden select-none
+        bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(0,0,0,0.08),rgba(255,255,255,0))] 
+        dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(255,255,255,0.14),rgba(0,0,0,0))]
+      " />
+
+      {/* ================= ONBOARDING HEADER (SLIDING TOGGLE) ================= */}
+      {/* ✅ Added a sliding theme selector toggle in the header */}
+      <header className="relative z-10 max-w-xl w-full mx-auto h-16 flex items-center justify-between shrink-0 px-2">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-green-500 flex items-center justify-center text-black font-extrabold text-sm shadow-md shadow-green-500/10">
+            M
+          </div>
+          <span className="font-extrabold text-sm tracking-wide text-green-500">My Finance</span>
+        </div>
+
+        {/* Sliding Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          type="button"
+          className="relative w-12 h-6 rounded-full transition-colors duration-300 bg-black/[0.04] dark:bg-white/[0.04] border border-black/[0.05] dark:border-white/[0.05] focus:outline-none"
+          aria-label="Toggle theme"
+        >
+          <div
+            className={`
+              absolute top-[1.5px] left-[1px] w-5 h-5 rounded-full bg-white dark:bg-zinc-400
+              shadow-md flex items-center justify-center text-[10px]
+              transition-transform duration-300
+              ${theme === "dark" ? "translate-x-6" : "translate-x-0"}
+            `}
+          >
+            {theme === "dark" ? "🌙" : "☀️"}
+          </div>
+        </button>
+      </header>
+
+      {/* CARD MAIN WRAPPER (Frosted Glass) */}
+      {/* ✅ Wrapped in relative z-10 so the ambient backdrop glow can bleed through dynamically */}
+      <div className="relative z-10 w-full max-w-xl mx-auto bg-white/75 dark:bg-black/60 border border-black/[0.05] dark:border-white/[0.05] backdrop-blur-xl rounded-3xl p-4 sm:p-8 shadow-2xl flex flex-col gap-6 animate-modalIn">
         
         {/* PROGRESS STEP DOTS */}
         <div className="flex justify-between items-center px-4">
@@ -226,9 +269,9 @@ export default function OnboardingPage() {
             Step {step} of 3
           </span>
           <div className="flex gap-2">
-            <div className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${step >= 1 ? "bg-green-500" : "bg-slate-200 dark:bg-zinc-800"}`} />
-            <div className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${step >= 2 ? "bg-green-500" : "bg-slate-200 dark:bg-zinc-800"}`} />
-            <div className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${step >= 3 ? "bg-green-500" : "bg-slate-200 dark:bg-zinc-800"}`} />
+            <div className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${step >= 1 ? "bg-green-500" : "bg-black/[0.05] dark:bg-white/[0.05]"}`} />
+            <div className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${step >= 2 ? "bg-green-500" : "bg-black/[0.05] dark:bg-white/[0.05]"}`} />
+            <div className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${step >= 3 ? "bg-green-500" : "bg-black/[0.05] dark:bg-white/[0.05]"}`} />
           </div>
         </div>
 
@@ -238,30 +281,30 @@ export default function OnboardingPage() {
         {step === 1 && (
           <div className="flex flex-col gap-5">
             <div className="space-y-1">
-              <h2 className="text-2xl font-extrabold text-black dark:text-white">Set Your Current Balances</h2>
+              <h2 className="text-2xl font-bold tracking-tight text-black dark:text-white">Set Your Current Balances</h2>
               <p className="text-sm text-slate-500 dark:text-zinc-400">Establish the cash and bank holdings you have on hand today. You can add more later.</p>
             </div>
 
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-slate-500 dark:text-zinc-400">Cash Balance</label>
+                <label className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Cash Balance</label>
                 <input
                   type="number"
                   placeholder="0.00"
                   value={cashBalance}
                   onChange={(e) => setCashBalance(e.target.value)}
-                  className="px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                  className="px-4 py-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-slate-500 dark:text-zinc-400">Bank Balance</label>
+                <label className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Bank Balance</label>
                 <input
                   type="number"
                   placeholder="0.00"
                   value={bankBalance}
                   onChange={(e) => setBankBalance(e.target.value)}
-                  className="px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                  className="px-4 py-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm"
                 />
               </div>
             </div>
@@ -269,13 +312,13 @@ export default function OnboardingPage() {
             <div className="flex justify-end gap-3 mt-4">
               <button
                 onClick={() => setModal("SKIP_BALANCES")}
-                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-semibold text-sm transition active:scale-95"
+                className="px-5 py-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.04] text-slate-700 dark:text-zinc-300 font-bold text-xs sm:text-sm hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition active:scale-95"
               >
                 Skip
               </button>
               <button
                 onClick={handleNextStep1}
-                className="px-6 py-2.5 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold text-sm transition active:scale-95 flex items-center gap-1.5"
+                className="px-6 py-2.5 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold text-xs sm:text-sm transition active:scale-95 flex items-center gap-1.5 shadow-sm shadow-green-500/10"
               >
                 Next <ArrowRight size={16} />
               </button>
@@ -289,11 +332,11 @@ export default function OnboardingPage() {
         {step === 2 && (
           <div className="flex flex-col gap-5">
             <div className="space-y-1">
-              <h2 className="text-2xl font-extrabold text-black dark:text-white">People You Owe</h2>
+              <h2 className="text-2xl font-bold tracking-tight text-black dark:text-white">People You Owe</h2>
               <p className="text-sm text-slate-500 dark:text-zinc-400">Enter any outstanding loans or debts you currently owe. Press Next if you don't have any.</p>
             </div>
 
-            {/* Dynamic Manual Rows (Updated with mobile responsive gap and flex input sizes) */}
+            {/* Dynamic Manual Rows */}
             <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
               {debts.map((row, index) => (
                 <div key={index} className="flex gap-1.5 sm:gap-2 items-center w-full">
@@ -302,14 +345,14 @@ export default function OnboardingPage() {
                     placeholder="Name (e.g. Rahim)"
                     value={row.name}
                     onChange={(e) => updateRow("DEBTS", index, "name", e.target.value)}
-                    className="flex-grow min-w-0 px-2.5 sm:px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                    className="flex-grow min-w-0 px-2.5 sm:px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm"
                   />
                   <input
                     type="number"
                     placeholder="Amount"
                     value={row.amount}
                     onChange={(e) => updateRow("DEBTS", index, "amount", e.target.value)}
-                    className="w-20 sm:w-32 px-2 sm:px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm shrink-0"
+                    className="w-20 sm:w-32 px-2.5 sm:px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                   <button
                     onClick={() => removeRow("DEBTS", index)}
@@ -330,17 +373,17 @@ export default function OnboardingPage() {
             </button>
 
             {/* Bulk Paste Area */}
-            <div className="pt-2 border-t border-slate-200 dark:border-zinc-900 space-y-2">
+            <div className="pt-2 border-t border-black/[0.05] dark:border-white/[0.05] dark:border-white/[0.04] space-y-2">
               <label className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block">Paste Multiple Debts (Format: Name Amount)</label>
               <textarea
                 placeholder={"Rahim 8000\nKarim 3000\nHasan 12000"}
                 value={bulkDebtsText}
                 onChange={(e) => setBulkDebtsText(e.target.value)}
-                className="w-full h-20 px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm resize-none font-mono"
+                className="w-full h-20 px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm resize-none font-mono text-black dark:text-white"
               />
               <button
                 onClick={handleBulkParseDebts}
-                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-xs font-semibold transition"
+                className="px-3 py-1.5 rounded-lg bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.04] text-xs font-bold hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition"
               >
                 Parse & Add
               </button>
@@ -350,7 +393,7 @@ export default function OnboardingPage() {
             <div className="flex justify-between items-center mt-4">
               <button
                 onClick={handleBackStep2}
-                className="flex items-center gap-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-zinc-900 transition active:scale-95"
+                className="flex items-center gap-1 px-4 py-2.5 rounded-xl border border-black/[0.05] dark:border-white/[0.05] text-slate-600 dark:text-zinc-400 font-bold text-xs sm:text-sm hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition active:scale-95"
               >
                 <ArrowLeft size={16} /> Back
               </button>
@@ -358,13 +401,13 @@ export default function OnboardingPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setModal("SKIP_DEBTS")}
-                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-semibold text-sm transition active:scale-95"
+                  className="px-5 py-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.04] text-slate-700 dark:text-zinc-300 font-bold text-xs sm:text-sm hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition active:scale-95"
                 >
                   Skip
                 </button>
                 <button
                   onClick={handleNextStep2}
-                  className="px-6 py-2.5 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold text-sm transition active:scale-95 flex items-center gap-1.5"
+                  className="px-6 py-2.5 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold text-xs sm:text-sm transition active:scale-95 flex items-center gap-1.5 shadow-sm shadow-green-500/10"
                 >
                   Next <ArrowRight size={16} />
                 </button>
@@ -379,11 +422,11 @@ export default function OnboardingPage() {
         {step === 3 && (
           <div className="flex flex-col gap-5">
             <div className="space-y-1">
-              <h2 className="text-2xl font-extrabold text-black dark:text-white">People Who Owe You</h2>
+              <h2 className="text-2xl font-bold tracking-tight text-black dark:text-white">People Who Owe You</h2>
               <p className="text-sm text-slate-500 dark:text-zinc-400">Enter details of money lent out. If you don't have any receivables, press Finish.</p>
             </div>
 
-            {/* Dynamic Manual Rows (Updated with mobile responsive gap and flex input sizes) */}
+            {/* Dynamic Manual Rows */}
             <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
               {receivables.map((row, index) => (
                 <div key={index} className="flex gap-1.5 sm:gap-2 items-center w-full">
@@ -392,14 +435,14 @@ export default function OnboardingPage() {
                     placeholder="Name (e.g. Rahim)"
                     value={row.name}
                     onChange={(e) => updateRow("RECEIVABLES", index, "name", e.target.value)}
-                    className="flex-grow min-w-0 px-2.5 sm:px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                    className="flex-grow min-w-0 px-2.5 sm:px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm"
                   />
                   <input
                     type="number"
                     placeholder="Amount"
                     value={row.amount}
                     onChange={(e) => updateRow("RECEIVABLES", index, "amount", e.target.value)}
-                    className="w-20 sm:w-32 px-2 sm:px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm shrink-0"
+                    className="w-20 sm:w-32 px-2.5 sm:px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                   <button
                     onClick={() => removeRow("RECEIVABLES", index)}
@@ -420,30 +463,30 @@ export default function OnboardingPage() {
             </button>
 
             {/* Bulk Paste Area */}
-            <div className="pt-2 border-t border-slate-200 dark:border-zinc-900 space-y-2">
+            <div className="pt-2 border-t border-black/[0.05] dark:border-white/[0.05] dark:border-white/[0.04] space-y-2">
               <label className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block">Paste Multiple Receivables (Format: Name Amount)</label>
               <textarea
                 placeholder={"Rahim 8000\nKarim 3000\nHasan 12000"}
                 value={bulkReceivablesText}
                 onChange={(e) => setBulkReceivablesText(e.target.value)}
-                className="w-full h-20 px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm resize-none font-mono"
+                className="w-full h-20 px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm resize-none font-mono text-black dark:text-white"
               />
               <button
                 onClick={handleBulkParseReceivables}
-                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-xs font-semibold transition"
+                className="px-3 py-1.5 rounded-lg bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.04] text-xs font-bold hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition"
               >
                 Parse & Add
               </button>
             </div>
 
             {/* Error Message */}
-            {error && <div className="text-xs text-red-500 font-semibold text-center">{error}</div>}
+            {error && <div className="text-xs text-red-500 font-bold text-center leading-normal">{error}</div>}
 
             {/* Buttons */}
             <div className="flex justify-between items-center mt-4">
               <button
                 onClick={handleBackStep3}
-                className="flex items-center gap-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-zinc-900 transition active:scale-95"
+                className="flex items-center gap-1 px-4 py-2.5 rounded-xl border border-black/[0.05] dark:border-white/[0.05] text-slate-600 dark:text-zinc-400 font-bold text-xs sm:text-sm hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition active:scale-95"
               >
                 <ArrowLeft size={16} /> Back
               </button>
@@ -451,14 +494,14 @@ export default function OnboardingPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setModal("SKIP_RECEIVABLES")}
-                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-semibold text-sm transition active:scale-95"
+                  className="px-5 py-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.04] text-slate-700 dark:text-zinc-300 font-bold text-xs sm:text-sm hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition active:scale-95"
                 >
                   Skip
                 </button>
                 <button
                   onClick={handleFinishStep3}
                   disabled={loading}
-                  className="px-6 py-2.5 rounded-xl bg-green-500 hover:bg-green-400 disabled:bg-slate-300 dark:disabled:bg-zinc-800 text-black font-bold text-sm transition active:scale-95 flex items-center gap-1.5"
+                  className="px-6 py-2.5 rounded-xl bg-green-500 hover:bg-green-400 disabled:bg-slate-300 dark:disabled:bg-zinc-800 text-black font-bold text-xs sm:text-sm transition active:scale-95 flex items-center gap-1.5 shadow-sm shadow-green-500/10"
                 >
                   {loading ? "Saving..." : "Finish"} <Check size={16} />
                 </button>
@@ -469,12 +512,17 @@ export default function OnboardingPage() {
 
       </div>
 
+      {/* ================= FOOTER ================= */}
+      <footer className="relative z-10 h-16 flex items-center justify-center shrink-0">
+        <span className="text-[10px] sm:text-xs text-slate-400">© 2026 My Finance. All rights reserved.</span>
+      </footer>
+
       {/* ==========================================
-          WARNING & CONFIRMATION MODALS
+          WARNING & CONFIRMATION MODALS (FROSTED GLASS)
           ========================================== */}
       {modal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white/95 dark:bg-black/90 border border-slate-200 dark:border-zinc-800 backdrop-blur-xl rounded-3xl p-6 w-full max-w-[340px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn">
+          <div className="bg-white/75 dark:bg-black/60 border border-black/[0.05] dark:border-white/[0.05] text-black dark:text-white backdrop-blur-xl rounded-3xl p-6 w-full max-w-[340px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn">
             
             <h3 className="text-lg font-bold text-black dark:text-white">
               {modal.startsWith("SKIP") ? "Are you sure?" : "Discard Changes?"}
@@ -510,14 +558,14 @@ export default function OnboardingPage() {
                     setModal(null);
                   }
                 }}
-                className="px-4 py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition active:scale-95"
+                className="px-4 py-2.5 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition active:scale-95"
               >
                 {modal.startsWith("SKIP") ? "Skip" : "Discard"}
               </button>
 
               <button
                 onClick={() => setModal(null)}
-                className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-semibold text-sm transition active:scale-95"
+                className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-semibold text-sm transition"
               >
                 Cancel
               </button>

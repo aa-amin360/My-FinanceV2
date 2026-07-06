@@ -51,12 +51,12 @@ export default function CashflowChart({ data }: Props) {
             <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
               <stop
                 offset="5%"
-                stopColor="#22c55e"
+                stopColor="#10b981" // ✅ Updated to deep emerald hex
                 stopOpacity={isDark ? 0.18 : 0.12}
               />
               <stop
                 offset="95%"
-                stopColor="#22c55e"
+                stopColor="#10b981" // ✅ Updated to deep emerald hex
                 stopOpacity={0}
               />
             </linearGradient>
@@ -98,7 +98,7 @@ export default function CashflowChart({ data }: Props) {
           <Area
             type="monotone"
             dataKey="balance"
-            stroke="#22c55e"
+            stroke="#10b981" // ✅ Updated to deep emerald hex
             strokeWidth={2.5}
             fill="url(#balanceGradient)"
             dot={{

@@ -35,7 +35,7 @@ export default function TransactionsPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [confirmAll, setConfirmAll] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // ✅ Maintained loading state
 
   // =========================
   // LOAD DATA
@@ -102,7 +102,7 @@ export default function TransactionsPage() {
   };
 
   // =========================
-  // TYPE STYLE
+  // TYPE STYLE (Updated to soft colors)
   // =========================
   const getTypeStyle = (type: string) => {
     switch (type) {
@@ -124,7 +124,7 @@ export default function TransactionsPage() {
   };
   
   const handleDelete = async (id: string) => {
-    setLoading(true); // ✅ Set loading to true
+    setLoading(true); // ✅ Maintained loading toggles
     try {
       const res = await fetch(`/api/transactions/${id}`, {
         method: "DELETE",
@@ -144,12 +144,12 @@ export default function TransactionsPage() {
       console.error(err);
       setErrorMessage("Something went wrong during deletion.");
     } finally {
-      setLoading(false); // ✅ Turn off loading on complete
+      setLoading(false);
     }
   };
 
   const handleDeleteAll = async () => {
-    setLoading(true); // ✅ Set loading to true
+    setLoading(true); // ✅ Maintained loading toggles
     try {
       const res = await fetch("/api/transactions/all", {
         method: "DELETE",
@@ -167,7 +167,7 @@ export default function TransactionsPage() {
       setErrorMessage("Error deleting transactions");
       setConfirmAll(false);
     } finally {
-      setLoading(false); // ✅ Turn off loading on complete
+      setLoading(false);
     }
   };
 
@@ -192,7 +192,7 @@ export default function TransactionsPage() {
   
   return (
     <DashboardLayout>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 px-1 animate-fadeIn">
         <h1 className="text-2xl font-bold">Transactions</h1>
       
         <button
@@ -203,10 +203,14 @@ export default function TransactionsPage() {
         </button>
       </div>      
 
-      <div className="bg-white dark:bg-black border border-gray-200 dark:border-zinc-900 rounded-3xl overflow-hidden">
+      {/* ==========================================
+          DESKTOP TABLE VIEW (GLASS CONTAINER)
+          ========================================== */}
+      {/* ✅ Updated to standard translucent glassmorphic panel */}
+      <div className="bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md rounded-3xl overflow-hidden shadow-sm shadow-black/[0.01]">
 
         {/* HEADER */}
-        <div className="grid grid-cols-6 px-4 py-4 text-xs uppercase tracking-wider text-gray-500 dark:text-zinc-500 border-b border-gray-200 dark:border-zinc-900">
+        <div className="grid grid-cols-6 px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-black/[0.05] dark:border-white/[0.04] leading-none">
           <div>Name</div>
           <div>Date</div>
           <div>Type</div>
@@ -217,8 +221,7 @@ export default function TransactionsPage() {
 
         <div className="pb-24 md:pb-0">
           {/* ROWS */}
-          {/* DESKTOP TABLE */}
-          <div className="hidden md:block">
+          <div className="hidden md:block divide-y divide-slate-100 dark:divide-zinc-900/60">
             {roots.map((parent) => {
               const children = sortedTransactions.filter(
                 (c) => c.parent_id === parent.id
@@ -235,14 +238,15 @@ export default function TransactionsPage() {
         
               return (
                 <div key={parent.id}>
-                  {/* ================= PARENT ================= */}
+                  {/* ================= PARENT ROW (GLASS HOVER) ================= */}
+                  {/* ✅ Updated to clean translucent glass hover effects */}
                   <div
                     className="
                     grid grid-cols-6 items-center
-                    px-4 py-4
-                    border-b border-gray-200 dark:border-zinc-900
+                    px-5 py-4
+                    border-b border-black/[0.04] dark:border-white/[0.04]
                     text-sm
-                    hover:bg-gray-100 dark:hover:bg-zinc-950/60
+                    hover:bg-white/35 dark:hover:bg-black/35
                     transition-all duration-200
                     "
                   >
@@ -282,7 +286,7 @@ export default function TransactionsPage() {
                     {/* TYPE */}
                     <div>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${getTypeStyle(
                           parent.type
                         )}`}
                       >
@@ -298,7 +302,7 @@ export default function TransactionsPage() {
                     {/* AMOUNT */}
                     <div
                       className={`text-right font-semibold ${
-                        isPositive ? "text-green-500" : "text-red-500"
+                        isPositive ? "text-emerald-500" : "text-rose-500"
                       }`}
                     >
                       {(isPositive ? "+" : "-") +
@@ -314,18 +318,19 @@ export default function TransactionsPage() {
                           setDeleteId(parent.id);
                         }}
                         className="
-                        p-2 rounded-full
-                        hover:bg-red-500/20
+                        p-1.5 rounded-xl
+                        hover:bg-red-500/10
                         text-red-400 hover:text-red-300
                         transition
                         "
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </div>
         
-                  {/* ================= CHILDREN ================= */}
+                  {/* ================= CHILDREN ROWS (SUBTLE NESTED GLASS) ================= */}
+                  {/* ✅ Updated child rows to beautiful transparent inner-glass style */}
                   {isExpanded &&
                     children.map((child) => {
                       const isPositiveChild =
@@ -338,11 +343,12 @@ export default function TransactionsPage() {
                           key={child.id}
                           className="
                           grid grid-cols-6 items-center
-                          px-4 py-3 pl-10
-                          border-b border-gray-200 dark:border-zinc-900
+                          px-5 py-3 pl-10
+                          border-b border-black/[0.03] dark:border-white/[0.03]
                           text-sm
-                          text-gray-500 dark:text-zinc-500
-                          bg-gray-50 dark:bg-zinc-950/30
+                          text-gray-500 dark:text-zinc-400
+                          bg-white/20 dark:bg-black/20
+                          backdrop-blur-sm
                           "
                         >
                           {/* NAME */}
@@ -368,7 +374,7 @@ export default function TransactionsPage() {
                           {/* TYPE */}
                           <div>
                             <span
-                              className={`px-2 py-1 rounded-full text-xs ${getTypeStyle(
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${getTypeStyle(
                                 child.type
                               )}`}
                             >
@@ -384,7 +390,7 @@ export default function TransactionsPage() {
                           {/* AMOUNT */}
                           <div
                             className={`text-right font-semibold ${
-                              isPositiveChild ? "text-green-500" : "text-red-500"
+                              isPositiveChild ? "text-emerald-500" : "text-rose-500"
                             }`}
                           >
                             {(isPositiveChild ? "+" : "-") +
@@ -401,8 +407,10 @@ export default function TransactionsPage() {
             })}
           </div>
         
-          {/* MOBILE CARD */}
-          <div className="md:hidden space-y-3">
+          {/* ==========================================
+              MOBILE CARD VIEW (GLASS CARDS)
+              ========================================== */}
+          <div className="md:hidden space-y-3 px-2 py-4">
             {roots.map((parent) => {
               const children = sortedTransactions.filter(
                 (c) => c.parent_id === parent.id
@@ -420,12 +428,14 @@ export default function TransactionsPage() {
               return (
                 <div key={parent.id} className="space-y-2">
         
-                  {/* ===== PARENT CARD ===== */}
+                  {/* ===== PARENT CARD (GLASS) ===== */}
+                  {/* ✅ Updated to standard translucent glassmorphic panel */}
                   <div
                     className="
-                    bg-white dark:bg-zinc-950
-                    border border-gray-200 dark:border-zinc-900
-                    p-4 rounded-2xl
+                    bg-white/45 dark:bg-black/35
+                    border border-black/[0.05] dark:border-white/[0.04]
+                    backdrop-blur-md p-4 rounded-2xl
+                    shadow-sm shadow-black/[0.01]
                     "
                   >
                     <div className="flex justify-between gap-3">
@@ -441,7 +451,8 @@ export default function TransactionsPage() {
                               onClick={() => toggleExpand(parent.id)}
                               className="
                               w-6 h-6 rounded-full
-                              bg-gray-100 dark:bg-zinc-900
+                              bg-black/[0.03] dark:bg-white/[0.03]
+                              border border-black/[0.04] dark:border-white/[0.04]
                               flex items-center justify-center
                               text-gray-500 dark:text-zinc-400
                               shrink-0
@@ -455,7 +466,7 @@ export default function TransactionsPage() {
                             </button>
                           )}
                     
-                          <div className="font-semibold text-black dark:text-white truncate">
+                          <div className="font-bold text-black dark:text-white truncate">
                             {getDisplayName(parent)}
                           </div>
                     
@@ -474,7 +485,7 @@ export default function TransactionsPage() {
                     
                           <div
                             className={`font-semibold whitespace-nowrap ${
-                              isPositive ? "text-green-500" : "text-red-500"
+                              isPositive ? "text-emerald-500" : "text-rose-500"
                             }`}
                           >
                             {isPositive ? "+" : "-"}
@@ -491,7 +502,7 @@ export default function TransactionsPage() {
                           </div>
                     
                           <span
-                            className={`px-2 py-1 rounded-full text-xs whitespace-nowrap ${getTypeStyle(
+                            className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase shrink-0 ${getTypeStyle(
                               parent.type
                             )}`}
                           >
@@ -510,7 +521,7 @@ export default function TransactionsPage() {
                         }}
                         className="
                         w-10 h-10 rounded-full
-                        bg-gray-100 dark:bg-zinc-900
+                        bg-black/[0.03] dark:bg-white/[0.03]
                         flex items-center justify-center
                         text-red-400
                         shrink-0 self-center
@@ -522,7 +533,8 @@ export default function TransactionsPage() {
                     </div>
                   </div>
         
-                  {/* ===== CHILDREN ===== */}
+                  {/* ===== CHILDREN (SUBTLE NESTED GLASS) ===== */}
+                  {/* ✅ Updated child card to beautiful transparent inner-glass style */}
                   {isExpanded &&
                     children.map((child) => {
                       const isPositiveChild =
@@ -534,11 +546,12 @@ export default function TransactionsPage() {
                         <div
                           key={child.id}
                           className="
-                          bg-gray-50 dark:bg-zinc-950/60
-                          border border-gray-200 dark:border-zinc-900
+                          bg-white/20 dark:bg-black/20
+                          border border-black/[0.03] dark:border-white/[0.03]
+                          backdrop-blur-sm
                           p-3 rounded-xl
                           ml-4
-                          text-gray-500 dark:text-zinc-500
+                          text-gray-500 dark:text-zinc-400
                           "
                         >
                           <div className="space-y-2">
@@ -550,7 +563,7 @@ export default function TransactionsPage() {
                                 className="text-gray-400 dark:text-zinc-500 shrink-0"
                               />
                           
-                              <span className="text-black dark:text-white truncate">
+                              <span className="text-black dark:text-white truncate font-bold text-xs sm:text-sm">
                                 {getDisplayName(child)}
                               </span>
                             </div>
@@ -567,10 +580,10 @@ export default function TransactionsPage() {
                               </div>
                           
                               <span
-                                className={`font-semibold whitespace-nowrap ${
+                                className={`font-semibold whitespace-nowrap text-xs sm:text-sm ${
                                   isPositiveChild
-                                    ? "text-green-400"
-                                    : "text-red-400"
+                                    ? "text-emerald-500"
+                                    : "text-rose-500"
                                 }`}
                               >
                                 {isPositiveChild ? "+" : "-"}
@@ -587,7 +600,7 @@ export default function TransactionsPage() {
                               </div>
                           
                               <span
-                                className={`px-2 py-1 rounded-full text-xs whitespace-nowrap ${getTypeStyle(
+                                className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase shrink-0 ${getTypeStyle(
                                   child.type
                                 )}`}
                               >
@@ -614,33 +627,36 @@ export default function TransactionsPage() {
         )}
       </div>
 
+      {/* =========================================================
+          GORGEOUS CUSTOM DELETE CONFIRMATION MODAL (FROSTED GLASS)
+          ========================================================= */}
       {deleteId && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-          
-          <div className="bg-white/90 dark:bg-black/80 border border-gray-200 dark:border-slate-700 
-            text-black dark:text-white backdrop-blur-xl rounded-2xl p-6 w-[320px] text-center shadow-2xl">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setDeleteId(null)}>
+          {/* ✅ Updated modal wrapper to heavy frosted glassmorphism */}
+          <div className="bg-white/75 dark:bg-black/60 border border-black/[0.05] dark:border-white/[0.05] text-black dark:text-white backdrop-blur-xl rounded-3xl p-6 w-full max-w-[320px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
             
-            <h3 className="text-lg font-semibold mb-5">
-              Delete this transaction?
-            </h3>
+            <h3 className="text-lg font-bold text-black dark:text-white">Delete Transaction?</h3>
+            <p className="text-sm text-slate-500 dark:text-zinc-400 leading-relaxed">
+              Are you sure you want to permanently delete this transaction? This action cannot be undone.
+            </p>
       
             <div className="flex gap-3 justify-center">
               
               <button
-                disabled={loading} // ✅ Gray out when loading
+                disabled={loading}
                 onClick={async () => {
                   await handleDelete(deleteId);
                   setDeleteId(null);
                 }}
-                className="px-5 py-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition disabled:bg-slate-200 dark:disabled:bg-zinc-800 disabled:text-slate-400 dark:disabled:text-zinc-600 disabled:cursor-not-allowed flex items-center justify-center min-w-[100px]"
+                className="px-5 py-2.5 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition disabled:bg-slate-200 dark:disabled:bg-zinc-800 disabled:text-slate-400 dark:disabled:text-zinc-600 disabled:cursor-not-allowed flex items-center justify-center min-w-[100px]"
               >
-                {loading ? "Deleting..." : "Delete"} {/* ✅ Toggle button text */}
+                {loading ? "Deleting..." : "Delete"}
               </button>
       
               <button
-                disabled={loading} // ✅ Prevent cancel actions during active requests
+                disabled={loading}
                 onClick={() => setDeleteId(null)}
-                className="px-5 py-2 rounded-full bg-gray-200 dark:bg-slate-700 text-black dark:text-gray-300 hover:bg-slate-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-semibold text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
@@ -652,33 +668,35 @@ export default function TransactionsPage() {
         </div>
       )}
 
+      {/* =========================================================
+          GORGEOUS CUSTOM DELETE ALL CONFIRMATION MODAL (FROSTED GLASS)
+          ========================================================= */}
       {confirmAll && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-          
-          <div className="bg-white/90 dark:bg-black/80 border border-gray-200 dark:border-slate-700 
-            text-black dark:text-white backdrop-blur-xl rounded-2xl p-6 w-[320px] text-center shadow-2xl">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setConfirmAll(false)}>
+          {/* ✅ Updated modal wrapper to heavy frosted glassmorphism */}
+          <div className="bg-white/75 dark:bg-black/60 border border-black/[0.05] dark:border-white/[0.05] text-black dark:text-white backdrop-blur-xl rounded-3xl p-6 w-full max-w-[320px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
             
-            <h3 className="text-lg font-semibold mb-4 text-red-400">
+            <h3 className="text-lg font-bold mb-4 text-red-400">
               Delete All Transactions?
             </h3>
       
-            <p className="text-sm text-gray-500 mb-5">
+            <p className="text-sm text-slate-500 mb-5">
               This will remove all transaction records permanently.
             </p>
       
             <div className="flex gap-3 justify-center">
               <button
-                disabled={loading} // ✅ Gray out when loading
+                disabled={loading}
                 onClick={handleDeleteAll}
-                className="px-5 py-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition disabled:bg-slate-200 dark:disabled:bg-zinc-800 disabled:text-slate-400 dark:disabled:text-zinc-600 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]"
+                className="px-5 py-2.5 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition disabled:bg-slate-200 dark:disabled:bg-zinc-800 disabled:text-slate-400 dark:disabled:text-zinc-600 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]"
               >
-                {loading ? "Deleting..." : "Delete All"} {/* ✅ Toggle button text */}
+                {loading ? "Deleting..." : "Delete All"}
               </button>
       
               <button
-                disabled={loading} // ✅ Prevent cancel actions during active requests
+                disabled={loading}
                 onClick={() => setConfirmAll(false)}
-                className="px-5 py-2 rounded-full bg-gray-200 dark:bg-slate-700 text-black dark:text-gray-300 hover:bg-slate-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-semibold text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
@@ -688,13 +706,15 @@ export default function TransactionsPage() {
         </div>
       )}
 
+      {/* =========================================================
+          GORGEOUS CUSTOM ACTION WARNING DIALOG (FROSTED GLASS)
+          ========================================================= */}
       {errorMessage && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-          
-          <div className="bg-white/90 dark:bg-black/80 border border-gray-200 dark:border-slate-700 
-            text-black dark:text-white backdrop-blur-xl rounded-2xl p-6 w-[320px] text-center shadow-2xl">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setErrorMessage(null)}>
+          {/* ✅ Updated modal wrapper to heavy frosted glassmorphism */}
+          <div className="bg-white/75 dark:bg-black/60 border border-black/[0.05] dark:border-white/[0.05] text-black dark:text-white backdrop-blur-xl rounded-3xl p-6 w-full max-w-[320px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
             
-            <h3 className="text-lg font-semibold mb-3 text-red-400">
+            <h3 className="text-lg font-bold mb-3 text-red-400">
               Action Not Allowed
             </h3>
       
@@ -704,7 +724,7 @@ export default function TransactionsPage() {
       
             <button
               onClick={() => setErrorMessage(null)}
-              className="px-5 py-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition"
+              className="px-6 py-2.5 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold text-sm transition active:scale-95 shadow-md shadow-green-500/10"
             >
               OK
             </button>

@@ -144,7 +144,6 @@ export default function AddHistoryPage() {
     setError("");
     setSuccess("");
 
-    // Compile values
     const payload: any = {
       debts: debts.filter(d => d.name.trim() && Number(d.amount) > 0).map(d => ({
         name: d.name.trim(),
@@ -156,13 +155,11 @@ export default function AddHistoryPage() {
       })),
     };
 
-    // Only send balances if they have not been configured yet and user wrote values
     if (!isBalancesInitialized) {
       if (cashBalance) payload.cashBalance = Number(cashBalance);
       if (bankBalance) payload.bankBalance = Number(bankBalance);
     }
 
-    // Validation: check if they entered anything at all
     const hasBalances = !isBalancesInitialized && (cashBalance || bankBalance);
     if (!hasBalances && payload.debts.length === 0 && payload.receivables.length === 0) {
       setError("Please enter at least one balance, debt, or receivable before saving.");
@@ -184,14 +181,11 @@ export default function AddHistoryPage() {
       }
 
       setSuccess("Historical records added successfully!");
-      
-      // Reset inputs
       setCashBalance("");
       setBankBalance("");
       setDebts([{ name: "", amount: "" }]);
       setReceivables([{ name: "", amount: "" }]);
       
-      // Refresh balances and reload initial check
       window.dispatchEvent(new Event("refreshData"));
       await checkBalanceStatus();
 
@@ -204,11 +198,12 @@ export default function AddHistoryPage() {
 
   return (
     <DashboardLayout>
-      <div className="w-full space-y-6 pb-12">
+      <div className="w-full space-y-6 animate-fadeIn pb-16 px-1 sm:px-4">
         
         {/* HEADER */}
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-black dark:text-white">Add History</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-black dark:text-white">Add History</h1>
+          <p className="text-sm text-slate-500 dark:text-zinc-500">Log forgotten starting balances, active debts, or receivables to keep your ledger starting position accurate.</p>
         </div>
 
         {initChecking ? (
@@ -217,13 +212,13 @@ export default function AddHistoryPage() {
           <div className="grid grid-cols-1 gap-6">
 
             {/* ==========================================
-                1. OPENING BALANCES SECTION
+                1. OPENING BALANCES SECTION (GLASS)
                 ========================================== */}
-            <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
-              <h3 className="text-lg font-bold text-black dark:text-white">Opening Balances</h3>
+            <div className="bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md rounded-3xl p-4 sm:p-6 shadow-sm shadow-black/[0.01] space-y-4">
+              <h3 className="text-lg font-bold text-black dark:text-white leading-none">Opening Balances</h3>
               
               {isBalancesInitialized ? (
-                /* Already Configured Panel */
+                /* Already Configured Panel (Simplified) */
                 <div className="flex items-center gap-3 p-4 rounded-2xl bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20 animate-fadeIn">
                   <CheckCircle2 size={18} className="shrink-0" />
                   <span className="text-xs sm:text-sm font-semibold">
@@ -248,7 +243,7 @@ export default function AddHistoryPage() {
                         placeholder="0.00"
                         value={cashBalance}
                         onChange={(e) => setCashBalance(e.target.value)}
-                        className="px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                        className="px-4 py-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm"
                       />
                     </div>
 
@@ -259,7 +254,7 @@ export default function AddHistoryPage() {
                         placeholder="0.00"
                         value={bankBalance}
                         onChange={(e) => setBankBalance(e.target.value)}
-                        className="px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                        className="px-4 py-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm"
                       />
                     </div>
                   </div>
@@ -268,10 +263,10 @@ export default function AddHistoryPage() {
             </div>
 
             {/* ==========================================
-                2. EXISTING DEBTS SECTION
+                2. EXISTING DEBTS SECTION (GLASS)
                 ========================================== */}
-            <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
-              <h3 className="text-lg font-bold text-black dark:text-white">Existing Debts</h3>
+            <div className="bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md rounded-3xl p-4 sm:p-6 shadow-sm shadow-black/[0.01] space-y-4">
+              <h3 className="text-lg font-bold text-black dark:text-white leading-none">Existing Debts</h3>
               
               <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
                 {debts.map((row, index) => (
@@ -281,14 +276,14 @@ export default function AddHistoryPage() {
                       placeholder="Name (e.g. Rahim)"
                       value={row.name}
                       onChange={(e) => updateRow("DEBTS", index, "name", e.target.value)}
-                      className="flex-grow min-w-0 px-2.5 sm:px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                      className="flex-grow min-w-0 px-2.5 sm:px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm text-black dark:text-white"
                     />
                     <input
                       type="number"
                       placeholder="Amount"
                       value={row.amount}
                       onChange={(e) => updateRow("DEBTS", index, "amount", e.target.value)}
-                      className="w-20 sm:w-32 px-2 sm:px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm shrink-0"
+                      className="w-20 sm:w-32 px-2 sm:px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <button
                       onClick={() => removeRow("DEBTS", index)}
@@ -307,17 +302,17 @@ export default function AddHistoryPage() {
                 <Plus size={14} /> Add Row
               </button>
 
-              <div className="pt-2 border-t border-slate-200 dark:border-zinc-900 space-y-2">
+              <div className="pt-2 border-t border-black/[0.05] dark:border-white/[0.05] dark:border-white/[0.04] space-y-2">
                 <label className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block">Paste Multiple Debts (Format: Name Amount)</label>
                 <textarea
                   placeholder={"Rahim 8000\nKarim 3000\nHasan 12000"}
                   value={bulkDebtsText}
                   onChange={(e) => setBulkDebtsText(e.target.value)}
-                  className="w-full h-20 px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm resize-none font-mono"
+                  className="w-full h-20 px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm resize-none font-mono text-black dark:text-white"
                 />
                 <button
                   onClick={handleBulkParseDebts}
-                  className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-xs font-semibold transition"
+                  className="px-3 py-1.5 rounded-lg bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.04] text-xs font-bold hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition"
                 >
                   Parse & Add
                 </button>
@@ -325,10 +320,10 @@ export default function AddHistoryPage() {
             </div>
 
             {/* ==========================================
-                3. EXISTING RECEIVABLES SECTION
+                3. EXISTING RECEIVABLES SECTION (GLASS)
                 ========================================== */}
-            <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
-              <h3 className="text-lg font-bold text-black dark:text-white">Existing Receivables</h3>
+            <div className="bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md rounded-3xl p-4 sm:p-6 shadow-sm shadow-black/[0.01] space-y-4">
+              <h3 className="text-lg font-bold text-black dark:text-white leading-none">Existing Receivables</h3>
               
               <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
                 {receivables.map((row, index) => (
@@ -338,14 +333,14 @@ export default function AddHistoryPage() {
                       placeholder="Name (e.g. Rahim)"
                       value={row.name}
                       onChange={(e) => updateRow("RECEIVABLES", index, "name", e.target.value)}
-                      className="flex-grow min-w-0 px-2.5 sm:px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                      className="flex-grow min-w-0 px-2.5 sm:px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm text-black dark:text-white"
                     />
                     <input
                       type="number"
                       placeholder="Amount"
                       value={row.amount}
                       onChange={(e) => updateRow("RECEIVABLES", index, "amount", e.target.value)}
-                      className="w-20 sm:w-32 px-2 sm:px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm shrink-0"
+                      className="w-20 sm:w-32 px-2 sm:px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <button
                       onClick={() => removeRow("RECEIVABLES", index)}
@@ -364,17 +359,17 @@ export default function AddHistoryPage() {
                 <Plus size={14} /> Add Row
               </button>
 
-              <div className="pt-2 border-t border-slate-200 dark:border-zinc-900 space-y-2">
+              <div className="pt-2 border-t border-black/[0.05] dark:border-white/[0.05] dark:border-white/[0.04] space-y-2">
                 <label className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block">Paste Multiple Receivables (Format: Name Amount)</label>
                 <textarea
                   placeholder={"Rahim 8000\nKarim 3000\nHasan 12000"}
                   value={bulkReceivablesText}
                   onChange={(e) => setBulkReceivablesText(e.target.value)}
-                  className="w-full h-20 px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm resize-none font-mono"
+                  className="w-full h-20 px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm focus:bg-white dark:focus:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm resize-none font-mono text-black dark:text-white"
                 />
                 <button
                   onClick={handleBulkParseReceivables}
-                  className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-xs font-semibold transition"
+                  className="px-3 py-1.5 rounded-lg bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.04] text-xs font-semibold hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition"
                 >
                   Parse & Add
                 </button>

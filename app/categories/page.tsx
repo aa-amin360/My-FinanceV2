@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
+import { Plus, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
 
 type Category = {
   id: string;
@@ -43,11 +44,11 @@ export default function CategoriesPage() {
   // CREATE CATEGORY
   // =========================
   const handleCreate = async () => {
-    if (!name) return alert("Enter category name");
+    if (!name.trim()) return alert("Enter category name");
 
     await fetch("/api/categories", {
       method: "POST",
-      body: JSON.stringify({ name, type }),
+      body: JSON.stringify({ name: name.trim(), type }),
     });
 
     setName("");
@@ -74,132 +75,154 @@ export default function CategoriesPage() {
 
   return (
     <DashboardLayout>
-      <h1 className="text-2xl font-bold mb-6 text-black dark:text-white">
-        Categories
-      </h1>
-
-      {/* =========================
-          CREATE CATEGORY
-      ========================= */}
-
-      <div
-        className="
-        bg-white dark:bg-zinc-950
-        border border-gray-200 dark:border-zinc-900
-        p-4 rounded-3xl mb-6 flex gap-3
-        "
-      >
-        <input
-          placeholder="Category name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="
-          w-full
-          bg-white dark:bg-black
-          border border-gray-300 dark:border-zinc-800
-          rounded-2xl
-          px-4 py-3
-          text-black dark:text-white
-          placeholder:text-gray-400 dark:placeholder:text-zinc-500
-          outline-none
-          focus:border-zinc-700
-          transition
-          "
-        />
-
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          className="
-          bg-white dark:bg-black
-          border border-gray-300 dark:border-zinc-800
-          rounded-2xl
-          px-4 py-3
-          text-black dark:text-white
-          outline-none
-          focus:border-zinc-700
-          transition
-          "
-        >
-          <option value="EXPENSE">Expense</option>
-          <option value="INCOME">Income</option>
-        </select>
-
-        <button
-          onClick={handleCreate}
-          className="
-          px-5 py-3
-          bg-green-500
-          hover:bg-green-400
-          active:scale-95
-          transition
-          text-black
-          font-semibold
-          rounded-2xl
-          "
-        >
-          Add
-        </button>
-      </div>
-
-      {/* =========================
-          CATEGORY TABLE
-      ========================= */}
-
-      <div
-        className="
-        bg-white dark:bg-black
-        border border-gray-200 dark:border-zinc-900
-        rounded-3xl overflow-hidden
-        "
-      >
+      <div className="w-full space-y-6 animate-fadeIn pb-16">
+        
         {/* HEADER */}
-        <div
-          className="
-          grid grid-cols-3
-          px-5 py-4
-          text-xs uppercase tracking-wider
-          text-gray-500 dark:text-zinc-500
-          border-b border-gray-200 dark:border-zinc-900
-          "
-        >
-          <div>Category</div>
-          <div>Type</div>
-          <div className="text-right">Total Expense</div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-black dark:text-white">
+            Categories
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-zinc-500">Configure your personal expense and income categories.</p>
         </div>
 
-        {/* ROWS */}
-        {categoryTotals.map((item, i) => (
+        {/* =========================
+            CREATE CATEGORY (GLASS PANEL)
+            ========================= */}
+        {/* ✅ Updated to standard translucent glassmorphic panel */}
+        <div
+          className="
+          bg-white/45 dark:bg-black/30
+          border border-black/[0.05] dark:border-white/[0.04]
+          backdrop-blur-md
+          p-4 rounded-3xl flex gap-3 shadow-sm shadow-black/[0.01]
+          "
+        >
+          <input
+            placeholder="Category name (e.g. Food)"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            // ✅ Applied subtle glass inner-shading to the input
+            className="
+            w-full
+            bg-black/[0.02] dark:bg-white/[0.02]
+            border border-black/[0.05] dark:border-white/[0.04]
+            backdrop-blur-sm
+            rounded-2xl
+            px-4 py-3
+            text-black dark:text-white
+            placeholder:text-gray-400 dark:placeholder:text-zinc-500
+            outline-none
+            focus:bg-white dark:focus:bg-zinc-950
+            transition-all duration-200
+            text-sm
+            "
+          />
+
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            // ✅ Applied subtle glass inner-shading to the selector
+            className="
+            bg-black/[0.02] dark:bg-white/[0.02]
+            border border-black/[0.05] dark:border-white/[0.04]
+            backdrop-blur-sm
+            rounded-2xl
+            px-4 py-3
+            text-black dark:text-white
+            outline-none
+            focus:bg-white dark:focus:bg-zinc-950
+            transition-all duration-200
+            text-sm cursor-pointer
+            "
+          >
+            <option value="EXPENSE">Expense</option>
+            <option value="INCOME">Income</option>
+          </select>
+
+          <button
+            onClick={handleCreate}
+            // ✅ Updated to use the premium Emerald theme
+            className="
+            px-6 py-3
+            bg-green-500
+            hover:bg-green-400
+            active:scale-95
+            transition-all duration-200
+            text-black
+            font-bold
+            text-sm
+            rounded-2xl shrink-0 shadow-md shadow-green-500/10
+            "
+          >
+            Add
+          </button>
+        </div>
+
+        {/* =========================
+            CATEGORY TABLE (GLASS PANEL)
+            ========================= */}
+        {/* ✅ Updated to standard translucent glassmorphic panel */}
+        <div
+          className="
+          bg-white/45 dark:bg-black/30
+          border border-black/[0.05] dark:border-white/[0.04]
+          backdrop-blur-md
+          rounded-3xl overflow-hidden shadow-sm shadow-black/[0.01]
+          "
+        >
+          {/* HEADER */}
           <div
-            key={i}
             className="
             grid grid-cols-3
             px-5 py-4
-            border-b border-gray-200 dark:border-zinc-900
-            hover:bg-gray-100 dark:hover:bg-zinc-950/60
-            transition-all duration-200
+            text-xs font-semibold uppercase tracking-wider
+            text-slate-400 dark:text-zinc-500
+            border-b border-black/[0.05] dark:border-white/[0.04]
+            leading-none
             "
           >
-            <div className="font-semibold text-black dark:text-white">
-              {item.name}
-            </div>
-
-            <div className="text-sm text-gray-500 dark:text-zinc-500">
-              {item.type}
-            </div>
-
-            <div className="text-right text-red-500 font-semibold">
-              {item.total.toFixed(2)} Tk
-            </div>
+            <div>Category</div>
+            <div>Type</div>
+            <div className="text-right">Total Expense</div>
           </div>
-        ))}
 
-        {/* EMPTY */}
-        {categoryTotals.length === 0 && (
-          <div className="p-10 text-center text-gray-500 dark:text-zinc-500">
-            No categories yet
+          {/* ROWS */}
+          <div className="divide-y divide-slate-100 dark:divide-zinc-900/60">
+            {categoryTotals.map((item, i) => (
+              <div
+                key={i}
+                className="
+                grid grid-cols-3
+                px-5 py-4
+                border-b border-black/[0.03] dark:border-white/[0.03]
+                hover:bg-white/35 dark:hover:bg-black/35
+                transition-all duration-200 text-sm
+                "
+              >
+                <div className="font-semibold text-black dark:text-white">
+                  {item.name}
+                </div>
+
+                <div className="text-xs text-slate-500 dark:text-zinc-500">
+                  {item.type}
+                </div>
+
+                {/* ✅ Updated total text to use Rose Crimson instead of neon red */}
+                <div className="text-right text-rose-600 dark:text-rose-400 font-bold">
+                  {item.total.toFixed(2)} Tk
+                </div>
+              </div>
+            ))}
           </div>
-        )}
+
+          {/* EMPTY */}
+          {categoryTotals.length === 0 && (
+            <div className="p-12 text-center text-slate-400 dark:text-zinc-500 text-sm">
+              No categories configured yet.
+            </div>
+          )}
+        </div>
+
       </div>
     </DashboardLayout>
   );

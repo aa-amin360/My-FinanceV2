@@ -65,14 +65,8 @@ export default function ReceivableDetailPage() {
 
   transactions.forEach((t) => {
     const amount = Number(t.amount);
-
-    if (t.type === "RECEIVABLE_GIVEN") {
-      totalGiven += amount;
-    }
-
-    if (t.type === "RECEIVABLE_RECEIVED") {
-      totalReceived += amount;
-    }
+    if (t.type === "RECEIVABLE_GIVEN") totalGiven += amount;
+    if (t.type === "RECEIVABLE_RECEIVED") totalReceived += amount;
   });
 
   const remaining = totalGiven - totalReceived;
@@ -94,7 +88,7 @@ export default function ReceivableDetailPage() {
   };
 
   // =========================
-  // FORMAT
+  // FORMAT NAME
   // =========================
   const formatName = (text: string) => {
     return text
@@ -106,143 +100,148 @@ export default function ReceivableDetailPage() {
 
   return (
     <DashboardLayout>
-      {/* HEADER */}
-      <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={() => router.push("/receivables")}
-          className="
-          p-2 rounded-xl
-          bg-gray-100 dark:bg-zinc-900
-          border border-gray-200 dark:border-zinc-800
-          hover:bg-gray-200 dark:hover:bg-zinc-800
-          transition active:scale-95
-          "
-        >
-          <ArrowLeft
-            size={18}
-            className="text-black dark:text-white"
-          />
-        </button>
-      
-        <h1 className="text-2xl font-bold text-black dark:text-white">
-          Receivable Details
-        </h1>
-      </div>
-      
-      {/* SUMMARY CARD */}
-      <div
-        className="
-        bg-white dark:bg-black
-        border border-gray-200 dark:border-zinc-900
-        p-6 rounded-3xl mb-6
-        "
-      >
-        <div className="flex justify-between items-center">
-          <h3 className="text-xl font-semibold text-black dark:text-white">
-            {formatName(name)}
-          </h3>
-      
+      <div className="w-full space-y-6 animate-fadeIn pb-16">
+        
+        {/* HEADER */}
+        <div className="flex items-center gap-3">
           <button
-            onClick={handleReceive}
+            onClick={() => router.push("/receivables")}
             className="
-            px-4 py-2 rounded-xl
-            bg-blue-500 hover:bg-blue-400
-            text-black text-sm font-medium
-            transition active:scale-95
+              p-2 rounded-xl
+              bg-black/[0.03] dark:bg-white/[0.03]
+              border border-black/[0.04] dark:border-white/[0.04]
+              hover:bg-black/[0.06] dark:hover:bg-white/[0.06]
+              transition active:scale-95
             "
           >
-            Receive
+            <ArrowLeft size={18} className="text-black dark:text-white" />
           </button>
+        
+          <h1 className="text-2xl font-bold tracking-tight text-black dark:text-white">
+            Receivable Details
+          </h1>
         </div>
-      
-        <div className="mt-6 space-y-3">
-      
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500 dark:text-zinc-500">
-              Total Given
-            </span>
-      
-            <span className="text-black dark:text-white font-medium">
-              {totalGiven.toFixed(2)} Tk
-            </span>
-          </div>
-      
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500 dark:text-zinc-500">
-              Total Received
-            </span>
-      
-            <span className="text-black dark:text-white font-medium">
-              {totalReceived.toFixed(2)} Tk
-            </span>
-          </div>
-      
-          <div className="flex justify-between pt-3 border-t border-gray-200 dark:border-zinc-900">
-            <span className="text-black dark:text-white font-medium">
-              Remaining
-            </span>
-      
-            <span className="text-yellow-500 font-semibold">
-              {remaining.toFixed(2)} Tk
-            </span>
-          </div>
-      
-        </div>
-      </div>
-      
-      {/* TRANSACTIONS */}
-      <div className="flex flex-col gap-3">
-        {transactions.map((t) => {
-          const amount = Number(t.amount);
-      
-          return (
-            <div
-              key={t.id}
+        
+        {/* SUMMARY CARD (GLASS) */}
+        {/* ✅ Updated to standard translucent glassmorphic panel */}
+        <div
+          className="
+          bg-white/45 dark:bg-black/35
+          border border-black/[0.05] dark:border-white/[0.04]
+          backdrop-blur-md p-6 rounded-3xl
+          shadow-sm shadow-black/[0.01]
+          "
+        >
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-bold text-black dark:text-white leading-none">
+              {formatName(name)}
+            </h3>
+        
+            {/* RECEIVE BUTTON */}
+            {/* ✅ Updated to compact, highly professional Sapphire Indigo style */}
+            <button
+              onClick={handleReceive}
               className="
-              flex justify-between items-center
-              p-4 rounded-2xl
-              bg-white dark:bg-zinc-950
-              border border-gray-200 dark:border-zinc-900
-              hover:bg-gray-50 dark:hover:bg-zinc-900/60
-              transition
+              px-3.5 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20
+              font-bold text-xs sm:text-sm active:scale-95 transition
               "
             >
-              <div>
-                <div className="text-sm font-semibold text-black dark:text-white">
-                  {t.type.replace("_", " ")}
-                </div>
-      
-                <div className="text-xs text-gray-500 dark:text-zinc-500 mt-1">
-                  {new Date(t.date).toLocaleDateString("en-US", {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                    timeZone: "UTC",
-                  })}
-                </div>
-              </div>
-      
-              <div
-                className={`font-semibold ${
-                  t.type === "RECEIVABLE_RECEIVED"
-                    ? "text-green-500"
-                    : "text-red-500"
-                }`}
-              >
-                {t.type === "RECEIVABLE_RECEIVED" ? "+" : "-"}
-                {amount.toFixed(2)} Tk
-              </div>
+              Receive
+            </button>
+          </div>
+        
+          <div className="mt-6 space-y-3">
+        
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-400 dark:text-zinc-500">
+                Total Given
+              </span>
+        
+              <span className="text-black dark:text-white font-semibold">
+                {totalGiven.toLocaleString("en-BD")} Tk
+              </span>
             </div>
-          );
-        })}
-      </div>
-      
-      {transactions.length === 0 && (
-        <div className="text-center text-gray-400 mt-10">
-          No transactions found
+        
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-400 dark:text-zinc-500">
+                Total Received
+              </span>
+        
+              <span className="text-black dark:text-white font-semibold">
+                {totalReceived.toLocaleString("en-BD")} Tk
+              </span>
+            </div>
+        
+            {/* ✅ Updated remaining total text to premium Amber Gold instead of neon yellow */}
+            <div className="flex justify-between pt-3 border-t border-black/[0.04] dark:border-white/[0.04]">
+              <span className="text-slate-500 dark:text-zinc-400 font-bold">
+                Remaining
+              </span>
+        
+              <span className="text-amber-600 dark:text-amber-400 font-extrabold text-lg sm:text-xl">
+                {remaining.toLocaleString("en-BD")} Tk
+              </span>
+            </div>
+        
+          </div>
         </div>
-      )}
+        
+        {/* TRANSACTIONS LIST */}
+        <div className="flex flex-col gap-3">
+          {transactions.map((t) => {
+            const amount = Number(t.amount);
+            const isReceived = t.type === "RECEIVABLE_RECEIVED";
+        
+            return (
+              // ✅ Updated transaction rows to subtle transparent inner-glass style
+              <div
+                key={t.id}
+                className="
+                flex justify-between items-center
+                p-4 rounded-2xl
+                bg-white/25 dark:bg-zinc-950/10
+                border border-black/[0.03] dark:border-white/[0.03]
+                backdrop-blur-sm
+                hover:bg-white/35 dark:hover:bg-zinc-950/20
+                transition duration-200
+                "
+              >
+                <div>
+                  <div className="text-sm font-semibold text-black dark:text-white">
+                    {t.type.replace("_", " ")}
+                  </div>
+        
+                  <div className="text-xs text-slate-400 dark:text-zinc-500 mt-1">
+                    {new Date(t.date).toLocaleDateString("en-US", {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                      timeZone: "UTC",
+                    })}
+                  </div>
+                </div>
+        
+                {/* ✅ Updated colors to premium Emerald and Rose Crimson */}
+                <div
+                  className={`font-bold text-base ${
+                    isReceived ? "text-emerald-500" : "text-rose-500"
+                  }`}
+                >
+                  {isReceived ? "+" : "-"}
+                  {amount.toLocaleString("en-BD")} Tk
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        
+        {transactions.length === 0 && (
+          <div className="text-center text-slate-400 dark:text-zinc-500 py-12 text-sm">
+            No transactions found
+          </div>
+        )}
+      </div>
     </DashboardLayout>
   );
 }

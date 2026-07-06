@@ -130,7 +130,7 @@ export default function BudgetPage() {
     loadData();
   }, [currentDate]);
 
-  // Optimized: Only fetch categories on mount (no transaction history fetch needed anymore!)
+  // Optimized: Only fetch categories on mount
   useEffect(() => {
     fetch("/api/categories")
       .then(res => res.json())
@@ -440,10 +440,7 @@ export default function BudgetPage() {
   const handleDeletePlan = async (id: number) => {
     try {
       const res = await fetch(`/api/budget/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        setPlanToDeleteId(null);
-        loadData();
-      }
+      if (res.ok) loadData();
     } catch (err) {
       console.error("Failed to delete plan:", err);
     }
@@ -460,7 +457,8 @@ export default function BudgetPage() {
         {/* HEADER CONTROLS */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Budget Planning</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-black dark:text-white">Budget Planning</h1>
+            <p className="text-sm text-slate-500 dark:text-zinc-500">Plan ahead, schedule events, and forecast your actual projected month-end wealth.</p>
           </div>
 
           <div className="flex gap-2 items-center self-end sm:self-center">
@@ -480,7 +478,7 @@ export default function BudgetPage() {
             {/* Add Plan Trigger */}
             <button
               onClick={() => setShowAddModal(true)}
-              className="px-4 py-2.5 rounded-2xl bg-green-500 hover:bg-green-400 text-black font-bold text-xs sm:text-sm transition active:scale-95 flex items-center gap-1.5 whitespace-nowrap shrink-0"
+              className="px-4 py-2.5 rounded-2xl bg-green-500 hover:bg-green-400 text-black font-bold text-xs sm:text-sm transition active:scale-95 flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-sm shadow-green-500/10"
             >
               <Plus size={16} /> Add Plan
             </button>
@@ -488,9 +486,10 @@ export default function BudgetPage() {
         </div>
 
         {/* ==========================================
-            FINANCIAL FORECASTING SUMMARY CARD
+            FINANCIAL FORECASTING SUMMARY CARD (GLASS)
             ========================================== */}
-        <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 p-4 sm:p-6 rounded-3xl shadow-sm space-y-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_1.5px_3px_rgba(255,255,255,0.02)]">
+        {/* ✅ Updated to standard translucent glassmorphic panel */}
+        <div className="bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md p-4 sm:p-6 rounded-3xl shadow-sm space-y-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_1.5px_3px_rgba(255,255,255,0.02)]">
           <h2 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block">Projections for {monthName}</h2>
           
           {/* Mobile: Current Balance full width, Income/Expense side by side */}
@@ -505,7 +504,8 @@ export default function BudgetPage() {
 
           <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-zinc-900/60 mt-2">
             <span className="text-xs sm:text-sm font-bold text-slate-500 dark:text-zinc-400">Projected Month-End Position</span>
-            <span className="text-base sm:text-xl font-bold text-green-500">
+            {/* ✅ Updated text color to premium emerald green */}
+            <span className="text-base sm:text-xl font-bold text-emerald-500">
               {projectedPosition.toLocaleString("en-BD")} Tk
             </span>
           </div>
@@ -515,10 +515,11 @@ export default function BudgetPage() {
             PLANNED ITEMS LISTING (SPLIT LAYOUT)
             ========================================== */}
         
-        {/* DESKTOP TABLE VIEW */}
-        <div className="hidden md:block bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 rounded-3xl overflow-hidden shadow-sm">
+        {/* DESKTOP TABLE VIEW (GLASS CONTAINER) */}
+        {/* ✅ Updated to standard translucent glassmorphic panel */}
+        <div className="hidden md:block bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md rounded-3xl overflow-hidden shadow-sm shadow-black/[0.01]">
           {/* HEADER */}
-          <div className="grid grid-cols-12 px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-900 leading-none">
+          <div className="grid grid-cols-12 px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-black/[0.05] dark:border-white/[0.04] leading-none">
             <div className="col-span-3">Target</div>
             <div className="col-span-2">Expected Date</div>
             <div className="col-span-2">Type</div>
@@ -527,18 +528,19 @@ export default function BudgetPage() {
           </div>
 
           {/* LIST */}
-          <div className="divide-y divide-slate-100 dark:divide-zinc-900">
+          <div className="divide-y divide-slate-100 dark:divide-zinc-900/60">
             {plans.map((p) => {
               const amt = Number(p.amount);
               return (
-                <div key={p.id} className="grid grid-cols-12 items-center px-5 py-4 hover:bg-slate-50 dark:hover:bg-zinc-900/10 transition text-sm">
+                // ✅ Updated table rows to clean translucent glass hover effects
+                <div key={p.id} className="grid grid-cols-12 items-center px-5 py-4 hover:bg-white/35 dark:hover:bg-black/35 transition text-sm border-b border-black/[0.03] dark:border-white/[0.03]">
                   
                   {/* Target Name */}
                   <div className="col-span-3 font-semibold text-black dark:text-white truncate">
                     {p.target_name}
                   </div>
 
-                {/* Date (With pulsing warning indicator if overdue) */}
+                  {/* Date (With pulsing warning indicator if overdue) */}
                   <div className="col-span-2 text-xs text-slate-500 dark:text-zinc-500 flex items-center gap-1.5">
                     <span>
                       {new Date(p.date).toLocaleDateString("en-US", {
@@ -570,7 +572,7 @@ export default function BudgetPage() {
                       {amt.toLocaleString("en-BD")} Tk
                     </span>
 
-                      {p.status === "PENDING" ? (
+                    {p.status === "PENDING" ? (
                       p.date.substring(0, 10) < new Date().toLocaleDateString("en-CA") ? (
                         <button
                           onClick={() => setProcessingPlan(p)}
@@ -612,14 +614,15 @@ export default function BudgetPage() {
           </div>
         </div>
 
-        {/* MOBILE CARD VIEW */}
+        {/* MOBILE CARD VIEW (GLASS CARDS) */}
         <div className="md:hidden space-y-3">
           {plans.map((p) => {
             const amt = Number(p.amount);
             return (
+              // ✅ Updated cards to standard translucent glassmorphic style
               <div 
                 key={p.id} 
-                className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-900 rounded-2xl p-4 flex flex-col gap-3 shadow-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_1.5px_3px_rgba(255,255,255,0.02)]"
+                className="bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md p-4 rounded-2xl shadow-sm shadow-black/[0.01] flex flex-col gap-3"
               >
                 {/* Row 1: Target and Amount */}
                 <div className="flex justify-between items-start gap-2">
@@ -644,7 +647,7 @@ export default function BudgetPage() {
                 </div>
 
                 {/* Row 2: Type, Notes and Action Button */}
-                <div className="flex justify-between items-center gap-3 pt-2 border-t border-slate-100 dark:border-zinc-900/50">
+                <div className="flex justify-between items-center gap-3 pt-2 border-t border-black/[0.04] dark:border-white/[0.04]">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase shrink-0 ${getBadgeStyle(p.type)}`}>
                       {p.type}
@@ -701,15 +704,16 @@ export default function BudgetPage() {
       </div>
 
       {/* ==========================================
-          ADD PLAN MODAL & SEARCH DROPDOWN
+          ADD PLAN MODAL & SEARCH DROPDOWN (GLASS)
           ========================================== */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAddModal(false)}>
-          <div className="bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 w-full max-w-[380px] shadow-2xl flex flex-col gap-4 animate-modalIn relative" onClick={(e) => e.stopPropagation()}>
+          {/* ✅ Updated modal wrapper to heavy frosted glassmorphism */}
+          <div className="bg-white/75 dark:bg-black/60 border border-black/[0.05] dark:border-white/[0.05] text-black dark:text-white backdrop-blur-xl rounded-3xl p-5 sm:p-6 w-full max-w-[380px] shadow-2xl flex flex-col gap-4 animate-modalIn relative" onClick={(e) => e.stopPropagation()}>
             
-            <div className="flex justify-between items-center border-b border-slate-100 dark:border-zinc-900 pb-3">
+            <div className="flex justify-between items-center border-b border-black/[0.04] dark:border-white/[0.04] pb-3">
               <h3 className="text-lg font-bold text-black dark:text-white">Create Budget Plan</h3>
-              <button onClick={() => setShowAddModal(false)} className="p-1 text-slate-400 hover:text-black dark:hover:text-white transition rounded-full hover:bg-slate-100 dark:hover:bg-zinc-900">
+              <button onClick={() => setShowAddModal(false)} className="p-1 text-slate-400 hover:text-black dark:hover:text-white transition rounded-full hover:bg-black/[0.03] dark:hover:bg-white/[0.03]">
                 <X size={16} />
               </button>
             </div>
@@ -725,7 +729,7 @@ export default function BudgetPage() {
                     setSelectedDateTarget(null);
                     setTargetSearch("");
                   }}
-                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-xs sm:text-sm text-black dark:text-white"
+                  className="px-3 py-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-xs sm:text-sm text-black dark:text-white cursor-pointer"
                 >
                   <option value="EXPENSE">Expense</option>
                   <option value="INCOME">Income</option>
@@ -749,12 +753,12 @@ export default function BudgetPage() {
                     setSelectedDateTarget(null);
                     setShowTargetDropdown(true);
                   }}
-                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-xs sm:text-sm text-black dark:text-white"
+                  className="px-3 py-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-xs sm:text-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200"
                 />
 
                 {/* Autocomplete dropdown suggestions */}
                 {showTargetDropdown && (
-                  <div className="absolute top-full left-0 w-full mt-1.5 max-h-40 overflow-y-auto bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl z-50 flex flex-col divide-y divide-slate-100 dark:divide-zinc-900">
+                  <div className="absolute top-full left-0 w-full mt-1.5 max-h-40 overflow-y-auto bg-white dark:bg-zinc-950 border border-black/[0.05] dark:border-white/[0.05] rounded-2xl shadow-xl z-50 flex flex-col divide-y divide-slate-100 dark:divide-zinc-900">
                     {suggestions.map((s, idx) => {
                       const nameStr = s.name;
                       const idStr = s.id;
@@ -767,7 +771,7 @@ export default function BudgetPage() {
                             setTargetSearch(nameStr);
                             setShowTargetDropdown(false);
                           }}
-                          className="px-4 py-2.5 text-left text-xs font-semibold hover:bg-slate-50 dark:hover:bg-zinc-900 transition text-slate-700 dark:text-zinc-300"
+                          className="px-4 py-2.5 text-left text-xs font-semibold hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition text-slate-700 dark:text-zinc-300"
                         >
                           {nameStr}
                         </button>
@@ -779,7 +783,7 @@ export default function BudgetPage() {
                       <button
                         type="button"
                         onClick={() => setShowQuickCategoryModal(true)}
-                        className="px-4 py-3 text-left text-xs font-semibold text-green-500 hover:bg-green-500/10 transition leading-normal border-t border-slate-100 dark:border-zinc-900"
+                        className="px-4 py-3 text-left text-xs font-semibold text-green-500 hover:bg-green-500/10 transition leading-normal border-t border-black/[0.05] dark:border-white/[0.04]"
                       >
                         No category found. Create "{targetSearch}"?
                       </button>
@@ -810,7 +814,7 @@ export default function BudgetPage() {
                       setAmount(val);
                     }
                   }}
-                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-xs sm:text-sm text-black dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="px-3 py-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-xs sm:text-sm text-black dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
 
@@ -819,7 +823,7 @@ export default function BudgetPage() {
                 <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Scheduled Date</label>
                 <div
                   onClick={() => setShowDatePicker(!showDatePicker)}
-                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none text-xs sm:text-sm text-slate-500 dark:text-zinc-400 cursor-pointer flex justify-between items-center"
+                  className="px-3 py-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-xs sm:text-sm text-slate-500 dark:text-zinc-400 cursor-pointer flex justify-between items-center"
                 >
                   <span>
                     {date 
@@ -832,14 +836,14 @@ export default function BudgetPage() {
 
                 {/* Floating Custom Mini Calendar Dropdown */}
                 {showDatePicker && (
-                  <div className="absolute top-full left-0 w-full mt-1.5 p-3 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl z-50 flex flex-col gap-2 animate-modalIn" onClick={(e) => e.stopPropagation()}>
+                  <div className="absolute top-full left-0 w-full mt-1.5 p-3 bg-white dark:bg-zinc-950 border border-black/[0.04] dark:border-white/[0.04] rounded-2xl shadow-xl z-50 flex flex-col gap-2 animate-modalIn" onClick={(e) => e.stopPropagation()}>
                     {/* Header */}
                     <div className="flex justify-between items-center text-[11px] font-bold text-black dark:text-white leading-none">
-                      <button type="button" onClick={() => setPickerDate(new Date(pickerDate.getFullYear(), pickerDate.getMonth() - 1, 1))} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-900 transition">
+                      <button type="button" onClick={() => setPickerDate(new Date(pickerDate.getFullYear(), pickerDate.getMonth() - 1, 1))} className="p-1 rounded hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition">
                         <ChevronLeft size={12} />
                       </button>
                       <span>{pickerDate.toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>
-                      <button type="button" onClick={() => setPickerDate(new Date(pickerDate.getFullYear(), pickerDate.getMonth() + 1, 1))} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-900 transition">
+                      <button type="button" onClick={() => setPickerDate(new Date(pickerDate.getFullYear(), pickerDate.getMonth() + 1, 1))} className="p-1 rounded hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition">
                         <ChevronRight size={12} />
                       </button>
                     </div>
@@ -877,7 +881,7 @@ export default function BudgetPage() {
                                 ? "text-zinc-300 dark:text-zinc-700 cursor-not-allowed opacity-50" 
                                 : isSelected
                                 ? "bg-green-500 text-black shadow-sm"
-                                : "text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-900"
+                                : "text-slate-700 dark:text-zinc-300 hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
                               }
                             `}
                           >
@@ -921,7 +925,7 @@ export default function BudgetPage() {
           ========================================== */}
       {showQuickCategoryModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-black border border-slate-200 dark:border-slate-800 rounded-3xl p-6 w-full max-w-[340px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn">
+          <div className="bg-white/75 dark:bg-black/60 border border-black/[0.05] dark:border-white/[0.05] text-black dark:text-white backdrop-blur-xl rounded-3xl p-6 w-full max-w-[340px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn">
             <h3 className="text-lg font-bold text-black dark:text-white">Create Category</h3>
             
             <div className="text-left space-y-3">
@@ -931,7 +935,7 @@ export default function BudgetPage() {
                   type="text"
                   disabled
                   value={targetSearch}
-                  className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-zinc-900 text-slate-500 border border-transparent text-sm font-semibold"
+                  className="px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-transparent text-sm font-semibold"
                 />
               </div>
 
@@ -941,7 +945,7 @@ export default function BudgetPage() {
                   type="text"
                   disabled
                   value={type}
-                  className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-zinc-900 text-slate-500 border border-transparent text-sm font-semibold"
+                  className="px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-transparent text-sm font-semibold"
                 />
               </div>
             </div>
@@ -963,16 +967,17 @@ export default function BudgetPage() {
           ========================================== */}
       {processingPlan && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => { setProcessingPlan(null); setIsPartial(false); setIsRescheduling(false); setShowReschedulePicker(false); }}>
-          <div className="bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 w-full max-w-[360px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
+          {/* ✅ Updated modal wrapper to heavy frosted glassmorphism */}
+          <div className="bg-white/75 dark:bg-black/60 border border-black/[0.05] dark:border-white/[0.05] text-black dark:text-white backdrop-blur-xl rounded-3xl p-5 sm:p-6 w-full max-w-[360px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
             
-            <div className="border-b border-slate-100 dark:border-zinc-900 pb-3 flex justify-between items-center text-left">
+            <div className="border-b border-black/[0.04] dark:border-white/[0.04] pb-3 flex justify-between items-center text-left">
               <div>
                 <h3 className="text-base font-bold text-black dark:text-white leading-none">{processingPlan.target_name}</h3>
                 <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider block mt-1">
                   Due amount: {Number(processingPlan.amount).toLocaleString("en-BD")} Tk
                 </span>
               </div>
-              <button onClick={() => { setProcessingPlan(null); setIsPartial(false); setIsRescheduling(false); setShowReschedulePicker(false); }} className="p-1 text-slate-400 hover:text-black dark:hover:text-white transition rounded-full hover:bg-slate-100 dark:hover:bg-zinc-900">
+              <button onClick={() => { setProcessingPlan(null); setIsPartial(false); setIsRescheduling(false); setShowReschedulePicker(false); }} className="p-1 text-slate-400 hover:text-black dark:hover:text-white transition rounded-full hover:bg-black/[0.03] dark:hover:bg-white/[0.03]">
                 <X size={14} />
               </button>
             </div>
@@ -984,8 +989,8 @@ export default function BudgetPage() {
                 <p className="text-xs text-slate-500 dark:text-zinc-400 leading-normal">How do you want to handle this scheduled event?</p>
                 
                 {/* Account Method picker for Confirmations */}
-                <div className="flex items-center justify-between bg-slate-50 dark:bg-zinc-900/60 p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800">
-                  <span className="text-xs font-bold text-slate-500 dark:text-zinc-400 flex items-center gap-1.5"><ArrowRightLeft size={13} /> Account</span>
+                <div className="flex items-center justify-between bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] p-2.5 rounded-xl">
+                  <span className="text-xs font-bold text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">Account</span>
                   <select value={processAccount} onChange={(e) => setAccount(e.target.value)} className="bg-transparent text-xs font-bold text-black dark:text-white focus:outline-none cursor-pointer">
                     <option>Cash</option>
                     <option>Bank</option>
@@ -1016,7 +1021,7 @@ export default function BudgetPage() {
                   placeholder="Partial Amount"
                   value={partialAmount}
                   onChange={(e) => setPartialAmount(e.target.value)}
-                  className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-green-500 text-xs text-black dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-xs text-black dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
 
                 <div className="flex items-center justify-between bg-slate-50 dark:bg-zinc-900/60 p-2 rounded-xl border border-slate-200 dark:border-zinc-800">
@@ -1045,7 +1050,7 @@ export default function BudgetPage() {
                 <div ref={reschedulePickerRef} className="relative flex flex-col text-left">
                   <div
                     onClick={() => setShowReschedulePicker(!showReschedulePicker)}
-                    className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs text-black dark:text-white cursor-pointer flex justify-between items-center"
+                    className="px-3 py-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] text-xs text-black dark:text-white cursor-pointer flex justify-between items-center"
                   >
                     <span>
                       {rescheduleDate 
@@ -1061,11 +1066,11 @@ export default function BudgetPage() {
                     <div className="absolute bottom-full left-0 w-full mb-1.5 p-3 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl z-50 flex flex-col gap-2 animate-modalIn" onClick={(e) => e.stopPropagation()}>
                       {/* Header */}
                       <div className="flex justify-between items-center text-[11px] font-bold text-black dark:text-white leading-none">
-                        <button type="button" onClick={() => setReschedulePickerDate(new Date(reschedulePickerDate.getFullYear(), reschedulePickerDate.getMonth() - 1, 1))} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-900 transition">
+                        <button type="button" onClick={() => setReschedulePickerDate(new Date(reschedulePickerDate.getFullYear(), reschedulePickerDate.getMonth() - 1, 1))} className="p-1 rounded hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition">
                           <ChevronLeft size={12} />
                         </button>
                         <span>{reschedulePickerDate.toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>
-                        <button type="button" onClick={() => setReschedulePickerDate(new Date(reschedulePickerDate.getFullYear(), reschedulePickerDate.getMonth() + 1, 1))} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-900 transition">
+                        <button type="button" onClick={() => setReschedulePickerDate(new Date(reschedulePickerDate.getFullYear(), reschedulePickerDate.getMonth() + 1, 1))} className="p-1 rounded hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition">
                           <ChevronRight size={12} />
                         </button>
                       </div>
@@ -1103,7 +1108,7 @@ export default function BudgetPage() {
                                   ? "text-zinc-300 dark:text-zinc-700 cursor-not-allowed opacity-50" 
                                   : isSelected
                                   ? "bg-green-500 text-black shadow-sm"
-                                  : "text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-900"
+                                  : "text-slate-700 dark:text-zinc-300 hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
                                 }
                               `}
                             >
