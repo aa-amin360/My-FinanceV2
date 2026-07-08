@@ -44,7 +44,15 @@ export default function LandingPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Created Ref to target the Phone Mockup wrapper on the page
+  // FAQ Accordion State
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  // Input Fields State
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  // Created Ref to target the Phone Mockup wrapper
   const phoneRef = useRef<HTMLDivElement | null>(null);
 
   // Custom UX handler: Sets states and smoothly scrolls to the phone if on mobile
@@ -60,14 +68,6 @@ export default function LandingPage() {
       }, 80);
     }
   };
-
-  // FAQ Accordion State
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
-
-  // Input Fields State
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
 
   // ==========================================
   // SIGN IN HANDLER
@@ -147,7 +147,7 @@ export default function LandingPage() {
     signIn("google", { callbackUrl: "/dashboard" });
   };
 
-  // Smooth scroll handler for any HTML clickable elements
+  // Smooth scroll handler for nav items
   const handleScrollToSection = (e: React.MouseEvent<HTMLElement>, targetId: string) => {
     e.preventDefault();
     const targetElement = document.getElementById(targetId);
@@ -157,8 +157,7 @@ export default function LandingPage() {
   };
 
   return (
-    // ✅ Main background set to match your clean Charcoal Gunmetal (#131B21) directly for perfect layout harmony
-    <div className="relative min-h-screen bg-[#131B21] text-slate-100 flex flex-col justify-between transition-colors duration-300 overflow-y-auto font-sans scroll-smooth">
+    <div className="relative min-h-screen bg-[#131B21] text-slate-100 flex flex-col justify-between transition-colors duration-300 overflow-y-auto overflow-x-hidden font-sans scroll-smooth">
       
       {/* ==========================================
           INLINE ANIMATION & BEHAVIOR STYLES
@@ -209,7 +208,7 @@ export default function LandingPage() {
       <div className="absolute bottom-[20%] right-[-5%] w-[600px] h-[600px] rounded-full bg-green-500/[0.03] blur-[140px] pointer-events-none animate-blob-slow" style={{ animationDelay: "5s" }} />
 
       {/* ================= HEADER ================= */}
-      <header className="relative z-20 max-w-6xl w-full mx-auto h-20 flex items-center justify-between shrink-0 px-6">
+      <header className="relative z-20 max-w-6xl w-full mx-auto h-20 flex items-center justify-between shrink-0 px-4 sm:px-6">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center text-black font-extrabold text-lg shadow-md shadow-green-500/20">
             M
@@ -217,16 +216,14 @@ export default function LandingPage() {
           <span className="font-extrabold text-lg tracking-wide text-green-500">My Finance</span>
         </div>
 
-        {/* Dynamic navigation anchoring */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-400">
           <a href="#features" onClick={(e) => handleScrollToSection(e, "features")} className="hover:text-white transition">Features</a>
           <a href="#how-it-works" onClick={(e) => handleScrollToSection(e, "how-it-works")} className="hover:text-white transition">How It Works</a>
           <a href="#faq" onClick={(e) => handleScrollToSection(e, "faq")} className="hover:text-white transition">FAQ</a>
         </nav>
 
-        {/* Action button toggles mobile phone login view */}
         <button 
-          onClick={() => handleOpenAuth("LOGIN")} // ✅ Custom trigger
+          onClick={() => handleOpenAuth("LOGIN")}
           className="px-5 py-2.5 rounded-full bg-green-500 hover:bg-green-400 text-black font-extrabold text-xs tracking-wider transition hover:scale-105 active:scale-[0.98] shadow-sm shadow-green-500/10"
         >
           Get Started
@@ -234,7 +231,8 @@ export default function LandingPage() {
       </header>
 
       {/* ================= HERO FOLD CONTAINER ================= */}
-      <main className="relative z-10 max-w-6xl w-full mx-auto px-6 py-4 md:py-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      {/* ✅ Optimized padding for better fit on tablets and phones */}
+      <main className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 md:py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
         
         {/* Left column info */}
         <div className="lg:col-span-6 space-y-6 animate-fade-in-up">
@@ -242,51 +240,53 @@ export default function LandingPage() {
             <ShieldCheck size={14} className="shrink-0 animate-pulse" /> Smart. Simple. Powerful.
           </div>
 
-          <h2 className="text-4xl sm:text-5.5xl font-extrabold tracking-tight leading-none pt-2">
+          {/* ✅ Scaled text sizes dynamically for small viewports to prevent wrapping */}
+          <h2 className="text-3xl xs:text-4xl sm:text-5xl lg:text-5.5xl font-extrabold tracking-tight leading-tight lg:leading-none pt-1">
             Take Control of <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-400 to-green-500">Your Money</span>
           </h2>
 
-          <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-lg">
+          <p className="text-slate-300 text-xs sm:text-base leading-relaxed max-w-lg">
             My Finance helps you track income, manage expenses, handle debts & receivables, and grow your savings — all in one place.
           </p>
 
-          {/* Action Row */}
-          <div className="flex flex-wrap gap-4 pt-2">
+          <div className="flex flex-wrap gap-3 sm:gap-4 pt-1">
             <button
-              onClick={() => handleOpenAuth("SIGNUP")} // ✅ Custom trigger
-              className="px-6 py-3.5 rounded-full bg-green-500 hover:bg-green-400 text-black font-extrabold text-sm transition hover:scale-[1.03] active:scale-[0.98] shadow-lg shadow-green-500/10 flex items-center gap-1.5"
+              onClick={() => handleOpenAuth("SIGNUP")}
+              className="px-5 py-3 sm:px-6 sm:py-3.5 rounded-full bg-green-500 hover:bg-green-400 text-black font-extrabold text-xs sm:text-sm transition hover:scale-[1.03] active:scale-[0.98] shadow-lg shadow-green-500/10 flex items-center gap-1.5"
             >
               Get Started Free <ArrowRight size={16} />
             </button>
             <button
               onClick={(e) => handleScrollToSection(e, "how-it-works")}
-              className="px-6 py-3.5 rounded-full border border-zinc-800 bg-zinc-900/30 text-slate-300 font-bold text-sm hover:bg-zinc-900/60 transition flex items-center gap-2 hover:scale-[1.03]"
+              className="px-5 py-3 sm:px-6 sm:py-3.5 rounded-full border border-zinc-800 bg-zinc-900/30 text-slate-300 font-bold text-xs sm:text-sm hover:bg-zinc-900/60 transition flex items-center gap-2 hover:scale-[1.03]"
             >
               <Play size={14} className="fill-slate-300" /> See How It Works
             </button>
           </div>
 
-          {/* Value highlights grid (Upgraded to standard glass panels) */}
-          <div className="grid grid-cols-2 gap-4 pt-4">
+          {/* ✅ Core Pillars Grid updated to stack vertically on mobile (cols-1) and double-column on tablet (cols-2) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4 pt-4">
             <MiniCard icon={ArrowLeftRight} title="All Transactions" desc="Income, Expense, Debt & Receivable" />
             <MiniCard icon={TrendingUp} title="Clear Overview" desc="Beautiful insights at a glance" />
             <MiniCard icon={ShieldCheck} title="Financial Control" desc="Manage obligations with confidence" />
             <MiniCard icon={Wallet} title="Grow Savings" desc="Track progress and achieve goals" />
           </div>
 
-          <div className="flex flex-wrap gap-x-8 gap-y-4 pt-6 border-t border-zinc-900/80">
+          {/* ✅ Trust Statistics updated to perfectly centered columns on mobile grids */}
+          <div className="grid grid-cols-3 gap-2 pt-6 border-t border-zinc-900/80 sm:flex sm:flex-wrap sm:gap-x-8 sm:gap-y-4">
             <Stat icon={Users} label="Happy Users" value="10K+" />
             <Stat icon={ShieldCheck} label="Secure & Private" value="100%" />
-            <Stat icon={TrendingUp} label="Transactions Managed" value="50K+" />
+            <Stat icon={TrendingUp} label="Transactions" value="50K+" />
           </div>
         </div>
 
         {/* Right column: Interactive dual mockups */}
         <div ref={phoneRef} className="lg:col-span-6 flex justify-center items-center h-[520px] sm:h-[600px] relative">
           
-          {/* PHONE 2: THE CALENDAR SCREEN (Background offset) */}
-          <div className="absolute right-[5%] sm:right-[10%] top-[10%] w-[240px] sm:w-[270px] aspect-[9/19] rounded-[36px] bg-[#020408] border-[3px] border-zinc-800 shadow-[20px_20px_50px_rgba(0,0,0,0.5)] overflow-hidden pointer-events-none opacity-40 sm:opacity-60 scale-95 origin-bottom-right rotate-[6deg] animate-float-medium z-0">
+          {/* PHONE 2: THE CALENDAR SCREEN */}
+          {/* ✅ Hidden on phones (hidden) to prevent overflow scrolling, and rendered from small tablet upwards (sm:block) */}
+          <div className="hidden sm:block absolute right-[5%] sm:right-[10%] top-[10%] w-[240px] sm:w-[270px] aspect-[9/19] rounded-[36px] bg-[#020408] border-[3px] border-zinc-800 shadow-[20px_20px_50px_rgba(0,0,0,0.5)] overflow-hidden pointer-events-none opacity-40 sm:opacity-60 scale-95 origin-bottom-right rotate-[6deg] animate-float-medium z-0">
             <div className="w-full h-full p-3 sm:p-4 text-[10px] space-y-4 select-none">
               <div className="w-20 h-4 bg-black rounded-full mx-auto" />
               <div className="flex items-center justify-between text-zinc-400 px-1 pt-1 font-bold">
@@ -315,13 +315,14 @@ export default function LandingPage() {
           </div>
 
           {/* PHONE 1: FOREGROUND INTERACTIVE SCREEN */}
-          <div className="relative lg:absolute left-0 lg:left-[10%] mx-auto lg:mx-0 w-[260px] sm:w-[290px] aspect-[9/19] rounded-[38px] bg-[#020408] border-[4px] border-zinc-800 shadow-[0_25px_60px_rgba(0,0,0,0.8)] overflow-hidden scale-100 hover:scale-[1.02] transition-transform duration-300 z-10 animate-float-slow">
+          {/* ✅ Scaled to responsive width (w-[250px] sm:w-[290px]) so it sits centered comfortably on any mobile device */}
+          <div className="relative lg:absolute left-0 lg:left-[10%] mx-auto lg:mx-0 w-[250px] sm:w-[290px] aspect-[9/19] rounded-[38px] bg-[#020408] border-[4px] border-zinc-800 shadow-[0_25px_60px_rgba(0,0,0,0.8)] overflow-hidden scale-100 hover:scale-[1.02] transition-transform duration-300 z-10 animate-float-slow">
             <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-24 h-5 bg-black rounded-full z-50 flex items-center justify-between px-3 text-[9px] text-zinc-500 font-bold">
               <span>9:41</span>
               <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
             </div>
 
-            <div className="w-full h-full pt-9 pb-4 px-3.5 sm:px-4 flex flex-col justify-between relative overflow-y-auto [&::-webkit-scrollbar]:hidden">
+            <div className="w-full h-full pt-9 pb-4 px-3 sm:px-4 flex flex-col justify-between relative overflow-y-auto [&::-webkit-scrollbar]:hidden select-none">
 
               {/* DEMO DISPLAY STATE */}
               {phoneScreen === "DEMO" && (
@@ -337,10 +338,10 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 text-black shadow-lg shadow-green-500/10 space-y-2">
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 text-black shadow-lg shadow-green-500/10 space-y-2">
                     <p className="text-[8px] font-extrabold uppercase tracking-wider opacity-85">Total Balance</p>
                     <div className="flex justify-between items-baseline">
-                      <span className="text-lg font-black tracking-tight">৳ 48,750.00</span>
+                      <span className="text-base font-black tracking-tight sm:text-lg">৳ 48,750.00</span>
                     </div>
                   </div>
 
@@ -358,7 +359,6 @@ export default function LandingPage() {
                     <TransactionRow name="Electricity" type="EXPENSE" val="-৳ 1,850" isPositive={false} />
                   </div>
 
-                  {/* Interactive Button to launch Auth */}
                   <button 
                     onClick={() => handleOpenAuth("LOGIN")}
                     className="w-full py-2 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-green-500 font-extrabold text-[10px] rounded-xl transition flex items-center justify-center gap-1 shrink-0"
@@ -508,10 +508,9 @@ export default function LandingPage() {
       {/* ======================================================================
           SECTION 2: DETAILED VALUE SHOWCASE & FEATURES (#features)
           ====================================================================== */}
-      {/* ✅ Expanded with rich feature summaries, detailed logic descriptions, and clean glass backdrops */}
-      <section id="features" className="relative z-10 max-w-6xl w-full mx-auto px-6 py-12 md:py-20 border-t border-zinc-900/60">
-        <div className="text-center max-w-2xl mx-auto space-y-3 mb-16">
-          <h2 className="text-3xl font-extrabold tracking-tight text-white">Unmatched Ledger Intelligence</h2>
+      <section id="features" className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 py-12 md:py-20 border-t border-zinc-900/60">
+        <div className="text-center max-w-2xl mx-auto space-y-3 mb-16 px-1 animate-fadeIn">
+          <h2 className="text-3xl font-extrabold tracking-tight text-white leading-tight">Unmatched Ledger Intelligence</h2>
           <p className="text-sm text-slate-400">Discover the unique, mathematical mechanisms that keep your personal balance sheets perfect down to the single Taka.</p>
         </div>
 
@@ -537,8 +536,7 @@ export default function LandingPage() {
       {/* ======================================================================
           SECTION 3: THREE STEPS LIFE-CYCLE (#how-it-works)
           ====================================================================== */}
-      {/* ✅ Fully detailed step breakdowns with matching vector icons */}
-      <section id="how-it-works" className="relative z-10 max-w-6xl w-full mx-auto px-6 py-12 md:py-20 border-t border-zinc-900/60">
+      <section id="how-it-works" className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 py-12 md:py-20 border-t border-zinc-900/60 animate-fadeIn">
         <div className="text-center max-w-2xl mx-auto space-y-3 mb-16">
           <span className="text-xs font-bold uppercase tracking-wider text-green-500 bg-green-500/10 px-3 py-1 rounded-full">Execution Sequence</span>
           <h2 className="text-3xl font-extrabold tracking-tight text-white mt-3">Three Steps to Absolute Clarity</h2>
@@ -554,10 +552,9 @@ export default function LandingPage() {
       {/* ======================================================================
           SECTION 4: INTERACTIVE ACCORDION FAQ (#faq)
           ====================================================================== */}
-      {/* ✅ Complete, customized FAQ with smooth slide toggle states */}
-      <section id="faq" className="relative z-10 max-w-3xl w-full mx-auto px-6 py-12 md:py-20 border-t border-zinc-900/60">
+      <section id="faq" className="relative z-10 max-w-3xl w-full mx-auto px-4 sm:px-6 py-12 md:py-20 border-t border-zinc-900/60">
         <div className="text-center space-y-3 mb-12">
-          <h2 className="text-3xl font-extrabold tracking-tight text-white">Frequently Answered Questions</h2>
+          <h2 className="text-3xl font-extrabold tracking-tight text-white leading-tight">Frequently Answered Questions</h2>
           <p className="text-sm text-slate-400">Deep, technical answers about how My Finance maintains precision.</p>
         </div>
 
@@ -587,8 +584,8 @@ export default function LandingPage() {
       </section>
 
       {/* ================= FOOTER ================= */}
-      <footer className="relative z-10 h-20 border-t border-zinc-900/50 flex flex-col justify-center items-center gap-1 shrink-0 bg-black/10">
-        <span className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider">
+      <footer className="relative z-10 h-20 border-t border-zinc-900/50 flex flex-col justify-center items-center gap-1 shrink-0 bg-black/10 px-4">
+        <span className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider text-center">
           Trusted by thousands to manage their money better every day
         </span>
         <span className="text-[9px] text-slate-600">© 2026 My Finance. All rights reserved.</span>
@@ -603,10 +600,10 @@ export default function LandingPage() {
 function MiniCard({ icon: Icon, title, desc }: any) {
   return (
     <div className="flex gap-3 p-3.5 rounded-2xl bg-[#131B21]/40 border border-white/[0.04] backdrop-blur-md shadow-sm">
-      <div className="w-8 h-8 rounded-lg bg-green-500/10 text-green-500 flex items-center justify-center shrink-0">
+      <div className="w-8 h-8 rounded-lg bg-green-500/10 text-green-500 flex items-center justify-center shrink-0 shadow-inner border border-green-500/10">
         <Icon size={16} />
       </div>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <h4 className="text-xs font-bold text-slate-200 truncate">{title}</h4>
         <p className="text-[10px] text-zinc-500 mt-0.5 truncate leading-normal">{desc}</p>
       </div>
@@ -616,13 +613,13 @@ function MiniCard({ icon: Icon, title, desc }: any) {
 
 function Stat({ icon: Icon, label, value }: any) {
   return (
-    <div className="flex items-center gap-3">
-      <div className="w-10 h-10 rounded-xl bg-black/25 text-green-500 flex items-center justify-center shrink-0 border border-white/[0.03] shadow-inner">
-        <Icon size={18} />
+    <div className="flex items-center gap-2 sm:gap-3 mx-auto sm:mx-0">
+      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-black/25 text-green-500 flex items-center justify-center shrink-0 border border-white/[0.03] shadow-inner">
+        <Icon size={16} className="sm:w-[18px] sm:h-[18px]" />
       </div>
-      <div>
-        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">{label}</p>
-        <h4 className="text-sm font-black text-slate-200 mt-0.5 leading-none">{value}</h4>
+      <div className="min-w-0">
+        <p className="text-[8.5px] sm:text-[10px] text-slate-500 uppercase font-bold tracking-wider truncate leading-none">{label}</p>
+        <h4 className="text-xs sm:text-sm font-black text-slate-200 mt-1 leading-none">{value}</h4>
       </div>
     </div>
   );
@@ -644,14 +641,13 @@ function TransactionRow({ name, type, val, isPositive }: { name: string, type: s
         <p className="text-zinc-200 truncate">{name}</p>
         <p className="text-zinc-600 text-[6.5px] mt-0.5">{type}</p>
       </div>
-      <span className={isPositive ? "text-emerald-500" : "text-rose-500"}>
+      <span className={isPositive ? "text-green-400" : "text-red-400"}>
         {val}
       </span>
     </div>
   );
 }
 
-// Detailed features showcase component
 function ShowcaseCard({ title, metric, desc }: { title: string, metric: string, desc: string }) {
   return (
     <div className="p-6 rounded-3xl bg-white/5 dark:bg-black/20 border border-black/[0.04] dark:border-white/[0.04] backdrop-blur-md flex flex-col justify-between gap-4 shadow-sm hover:scale-[1.01] hover:border-green-500/20 transition-all duration-300">
@@ -666,7 +662,6 @@ function ShowcaseCard({ title, metric, desc }: { title: string, metric: string, 
   );
 }
 
-// Lifecycle step block component
 function StepBlock({ num, title, desc }: { num: string, title: string, desc: string }) {
   return (
     <div className="relative p-6 rounded-3xl bg-black/10 border border-white/[0.02] flex flex-col gap-3">
@@ -677,7 +672,6 @@ function StepBlock({ num, title, desc }: { num: string, title: string, desc: str
   );
 }
 
-// Dynamic FAQ Accordion component
 function FaqRow({ idx, openIdx, setOpenIdx, q, a }: { idx: number, openIdx: number | null, setOpenIdx: (i: number | null) => void, q: string, a: string }) {
   const isOpen = openIdx === idx;
   return (
@@ -690,7 +684,7 @@ function FaqRow({ idx, openIdx, setOpenIdx, q, a }: { idx: number, openIdx: numb
         <ChevronDown size={16} className={`text-slate-400 shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
       </div>
       {isOpen && (
-        <p className="text-xs text-slate-400 leading-relaxed pt-3 border-t border-black/[0.03] dark:border-white/[0.03] mt-3 animate-fadeIn">
+        <p className="text-xs text-slate-400 leading-relaxed pt-3 border-t border-slate-100 dark:border-zinc-900/40 mt-3 animate-fadeIn">
           {a}
         </p>
       )}
