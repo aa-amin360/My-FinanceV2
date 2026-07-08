@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { 
@@ -19,8 +19,19 @@ import {
   Calendar,
   Grid,
   Bell,
-  Plus
+  Plus,
+  ChevronDown,
+  Info
 } from "lucide-react";
+
+type Transaction = {
+  id: string;
+  type: string;
+  amount: string;
+  date: string;
+  note: string | null;
+  parent_id?: string | null;
+};
 
 export default function LandingPage() {
   const router = useRouter();
@@ -32,6 +43,9 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // FAQ Accordion State
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   // Input Fields State
   const [name, setName] = useState("");
@@ -116,20 +130,33 @@ export default function LandingPage() {
     signIn("google", { callbackUrl: "/dashboard" });
   };
 
+  // Smooth scroll handler for any HTML clickable elements
+  const handleScrollToSection = (e: React.MouseEvent<HTMLElement>, targetId: string) => {
+    e.preventDefault();
+    const targetElement = document.getElementById(targetId);
+    if (targetElement) {
+      targetElement.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
-    <div className="relative min-h-screen bg-[#03060f] text-slate-100 flex flex-col justify-between transition-colors duration-300 overflow-hidden font-sans select-none">
+    // ✅ Main background set to match your clean Charcoal Gunmetal (#131B21) directly for perfect layout harmony
+    <div className="relative min-h-screen bg-[#131B21] text-slate-100 flex flex-col justify-between transition-colors duration-300 overflow-y-auto font-sans scroll-smooth">
       
       {/* ==========================================
-          INLINE ANIMATION STYLES (100% COMPATIBLE)
+          INLINE ANIMATION & BEHAVIOR STYLES
           ========================================== */}
       <style dangerouslySetInnerHTML={{__html: `
+        html {
+          scroll-behavior: smooth;
+        }
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(24px); }
           to { opacity: 1; transform: translateY(0); }
         }
         @keyframes floatSlow {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-10px) rotate(0.3deg); }
+          50% { transform: translateY(-12px) rotate(0.3deg); }
         }
         @keyframes floatMedium {
           0%, 100% { transform: translateY(0px) rotate(1deg); }
@@ -160,12 +187,12 @@ export default function LandingPage() {
         }
       `}} />
 
-      {/* ================= BACKGROUND DECORATIONS ================= */}
-      <div className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-green-500/5 blur-[130px] pointer-events-none animate-blob-slow" />
-      <div className="absolute bottom-[5%] right-[-5%] w-[600px] h-[600px] rounded-full bg-emerald-500/5 blur-[140px] pointer-events-none animate-blob-slow" style={{ animationDelay: "5s" }} />
+      {/* ================= BACKGROUND BLURS ================= */}
+      <div className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-emerald-500/[0.04] blur-[130px] pointer-events-none animate-blob-slow" />
+      <div className="absolute bottom-[20%] right-[-5%] w-[600px] h-[600px] rounded-full bg-green-500/[0.03] blur-[140px] pointer-events-none animate-blob-slow" style={{ animationDelay: "5s" }} />
 
       {/* ================= HEADER ================= */}
-      <header className="relative z-20 max-w-6xl w-full mx-auto px-6 h-20 flex items-center justify-between shrink-0">
+      <header className="relative z-20 max-w-6xl w-full mx-auto h-20 flex items-center justify-between shrink-0 px-6">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center text-black font-extrabold text-lg shadow-md shadow-green-500/20">
             M
@@ -173,149 +200,114 @@ export default function LandingPage() {
           <span className="font-extrabold text-lg tracking-wide text-green-500">My Finance</span>
         </div>
 
-        {/* Navigation Links */}
+        {/* Dynamic navigation anchoring */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-400">
-          <a href="#" className="hover:text-white transition">Features</a>
-          <a href="#" className="hover:text-white transition">How It Works</a>
-          <a href="#" className="hover:text-white transition">Why My Finance</a>
-          <a href="#" className="hover:text-white transition">Pricing</a>
-          <a href="#" className="hover:text-white transition">FAQ</a>
+          <a href="#features" onClick={(e) => handleScrollToSection(e, "features")} className="hover:text-white transition">Features</a>
+          <a href="#how-it-works" onClick={(e) => handleScrollToSection(e, "how-it-works")} className="hover:text-white transition">How It Works</a>
+          <a href="#faq" onClick={(e) => handleScrollToSection(e, "faq")} className="hover:text-white transition">FAQ</a>
         </nav>
 
-        {/* Action Button */}
+        {/* Action button toggles mobile phone login view */}
         <button 
           onClick={() => { setPhoneScreen("AUTH"); setTab("LOGIN"); }}
-          className="px-5 py-2 rounded-full bg-green-500 hover:bg-green-400 text-black font-extrabold text-xs tracking-wider transition hover:scale-105 active:scale-[0.98]"
+          className="px-5 py-2.5 rounded-full bg-green-500 hover:bg-green-400 text-black font-extrabold text-xs tracking-wider transition hover:scale-105 active:scale-[0.98] shadow-sm shadow-green-500/10"
         >
           Get Started
         </button>
       </header>
 
-      {/* ================= MAIN CONTAINER ================= */}
-      <main className="relative z-10 max-w-6xl w-full mx-auto px-6 py-6 md:py-12 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center flex-1">
+      {/* ================= HERO FOLD CONTAINER ================= */}
+      <main className="relative z-10 max-w-6xl w-full mx-auto px-6 py-4 md:py-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         
-        {/* ================= LEFT COLUMN: MARKETING COPY ================= */}
+        {/* Left column info */}
         <div className="lg:col-span-6 space-y-6 animate-fade-in-up">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-500/10 text-green-500 border border-green-500/20 shadow-sm animate-glow-pulse">
             <ShieldCheck size={14} className="shrink-0 animate-pulse" /> Smart. Simple. Powerful.
           </div>
 
-          <h2 className="text-4xl sm:text-5.5xl font-extrabold tracking-tight leading-tight">
+          <h2 className="text-4xl sm:text-5.5xl font-extrabold tracking-tight leading-none pt-2">
             Take Control of <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-400 to-green-500">Your Money</span>
           </h2>
 
-          <p className="text-slate-400 text-sm sm:text-base leading-relaxed max-w-lg">
+          <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-lg">
             My Finance helps you track income, manage expenses, handle debts & receivables, and grow your savings — all in one place.
           </p>
 
-          {/* Action Row */}
           <div className="flex flex-wrap gap-4 pt-2">
             <button
               onClick={() => { setPhoneScreen("AUTH"); setTab("SIGNUP"); }}
-              className="px-6 py-3 rounded-full bg-green-500 hover:bg-green-400 text-black font-extrabold text-sm transition hover:scale-[1.03] active:scale-[0.98] shadow-lg shadow-green-500/10 flex items-center gap-1.5"
+              className="px-6 py-3.5 rounded-full bg-green-500 hover:bg-green-400 text-black font-extrabold text-sm transition hover:scale-[1.03] active:scale-[0.98] shadow-lg shadow-green-500/10 flex items-center gap-1.5"
             >
               Get Started Free <ArrowRight size={16} />
             </button>
             <button
-              onClick={() => setPhoneScreen("DEMO")}
-              className="px-6 py-3 rounded-full border border-zinc-800 bg-zinc-900/30 text-slate-300 font-bold text-sm hover:bg-zinc-900/60 transition flex items-center gap-2 hover:scale-[1.03]"
+              onClick={(e) => handleScrollToSection(e, "how-it-works")}
+              className="px-6 py-3.5 rounded-full border border-zinc-800 bg-zinc-900/30 text-slate-300 font-bold text-sm hover:bg-zinc-900/60 transition flex items-center gap-2 hover:scale-[1.03]"
             >
               <Play size={14} className="fill-slate-300" /> See How It Works
             </button>
           </div>
 
-          {/* Core Pillars Grid */}
-          <div className="grid grid-cols-2 gap-4 pt-6">
+          {/* Value highlights grid (Upgraded to standard glass panels) */}
+          <div className="grid grid-cols-2 gap-4 pt-4">
             <MiniCard icon={ArrowLeftRight} title="All Transactions" desc="Income, Expense, Debt & Receivable" />
             <MiniCard icon={TrendingUp} title="Clear Overview" desc="Beautiful insights at a glance" />
             <MiniCard icon={ShieldCheck} title="Financial Control" desc="Manage obligations with confidence" />
             <MiniCard icon={Wallet} title="Grow Savings" desc="Track progress and achieve goals" />
           </div>
 
-          {/* Trust Statistics */}
-          <div className="flex flex-wrap gap-x-8 gap-y-4 pt-6 border-t border-zinc-900">
+          <div className="flex flex-wrap gap-x-8 gap-y-4 pt-6 border-t border-zinc-900/80">
             <Stat icon={Users} label="Happy Users" value="10K+" />
             <Stat icon={ShieldCheck} label="Secure & Private" value="100%" />
             <Stat icon={TrendingUp} label="Transactions Managed" value="50K+" />
           </div>
         </div>
 
-        {/* =========================================================
-            RIGHT COLUMN: INTERACTIVE DUAL SMARTPHONE PORTAL
-            ========================================================= */}
+        {/* Right column: Interactive dual mockups */}
         <div className="lg:col-span-6 flex justify-center items-center h-[520px] sm:h-[600px] relative">
           
           {/* PHONE 2: THE CALENDAR SCREEN (Background offset) */}
           <div className="absolute right-[5%] sm:right-[10%] top-[10%] w-[240px] sm:w-[270px] aspect-[9/19] rounded-[36px] bg-[#020408] border-[3px] border-zinc-800 shadow-[20px_20px_50px_rgba(0,0,0,0.5)] overflow-hidden pointer-events-none opacity-40 sm:opacity-60 scale-95 origin-bottom-right rotate-[6deg] animate-float-medium z-0">
             <div className="w-full h-full p-3 sm:p-4 text-[10px] space-y-4 select-none">
-              
-              {/* Dynamic island */}
               <div className="w-20 h-4 bg-black rounded-full mx-auto" />
-              
               <div className="flex items-center justify-between text-zinc-400 px-1 pt-1 font-bold">
                 <span>Calendar</span>
                 <span>May 2026</span>
               </div>
-
-              {/* Grid representation */}
-              <div className="grid grid-cols-7 gap-1 text-center font-bold text-[8px]">
-                {["S", "M", "T", "W", "T", "F", "S"].map(d => (
-                  <span key={d} className="text-zinc-600">{d}</span>
-                ))}
+              <div className="grid grid-cols-7 gap-1 text-center text-[8px] font-bold text-zinc-400">
+                {["S", "M", "T", "W", "T", "F", "S"].map(d => <span key={d}>{d}</span>)}
+              </div>
+              <div className="grid grid-cols-7 gap-1 text-center text-[8px]">
                 {Array.from({ length: 31 }, (_, i) => i + 1).map(day => {
                   const hasIncome = day === 5 || day === 26;
                   const hasExpense = day === 6 || day === 14 || day === 28;
                   return (
-                    <div key={day} className="aspect-square flex flex-col justify-between p-1 bg-zinc-950 rounded-md border border-zinc-900">
-                      <span className="text-zinc-400 self-end text-[7px]">{day}</span>
-                      <div className="text-[5px] text-left scale-90 origin-bottom-left leading-none font-extrabold">
-                        {hasIncome && <span className="text-green-500 block">+2.5K</span>}
-                        {hasExpense && <span className="text-red-500 block">-1.2K</span>}
+                    <div key={day} className="aspect-square flex flex-col justify-between p-1 bg-zinc-950/60 border border-zinc-900 rounded-md">
+                      <span className="text-zinc-500 self-end text-[6.5px]">{day}</span>
+                      <div className="text-[4px] text-left scale-90 origin-bottom-left leading-none font-bold">
+                        {hasIncome && <span className="text-emerald-500 block">+2.5K</span>}
+                        {hasExpense && <span className="text-rose-500 block">-1.2K</span>}
                       </div>
                     </div>
                   );
                 })}
               </div>
-
-              {/* Month Summary card */}
-              <div className="p-2.5 rounded-2xl bg-zinc-950 border border-zinc-900 space-y-1 text-[8px] font-bold">
-                <span className="text-zinc-500 block mb-1.5 uppercase">May Summary</span>
-                <div className="flex justify-between">
-                  <span className="text-zinc-400">Income</span>
-                  <span className="text-green-500">৳ 75,200</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-400">Expense</span>
-                  <span className="text-red-500">৳ 26,450</span>
-                </div>
-                <div className="flex justify-between border-t border-zinc-900 pt-1 text-[9px]">
-                  <span className="text-white">Net</span>
-                  <span className="text-green-500">৳ 48,750</span>
-                </div>
-              </div>
             </div>
           </div>
 
-          {/* =========================================================
-              PHONE 1: THE INTERACTIVE SCREEN (DEMO OR LOGIN)
-              ========================================================= */}
+          {/* PHONE 1: FOREGROUND INTERACTIVE SCREEN */}
           <div className="absolute left-[5%] sm:left-[10%] w-[260px] sm:w-[290px] aspect-[9/19] rounded-[38px] bg-[#020408] border-[4px] border-zinc-800 shadow-[0_25px_60px_rgba(0,0,0,0.8)] overflow-hidden scale-100 hover:scale-[1.02] transition-transform duration-300 z-10 animate-float-slow">
-            
-            {/* Dynamic Island Notch */}
             <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-24 h-5 bg-black rounded-full z-50 flex items-center justify-between px-3 text-[9px] text-zinc-500 font-bold">
               <span>9:41</span>
               <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
             </div>
 
-            {/* SCREEN CONTENT */}
             <div className="w-full h-full pt-9 pb-4 px-3.5 sm:px-4 flex flex-col justify-between relative overflow-y-auto [&::-webkit-scrollbar]:hidden">
 
-              {/* ================= APP PREVIEW SCREEN ================= */}
+              {/* DEMO DISPLAY STATE */}
               {phoneScreen === "DEMO" && (
                 <div className="flex flex-col gap-3.5 flex-1 animate-fadeIn pb-6">
-                  
-                  {/* App Header */}
                   <div className="flex justify-between items-center pt-2">
                     <div>
                       <p className="text-[9px] text-zinc-500 font-bold">Welcome back!</p>
@@ -327,35 +319,27 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  {/* Main Balance Card */}
-                  <div className="p-3.5 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 text-black shadow-lg shadow-green-500/10 space-y-2">
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 text-black shadow-lg shadow-green-500/10 space-y-2">
                     <p className="text-[8px] font-extrabold uppercase tracking-wider opacity-85">Total Balance</p>
                     <div className="flex justify-between items-baseline">
                       <span className="text-lg font-black tracking-tight">৳ 48,750.00</span>
-                      <span className="text-[7.5px] font-extrabold bg-white/20 px-1.5 py-0.5 rounded-full">
-                        ↑ 12.5% this month
-                      </span>
                     </div>
                   </div>
 
-                  {/* Overview Metrics (Pills) */}
                   <div className="grid grid-cols-3 gap-1.5">
-                    <MiniPill label="Income" val="৳ 75.2K" color="text-green-500" />
-                    <MiniPill label="Expense" val="৳ 26.4K" color="text-red-500" />
-                    <MiniPill label="Savings" val="৳ 18.7K" color="text-blue-500" />
+                    <MiniPill label="Income" val="৳ 75.2K" color="text-emerald-400" />
+                    <MiniPill label="Expense" val="৳ 26.4K" color="text-rose-400" />
+                    <MiniPill label="Savings" val="৳ 18.7K" color="text-indigo-400" />
                   </div>
 
-                  {/* Recent Activity List */}
                   <div className="space-y-1.5 flex-1 overflow-hidden">
-                    <span className="text-[9px] font-extrabold text-zinc-500 uppercase tracking-widest block mb-1">Recent Transactions</span>
-                    
-                    <TransactionRow name="Salary" type="Income" val="+৳ 50,000" isPositive={true} />
-                    <TransactionRow name="Groceries" type="Expense" val="-৳ 2,450" isPositive={false} />
-                    <TransactionRow name="Friend Payment" type="Receivable" val="+৳ 3,200" isPositive={true} />
-                    <TransactionRow name="Electricity Bill" type="Expense" val="-৳ 1,850" isPositive={false} />
+                    <span className="text-[9px] font-extrabold text-zinc-500 uppercase tracking-widest block">Recent Transactions</span>
+                    <TransactionRow name="Salary" type="INCOME" val="+৳ 50,000" isPositive={true} />
+                    <TransactionRow name="Groceries" type="EXPENSE" val="-৳ 2,450" isPositive={false} />
+                    <TransactionRow name="Friend Loan" type="RECEIVABLE" val="+৳ 3,200" isPositive={true} />
+                    <TransactionRow name="Electricity" type="EXPENSE" val="-৳ 1,850" isPositive={false} />
                   </div>
 
-                  {/* Interactive Button to launch Auth */}
                   <button 
                     onClick={() => { setPhoneScreen("AUTH"); setTab("LOGIN"); }}
                     className="w-full py-2 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-green-500 font-extrabold text-[10px] rounded-xl transition flex items-center justify-center gap-1 shrink-0"
@@ -365,18 +349,14 @@ export default function LandingPage() {
                 </div>
               )}
 
-              {/* ================= INTERACTIVE AUTH SCREEN ================= */}
+              {/* INTERACTIVE AUTH SCREEN STATE */}
               {phoneScreen === "AUTH" && (
                 <div className="flex flex-col gap-4 flex-1 animate-fadeIn pt-2 justify-center pb-6">
-                  
-                  {/* Tabs */}
                   <div className="grid grid-cols-2 p-0.5 bg-zinc-900 rounded-xl">
                     <button
                       onClick={() => { setTab("LOGIN"); setError(""); setSuccess(""); }}
                       className={`py-1 text-[10px] font-black rounded-lg transition-all duration-200 ${
-                        tab === "LOGIN" 
-                          ? "bg-zinc-800 text-white shadow-md" 
-                          : "text-zinc-500 hover:text-zinc-300"
+                        tab === "LOGIN" ? "bg-zinc-800 text-white shadow-md" : "text-zinc-500 hover:text-zinc-300"
                       }`}
                     >
                       Sign In
@@ -384,16 +364,13 @@ export default function LandingPage() {
                     <button
                       onClick={() => { setTab("SIGNUP"); setError(""); setSuccess(""); }}
                       className={`py-1 text-[10px] font-black rounded-lg transition-all duration-200 ${
-                        tab === "SIGNUP" 
-                          ? "bg-zinc-800 text-white shadow-md" 
-                          : "text-zinc-500 hover:text-zinc-300"
+                        tab === "SIGNUP" ? "bg-zinc-800 text-white shadow-md" : "text-zinc-500 hover:text-zinc-300"
                       }`}
                     >
                       Sign Up
                     </button>
                   </div>
 
-                  {/* Form */}
                   <form onSubmit={tab === "LOGIN" ? handleSignIn : handleSignUp} className="flex flex-col gap-2">
                     {tab === "SIGNUP" && (
                       <div className="flex flex-col gap-1">
@@ -442,7 +419,6 @@ export default function LandingPage() {
                       </div>
                     </div>
 
-                    {/* Status messaging inside screen */}
                     {error && <div className="text-[8px] text-red-500 font-bold text-center leading-normal mt-1">{error}</div>}
                     {success && <div className="text-[8px] text-green-500 font-bold text-center leading-normal mt-1">{success}</div>}
 
@@ -455,7 +431,6 @@ export default function LandingPage() {
                     </button>
                   </form>
 
-                  {/* Google OAuth inside phone */}
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-[1px] bg-zinc-900" />
                     <span className="text-[7px] text-zinc-500 font-bold tracking-widest uppercase">Or</span>
@@ -475,29 +450,23 @@ export default function LandingPage() {
                     Continue with Google
                   </button>
 
-                  {/* Return to demo screen */}
-                  <button 
-                    onClick={() => setPhoneScreen("DEMO")}
-                    className="text-[8.5px] font-bold text-zinc-500 hover:text-green-500 transition text-center mt-1"
-                  >
+                  <button onClick={() => setPhoneScreen("DEMO")} className="text-[8.5px] font-bold text-zinc-500 hover:text-green-500 transition text-center mt-1">
                     ← Back to App Tour
                   </button>
-
                 </div>
               )}
 
-              {/* Virtual App Bottom Navigation bar */}
+              {/* Phone footer nav (FAB triggers auth toggle) */}
               <div className="h-10 border-t border-zinc-900/60 pt-1.5 flex justify-between items-center text-[7px] font-extrabold text-zinc-500 select-none shrink-0 relative z-30">
-                <div className="flex flex-col items-center gap-0.5 text-green-500 cursor-pointer">
+                <div onClick={() => setPhoneScreen("DEMO")} className="flex flex-col items-center gap-0.5 text-green-500 cursor-pointer">
                   <Grid size={11} /> Dashboard
                 </div>
                 <div className="flex flex-col items-center gap-0.5 cursor-pointer">
                   <ArrowLeftRight size={11} /> History
                 </div>
                 
-                {/* Floating Plus button */}
                 <div 
-                  onClick={() => { setPhoneScreen("AUTH"); setTab("LOGIN"); }}
+                  onClick={() => { setPhoneScreen("AUTH"); setTab("SIGNUP"); }}
                   className="w-7 h-7 rounded-full bg-green-500 text-black flex items-center justify-center -translate-y-3 cursor-pointer shadow-lg shadow-green-500/20 active:scale-95"
                 >
                   <Plus size={14} />
@@ -517,48 +486,129 @@ export default function LandingPage() {
 
       </main>
 
-      {/* ================= TRUST STATEMENT FOOTER ================= */}
-      <div className="max-w-6xl w-full mx-auto px-6 py-6 border-t border-zinc-900/50 text-center relative z-10 shrink-0">
-        <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
+      {/* ======================================================================
+          SECTION 2: DETAILED VALUE SHOWCASE & FEATURES (#features)
+          ====================================================================== */}
+      {/* ✅ Expanded with rich feature summaries, detailed logic descriptions, and clean glass backdrops */}
+      <section id="features" className="relative z-10 max-w-6xl w-full mx-auto px-6 py-12 md:py-20 border-t border-zinc-900/60">
+        <div className="text-center max-w-2xl mx-auto space-y-3 mb-16">
+          <h2 className="text-3xl font-extrabold tracking-tight text-white">Unmatched Ledger Intelligence</h2>
+          <p className="text-sm text-slate-400">Discover the unique, mathematical mechanisms that keep your personal balance sheets perfect down to the single Taka.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <ShowcaseCard 
+            title="Parent-Child Ledger Splits" 
+            metric="Auto-reconciled conversions" 
+            desc="Overpay a debt of 2,000 Tk with 3,000 Tk? The engine automatically closes your debt to 0 Tk and maps the remaining 1,000 Tk into an active receivable asset, ensuring zero manual entry gaps."
+          />
+          <ShowcaseCard 
+            title="Zero-Impact Budgeting" 
+            metric="Forecast vs. Active Ledger" 
+            desc="Draft future monthly cashflow projections, schedule repayments, and simulate month-end scenarios on a separate prediction layer that never touches your actual on-hand balances."
+          />
+          <ShowcaseCard 
+            title="Continuous Onboarding" 
+            metric="Safe Starting Baselines" 
+            desc="Bypass double-counting. Initial debts and receivable configurations represent historically spent funds, routing cash flows to/from null to safely anchor your assets without modifying cash."
+          />
+        </div>
+      </section>
+
+      {/* ======================================================================
+          SECTION 3: THREE STEPS LIFE-CYCLE (#how-it-works)
+          ====================================================================== */}
+      {/* ✅ Fully detailed step breakdowns with matching vector icons */}
+      <section id="how-it-works" className="relative z-10 max-w-6xl w-full mx-auto px-6 py-12 md:py-20 border-t border-zinc-900/60">
+        <div className="text-center max-w-2xl mx-auto space-y-3 mb-16">
+          <span className="text-xs font-bold uppercase tracking-wider text-green-500 bg-green-500/10 px-3 py-1 rounded-full">Execution Sequence</span>
+          <h2 className="text-3xl font-extrabold tracking-tight text-white mt-3">Three Steps to Absolute Clarity</h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <StepBlock num="01" title="Initialize Balance" desc="Log in via Google or secure credentials. Complete your run-once onboarding flow to anchor your starting cash and bank positions." />
+          <StepBlock num="02" title="Schedule Projections" desc="Add planned income streams or recurring expenses to your monthly forecast calendars, projecting your exact wealth threshold." />
+          <StepBlock num="03" title="Confirm Transactions" desc="When an event is due, confirm it. The system automatically converts plans into actual ledger entries, maintaining an auditable paper trail." />
+        </div>
+      </section>
+
+      {/* ======================================================================
+          SECTION 4: INTERACTIVE ACCORDION FAQ (#faq)
+          ====================================================================== */}
+      {/* ✅ Complete, customized FAQ with smooth slide toggle states */}
+      <section id="faq" className="relative z-10 max-w-3xl w-full mx-auto px-6 py-12 md:py-20 border-t border-zinc-900/60">
+        <div className="text-center space-y-3 mb-12">
+          <h2 className="text-3xl font-extrabold tracking-tight text-white">Frequently Answered Questions</h2>
+          <p className="text-sm text-slate-400">Deep, technical answers about how My Finance maintains precision.</p>
+        </div>
+
+        <div className="space-y-4">
+          <FaqRow 
+            idx={1} 
+            openIdx={openFaq} 
+            setOpenIdx={setOpenFaq} 
+            q="How does the double-entry accounting engine work?" 
+            a="Every income, expense, transfer, or debt adjustment is stored as a dual-legged transaction. This means every Tk that leaves your cash account is strictly tracked in its destination asset or liability ledger. Balance calculations are performed dynamically using native SQL aggregation indexes, guaranteeing no mathematical drift."
+          />
+          <FaqRow 
+            idx={2} 
+            openIdx={openFaq} 
+            setOpenIdx={setOpenFaq} 
+            q="Is my financial data secure?" 
+            a="Yes. Your data sits on an isolated PostgreSQL server protected by Neon-serverless firewalls. Local credentials passwords are hashed using Node's robust SHA-512 with PBKDF2 cryptography with custom salt offsets, making them unreadable by any database operator or script."
+          />
+          <FaqRow 
+            idx={3} 
+            openIdx={openFaq} 
+            setOpenIdx={setOpenFaq} 
+            q="Can I add history later if I skip onboarding?" 
+            a="Yes. A dedicated 'Add History' portal is continuously available in your sidebar. If your starting Cash or Bank balances were never set, you can configure them exactly once. For active debts and receivables, you can append forgotten historical obligations at any time without alterating your cash balance."
+          />
+        </div>
+      </section>
+
+      {/* ================= FOOTER ================= */}
+      <footer className="relative z-10 h-20 border-t border-zinc-900/50 flex flex-col justify-center items-center gap-1 shrink-0 bg-black/10">
+        <span className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider">
           Trusted by thousands to manage their money better every day
         </span>
-      </div>
+        <span className="text-[9px] text-slate-600">© 2026 My Finance. All rights reserved.</span>
+      </footer>
 
     </div>
   );
 }
 
-// ================= MINICARDS (Value Grid Items) =================
+// ================= COMPONENT PORTALS ================= //
+
 function MiniCard({ icon: Icon, title, desc }: any) {
   return (
-    <div className="flex gap-2.5 p-3 rounded-2xl bg-zinc-950/40 border border-zinc-900/80 shadow-md">
+    <div className="flex gap-3 p-3.5 rounded-2xl bg-[#131B21]/40 border border-white/[0.04] backdrop-blur-md shadow-sm">
       <div className="w-8 h-8 rounded-lg bg-green-500/10 text-green-500 flex items-center justify-center shrink-0">
         <Icon size={16} />
       </div>
       <div className="min-w-0">
         <h4 className="text-xs font-bold text-slate-200 truncate">{title}</h4>
-        <p className="text-[10px] text-zinc-500 mt-0.5 truncate leading-tight">{desc}</p>
+        <p className="text-[10px] text-zinc-500 mt-0.5 truncate leading-normal">{desc}</p>
       </div>
     </div>
   );
 }
 
-// ================= STATISTICS COMPONENT =================
 function Stat({ icon: Icon, label, value }: any) {
   return (
     <div className="flex items-center gap-3">
-      <div className="w-10 h-10 rounded-xl bg-zinc-950 text-green-500 flex items-center justify-center shrink-0 border border-zinc-900 shadow-inner">
+      <div className="w-10 h-10 rounded-xl bg-black/25 text-green-500 flex items-center justify-center shrink-0 border border-white/[0.03] shadow-inner">
         <Icon size={18} />
       </div>
       <div>
-        <p className="text-xs text-slate-500 font-semibold">{label}</p>
+        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">{label}</p>
         <h4 className="text-sm font-black text-slate-200 mt-0.5 leading-none">{value}</h4>
       </div>
     </div>
   );
 }
 
-// ================= MINI PILLS (Dashboard Widget Values) =================
 function MiniPill({ label, val, color }: { label: string, val: string, color: string }) {
   return (
     <div className="p-1.5 rounded-lg bg-zinc-950 border border-zinc-900/80 flex flex-col text-[7px] leading-tight font-extrabold text-left">
@@ -568,7 +618,6 @@ function MiniPill({ label, val, color }: { label: string, val: string, color: st
   );
 }
 
-// ================= MINATURE TRANSACTION ROW =================
 function TransactionRow({ name, type, val, isPositive }: { name: string, type: string, val: string, isPositive: boolean }) {
   return (
     <div className="p-1.5 rounded-lg bg-zinc-950 border border-zinc-900/60 flex justify-between items-center text-[7.5px] leading-none font-bold">
@@ -576,9 +625,56 @@ function TransactionRow({ name, type, val, isPositive }: { name: string, type: s
         <p className="text-zinc-200 truncate">{name}</p>
         <p className="text-zinc-600 text-[6.5px] mt-0.5">{type}</p>
       </div>
-      <span className={isPositive ? "text-green-500" : "text-red-500"}>
+      <span className={isPositive ? "text-emerald-500" : "text-rose-500"}>
         {val}
       </span>
+    </div>
+  );
+}
+
+// Detailed features showcase component
+function ShowcaseCard({ title, metric, desc }: { title: string, metric: string, desc: string }) {
+  return (
+    <div className="p-6 rounded-3xl bg-white/5 dark:bg-black/20 border border-black/[0.04] dark:border-white/[0.04] backdrop-blur-md flex flex-col justify-between gap-4 shadow-sm hover:scale-[1.01] hover:border-green-500/20 transition-all duration-300">
+      <div className="space-y-1.5">
+        <h4 className="text-sm font-bold text-white tracking-wide">{title}</h4>
+        <p className="text-[11px] text-slate-400 leading-normal">{desc}</p>
+      </div>
+      <div className="pt-3 border-t border-black/[0.03] dark:border-white/[0.03] flex items-center gap-1.5 text-[10px] font-bold text-green-500">
+        <Info size={12} /> {metric}
+      </div>
+    </div>
+  );
+}
+
+// Lifecycle step block component
+function StepBlock({ num, title, desc }: { num: string, title: string, desc: string }) {
+  return (
+    <div className="relative p-6 rounded-3xl bg-black/10 border border-white/[0.02] flex flex-col gap-3">
+      <span className="text-2xl font-black text-green-500/10 font-mono tracking-tight absolute top-4 right-6">{num}</span>
+      <h4 className="text-sm font-bold text-white tracking-wide">{title}</h4>
+      <p className="text-xs text-slate-400 leading-relaxed">{desc}</p>
+    </div>
+  );
+}
+
+// Dynamic FAQ Accordion component
+function FaqRow({ idx, openIdx, setOpenIdx, q, a }: { idx: number, openIdx: number | null, setOpenIdx: (i: number | null) => void, q: string, a: string }) {
+  const isOpen = openIdx === idx;
+  return (
+    <div 
+      onClick={() => setOpenIdx(isOpen ? null : idx)}
+      className="p-4 sm:p-5 rounded-2xl bg-white/5 dark:bg-black/20 border border-black/[0.04] dark:border-white/[0.04] backdrop-blur-md cursor-pointer transition-all duration-200"
+    >
+      <div className="flex justify-between items-center gap-3">
+        <h4 className="text-xs sm:text-sm font-bold text-white tracking-tight">{q}</h4>
+        <ChevronDown size={16} className={`text-slate-400 shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+      </div>
+      {isOpen && (
+        <p className="text-xs text-slate-400 leading-relaxed pt-3 border-t border-black/[0.03] dark:border-white/[0.03] mt-3 animate-fadeIn">
+          {a}
+        </p>
+      )}
     </div>
   );
 }
