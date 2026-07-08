@@ -44,6 +44,23 @@ export default function LandingPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // Created Ref to target the Phone Mockup wrapper on the page
+  const phoneRef = useRef<HTMLDivElement | null>(null);
+
+  // Custom UX handler: Sets states and smoothly scrolls to the phone if on mobile
+  const handleOpenAuth = (tabType: "LOGIN" | "SIGNUP") => {
+    setPhoneScreen("AUTH");
+    setTab(tabType);
+    setError("");
+    setSuccess("");
+
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setTimeout(() => {
+        phoneRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 80);
+    }
+  };
+
   // FAQ Accordion State
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
@@ -209,7 +226,7 @@ export default function LandingPage() {
 
         {/* Action button toggles mobile phone login view */}
         <button 
-          onClick={() => { setPhoneScreen("AUTH"); setTab("LOGIN"); }}
+          onClick={() => handleOpenAuth("LOGIN")} // ✅ Custom trigger
           className="px-5 py-2.5 rounded-full bg-green-500 hover:bg-green-400 text-black font-extrabold text-xs tracking-wider transition hover:scale-105 active:scale-[0.98] shadow-sm shadow-green-500/10"
         >
           Get Started
@@ -234,9 +251,10 @@ export default function LandingPage() {
             My Finance helps you track income, manage expenses, handle debts & receivables, and grow your savings — all in one place.
           </p>
 
+          {/* Action Row */}
           <div className="flex flex-wrap gap-4 pt-2">
             <button
-              onClick={() => { setPhoneScreen("AUTH"); setTab("SIGNUP"); }}
+              onClick={() => handleOpenAuth("SIGNUP")} // ✅ Custom trigger
               className="px-6 py-3.5 rounded-full bg-green-500 hover:bg-green-400 text-black font-extrabold text-sm transition hover:scale-[1.03] active:scale-[0.98] shadow-lg shadow-green-500/10 flex items-center gap-1.5"
             >
               Get Started Free <ArrowRight size={16} />
@@ -265,7 +283,7 @@ export default function LandingPage() {
         </div>
 
         {/* Right column: Interactive dual mockups */}
-        <div className="lg:col-span-6 flex justify-center items-center h-[520px] sm:h-[600px] relative">
+        <div ref={phoneRef} className="lg:col-span-6 flex justify-center items-center h-[520px] sm:h-[600px] relative">
           
           {/* PHONE 2: THE CALENDAR SCREEN (Background offset) */}
           <div className="absolute right-[5%] sm:right-[10%] top-[10%] w-[240px] sm:w-[270px] aspect-[9/19] rounded-[36px] bg-[#020408] border-[3px] border-zinc-800 shadow-[20px_20px_50px_rgba(0,0,0,0.5)] overflow-hidden pointer-events-none opacity-40 sm:opacity-60 scale-95 origin-bottom-right rotate-[6deg] animate-float-medium z-0">
@@ -297,7 +315,7 @@ export default function LandingPage() {
           </div>
 
           {/* PHONE 1: FOREGROUND INTERACTIVE SCREEN */}
-          <div className="absolute left-[5%] sm:left-[10%] w-[260px] sm:w-[290px] aspect-[9/19] rounded-[38px] bg-[#020408] border-[4px] border-zinc-800 shadow-[0_25px_60px_rgba(0,0,0,0.8)] overflow-hidden scale-100 hover:scale-[1.02] transition-transform duration-300 z-10 animate-float-slow">
+          <div className="relative lg:absolute left-0 lg:left-[10%] mx-auto lg:mx-0 w-[260px] sm:w-[290px] aspect-[9/19] rounded-[38px] bg-[#020408] border-[4px] border-zinc-800 shadow-[0_25px_60px_rgba(0,0,0,0.8)] overflow-hidden scale-100 hover:scale-[1.02] transition-transform duration-300 z-10 animate-float-slow">
             <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-24 h-5 bg-black rounded-full z-50 flex items-center justify-between px-3 text-[9px] text-zinc-500 font-bold">
               <span>9:41</span>
               <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
@@ -340,8 +358,9 @@ export default function LandingPage() {
                     <TransactionRow name="Electricity" type="EXPENSE" val="-৳ 1,850" isPositive={false} />
                   </div>
 
+                  {/* Interactive Button to launch Auth */}
                   <button 
-                    onClick={() => { setPhoneScreen("AUTH"); setTab("LOGIN"); }}
+                    onClick={() => handleOpenAuth("LOGIN")}
                     className="w-full py-2 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-green-500 font-extrabold text-[10px] rounded-xl transition flex items-center justify-center gap-1 shrink-0"
                   >
                     Click to Open Auth Portal <ArrowRight size={11} />
@@ -466,7 +485,7 @@ export default function LandingPage() {
                 </div>
                 
                 <div 
-                  onClick={() => { setPhoneScreen("AUTH"); setTab("SIGNUP"); }}
+                  onClick={() => handleOpenAuth("SIGNUP")}
                   className="w-7 h-7 rounded-full bg-green-500 text-black flex items-center justify-center -translate-y-3 cursor-pointer shadow-lg shadow-green-500/20 active:scale-95"
                 >
                   <Plus size={14} />
