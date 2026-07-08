@@ -28,6 +28,8 @@ import {
   History,
   LogOut,
   TrendingUp,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -74,15 +76,23 @@ export default function DashboardLayout({
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#E7EBED] text-black dark:bg-[#131B21] dark:text-white transition-colors duration-300">
+    <div className="relative flex h-screen overflow-hidden bg-[#E7EBED] text-black dark:bg-[#131B21] dark:text-white transition-colors duration-300">
+      
+      {/* ======================================================================
+          AMBIENT SPOTLIGHT BACKGROUND LAYER
+          ====================================================================== */}
+      <div className="
+        absolute inset-0 z-0 pointer-events-none 
+        bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(0,0,0,0.08),rgba(255,255,255,0))] 
+        dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(255,255,255,0.14),rgba(0,0,0,0))]
+      " />
 
       {/* ================= SIDEBAR (DESKTOP) ================= */}
       <aside
-        className={`hidden md:flex ${
+        className={`relative z-10 hidden md:flex ${
           collapsed ? "w-16" : "w-56"
-        } h-full bg-slate-50/50 dark:bg-[#2A3439]/40 border-r border-slate-100 dark:border-zinc-900/60 flex-col transition-all duration-300`}
+        } h-full bg-[#E7EBED]/45 dark:bg-[#131B21]/30 border-r border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md flex-col transition-all duration-300`}
       >
-        
         {/* Adjusted justify and margins to center the toggle button perfectly when collapsed */}
         <div className={`p-4 flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
           {!collapsed && (
@@ -93,7 +103,7 @@ export default function DashboardLayout({
 
           <button
             onClick={handleToggleCollapse}
-            className={`w-9 h-9 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition active:scale-95 ${collapsed ? "mx-auto" : ""}`}
+            className={`w-9 h-9 flex items-center justify-center rounded-lg bg-black/[0.03] dark:bg-white/[0.03] hover:bg-black/[0.06] dark:hover:bg-white/[0.06] border border-black/[0.04] dark:border-white/[0.04] backdrop-blur-sm transition active:scale-95 ${collapsed ? "mx-auto" : ""}`}
           >
             {collapsed ? (
               <PanelRightClose size={18} />
@@ -119,47 +129,58 @@ export default function DashboardLayout({
       </aside>
 
       {/* ================= MAIN PANEL ================= */}
-      <div className="flex flex-col flex-1 h-full">
+      <div className="relative z-10 flex flex-col flex-1 h-full">
         
-        {/* HEADER */}
-        <div className="h-16 flex items-center justify-between px-6 bg-white dark:bg-black border-b border-gray-200 dark:border-zinc-900 animate-fadeIn">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-green-500 flex items-center justify-center overflow-hidden">
+        {/* HEADER (FROSTED GLASS STATUSBAR - REDESIGNED) */}
+        <div className="h-14 flex items-center justify-between px-6 bg-white/40 dark:bg-black/30 border-b border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md animate-fadeIn relative z-30">
+          <div className="flex items-center gap-2.5">
+            {/* Logo wrapper */}
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 p-0.5 shadow-sm shadow-emerald-500/10 hover:rotate-3 hover:scale-105 transition-all duration-300 cursor-pointer flex items-center justify-center overflow-hidden shrink-0">
               <img
                 src="/logo.png"
                 alt="logo"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover rounded-[10px]"
               />
             </div>
-            <h1 className="text-lg font-semibold text-green-500 tracking-wide">
-              My Finance
+
+            {/* Typography */}
+            <h1 className="text-sm sm:text-base tracking-tight font-black select-none leading-none">
+              <span className="text-zinc-900 dark:text-zinc-50 font-bold">My</span>
+              <span className="text-emerald-500 ml-1 font-extrabold">Finance</span>
             </h1>
           </div>
           
           {/* HEADER CONTROLS */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            {/* 1. Calendar View */}
             <Link
               href="/calendar"
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 hover:scale-105 transition"
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-black/[0.05] dark:hover:bg-white/[0.05] border border-black/[0.05] dark:border-white/[0.05] backdrop-blur-sm hover:scale-105 active:scale-95 transition-all duration-200 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400"
               aria-label="Calendar view"
             >
-              <CalendarDays size={18} />
+              <CalendarDays size={16} />
             </Link>
           
+            {/* 2. Theme Toggle (Vector Only - No Emojis) */}
             <button
               onClick={toggleTheme}
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 hover:scale-105 transition"
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-black/[0.05] dark:hover:bg-white/[0.05] border border-black/[0.05] dark:border-white/[0.05] backdrop-blur-sm hover:scale-105 active:scale-95 transition-all duration-200 text-zinc-500 dark:text-zinc-400"
               aria-label="Toggle theme"
             >
-              {theme === "dark" ? "🌙" : "☀️"}
+              {theme === "dark" ? (
+                <Moon size={16} className="text-indigo-400" />
+              ) : (
+                <Sun size={16} className="text-amber-500" />
+              )}
             </button>
 
+            {/* 3. Red Logout Button */}
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 hover:scale-105 transition"
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-500/10 dark:bg-red-500/10 hover:bg-red-500/20 dark:hover:bg-red-500/20 border border-red-500/20 hover:scale-105 active:scale-95 transition-all duration-200 text-red-600 dark:text-red-400"
               aria-label="Log out"
             >
-              <LogOut size={18} />
+              <LogOut size={16} />
             </button>
           </div>
         </div>
@@ -186,7 +207,7 @@ export default function DashboardLayout({
             window.dispatchEvent(new CustomEvent("openAdd", { detail: "GENERAL" }));
           }
         }}
-        className="fixed bottom-28 md:bottom-6 right-6 w-14 h-14 rounded-full bg-green-500 text-black text-2xl flex items-center justify-center shadow-lg hover:scale-105 transition z-50"
+        className="fixed bottom-28 md:bottom-6 right-6 w-14 h-14 rounded-full bg-green-500 text-black text-2xl flex items-center justify-center shadow-lg hover:scale-105 transition z-50 shadow-green-500/20"
       >
         +
       </button>
@@ -197,23 +218,23 @@ export default function DashboardLayout({
   );
 }
 
-// ================= SIDEBAR COMPONENTS ================= //
+// ================= SIDEBAR COMPONENTS (FROSTED GLASS) ================= //
 
 function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
   const isActive =
     pathname === href || pathname.startsWith(href + "/");
 
-  // Custom visual styles: Collapsed state uses a perfectly centered circular/squircle badge
+  // Custom visual styles with soft-glow active backdrops and micro-translations
   const containerStyle = collapsed
     ? `mx-auto w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 cursor-pointer ${
         isActive
           ? "bg-green-500/20 text-green-600 dark:text-green-400 shadow-[inset_0_1.5px_3px_rgba(34,197,94,0.06)] dark:shadow-[inset_0_1px_2.5px_rgba(255,255,255,0.04)] border border-green-500/10 scale-105"
-          : "text-slate-400 dark:text-zinc-500 hover:bg-slate-100/50 dark:hover:bg-zinc-900/60 hover:text-black dark:hover:text-white"
+          : "text-slate-400 dark:text-zinc-500 hover:bg-black/[0.04] dark:hover:bg-white/[0.04] hover:text-black dark:hover:text-white"
       }`
     : `group relative flex items-center gap-3 px-4 py-2.5 rounded-r-xl border-l-4 transition-all duration-200 cursor-pointer ${
         isActive
-          ? "bg-green-500/20 dark:bg-green-500/10 border-green-500 text-green-700 dark:text-green-400 font-bold"
-          : "border-transparent text-slate-500 dark:text-zinc-400 hover:bg-slate-100/50 dark:hover:bg-zinc-900/50 hover:text-black dark:hover:text-white hover:translate-x-1"
+          ? "bg-green-500/15 dark:bg-green-500/10 border-green-500 text-green-700 dark:text-green-400 font-bold shadow-[inset_0_1px_2px_rgba(34,197,94,0.04)]"
+          : "border-transparent text-slate-500 dark:text-zinc-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.04] hover:text-black dark:hover:text-white hover:translate-x-1"
       }`;
 
   return (
@@ -226,7 +247,7 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
   );
 }
 
-// ================= MOBILE NAV ================= //
+// ================= MOBILE NAV (HORIZONTALLY SCROLLABLE FROSTED PILL) ================= //
 
 function FloatingNav({ pathname }: { pathname: string }) {
   const items = [
@@ -242,10 +263,10 @@ function FloatingNav({ pathname }: { pathname: string }) {
 
   return (
     <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md animate-fadeIn">
-      {/* Scrollable Container with Hidden Scrollbars */}
+      {/* Custom styled scrollable mobile pill */}
       <div className="
         flex gap-3 items-center w-full px-4 py-2.5 rounded-full 
-        bg-white/80 dark:bg-black/80 border border-gray-200 dark:border-slate-700 
+        bg-white/45 dark:bg-black/30 border border-black/[0.05] dark:border-white/[0.04] 
         backdrop-blur-xl shadow-xl overflow-x-auto whitespace-nowrap
         [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]
       ">
@@ -261,8 +282,8 @@ function FloatingNav({ pathname }: { pathname: string }) {
               <div
                 className={`flex items-center justify-center gap-2 py-2 rounded-full transition shrink-0 ${
                   isActive
-                    ? "bg-green-500 text-black px-4 scale-105"
-                    : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-200 dark:hover:bg-zinc-900 w-10 h-10"
+                    ? "bg-green-500 text-black px-4 scale-105 shadow-md shadow-green-500/10"
+                    : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.04] w-10 h-10"
                 }`}
               >
                 <Icon size={20} />
