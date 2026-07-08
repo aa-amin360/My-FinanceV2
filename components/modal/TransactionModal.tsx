@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react"; // Added useRef
+import { X, ChevronDown } from "lucide-react"; // Imported ChevronDown
+
+type Category = {
+  id: string;
+  name: string;
+  type: string;
+};
 
 export default function TransactionModal() {
   const [showModal, setShowModal] = useState(false);
@@ -13,10 +20,37 @@ export default function TransactionModal() {
   const [account, setAccount] = useState("Cash");
   const [category, setCategory] = useState("");
   const [note, setNote] = useState("");
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const [error, setError] = useState("");
   const [isDirectFlow, setIsDirectFlow] = useState(false);
+
+  // Custom Dropdown Open States
+  const [showAccountDropdown, setShowAccountDropdown] = useState(false);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+
+  // References for Click-Outside Detectors
+  const accountRef = useRef<HTMLDivElement | null>(null);
+  const categoryRef = useRef<HTMLDivElement | null>(null);
+
+  // ==========================================
+  // CLICK OUTSIDE DETECTOR
+  // ==========================================
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
+        setShowAccountDropdown(false);
+      }
+      if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
+        setShowCategoryDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // ================= RESET =================
   const resetForm = () => {
@@ -27,6 +61,8 @@ export default function TransactionModal() {
     setError("");
     setAction("");
     setAccount("Cash");
+    setShowAccountDropdown(false);
+    setShowCategoryDropdown(false);
   };
 
   const closeModal = () => {
@@ -65,7 +101,7 @@ export default function TransactionModal() {
         }
       }
 
-      // DIRECT FLOWS ONLY (no edit anymore)
+      // DIRECT FLOWS ONLY (repay/receive actions)
       if (typeof e.detail === "object") {
         if (e.detail.type === "DEBT_REPAID") {
           setAction("REPAY");
@@ -98,26 +134,25 @@ export default function TransactionModal() {
   // ================= SUBMIT =================
   const handleSubmit = async () => {
     if (loading) return;
-
     setError("");
 
     const amountNumber = Number(amount);
 
-    if (!amount || amountNumber <= 0) {
-      setError("Enter a valid amount");
+    if (!amount || amountNumber <= 0 || isNaN(amountNumber)) {
+      setError("Please enter a valid amount greater than 0.");
       return;
     }
 
     if ((action === "INCOME" || action === "EXPENSE") && !category) {
-      setError("Select a category");
+      setError("Select a category.");
       return;
     }
 
     if (
       ["BORROW", "GIVE", "REPAY", "RECEIVE"].includes(action) &&
-      !entity
+      !entity.trim()
     ) {
-      setError("Enter person / entity");
+      setError("Enter person or counterpart entity.");
       return;
     }
 
@@ -129,11 +164,11 @@ export default function TransactionModal() {
         amount: amountNumber,
         account,
         date: new Date().toLocaleDateString("en-CA"),
-        note,
+        note: note.trim() || null,
       };
 
       if (category) body.category_id = category;
-      if (entity) body.entity = entity;
+      if (entity) body.entity = entity.trim();
 
       const res = await fetch("/api/transactions", {
         method: "POST",
@@ -152,7 +187,7 @@ export default function TransactionModal() {
 
       closeModal();
     } catch {
-      setError("Something went wrong");
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -161,51 +196,43 @@ export default function TransactionModal() {
   if (!showModal) return null;
 
   return (
-
     <div
-      className="
-      fixed inset-0 z-50
-      bg-black/60 backdrop-blur-sm
-      flex items-center justify-center
-      "
+      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn"
       onClick={closeModal}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         className="
         w-[340px]
-        bg-white dark:bg-black
-        border border-gray-200 dark:border-zinc-900
+        bg-gradient-to-br from-white to-slate-50
+        dark:from-[#0d1318] dark:to-[#080b0f]
+        backdrop-blur-xl
+        border border-black/[0.06] dark:border-white/[0.06]
         text-black dark:text-white
-        rounded-3xl
-        p-5
-        shadow-2xl
-        flex flex-col gap-4
-        animate-modalIn
+        rounded-3xl p-6
+        shadow-2xl flex flex-col gap-4
+        animate-modalIn relative
         "
       >
     
-        {/* ================= ACTION ================= */}
+        {/* ================= STEP 1: ACTION SELECTOR ================= */}
         {step === "ACTION" && (
           <>
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-black dark:text-white">
+              <h3 className="text-base font-bold text-black dark:text-white leading-none">
                 Select Action
               </h3>
     
               <button
                 onClick={closeModal}
                 className="
-                w-8 h-8
-                flex items-center justify-center
-                rounded-full
-                text-gray-400 dark:text-zinc-500
-                hover:text-black dark:hover:text-white
-                hover:bg-gray-100 dark:hover:bg-zinc-900
-                transition
+                w-7 h-7 flex items-center justify-center rounded-full
+                text-slate-400 dark:text-zinc-500 hover:text-black dark:hover:text-white
+                bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.04]
+                transition duration-150
                 "
               >
-                ✕
+                <X size={14} />
               </button>
             </div>
     
@@ -246,10 +273,10 @@ export default function TransactionModal() {
             <button
               onClick={closeModal}
               className="
-              text-sm
-              text-gray-500 dark:text-zinc-500
+              text-xs font-bold
+              text-slate-400 dark:text-zinc-500
               hover:text-black dark:hover:text-white
-              transition
+              transition mt-1 text-center
               "
             >
               Cancel
@@ -257,11 +284,11 @@ export default function TransactionModal() {
           </>
         )}
     
-        {/* ================= FORM ================= */}
+        {/* ================= STEP 2: THE FORM ================= */}
         {step === "FORM" && (
           <>
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-black dark:text-white">
+            <div className="flex items-center justify-between border-b border-black/[0.04] dark:border-white/[0.04] pb-2">
+              <h3 className="font-bold text-black dark:text-white text-base leading-none">
                 {action === "INCOME"
                   ? "Add Income"
                   : action === "EXPENSE"
@@ -278,133 +305,152 @@ export default function TransactionModal() {
               <button
                 onClick={closeModal}
                 className="
-                w-8 h-8
-                flex items-center justify-center
-                rounded-full
-                text-gray-400 dark:text-zinc-500
-                hover:text-black dark:hover:text-white
-                hover:bg-gray-100 dark:hover:bg-zinc-900
-                transition
+                w-7 h-7 flex items-center justify-center rounded-full
+                text-slate-400 dark:text-zinc-500 hover:text-black dark:hover:text-white
+                bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.04]
+                transition duration-150
                 "
               >
-                ✕
+                <X size={14} />
               </button>
             </div>
     
-            <input
-              className="
-              p-3 rounded-2xl
-              bg-gray-50 dark:bg-zinc-950
-              border border-gray-200 dark:border-zinc-900
-              text-black dark:text-white
-              placeholder:text-gray-400 dark:placeholder:text-zinc-500
-              focus:outline-none focus:ring-2 focus:ring-green-500
-              "
-              placeholder="Enter amount"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
-    
-            <select
-              className="
-              p-3 rounded-2xl
-              bg-gray-50 dark:bg-zinc-950
-              border border-gray-200 dark:border-zinc-900
-              text-black dark:text-white
-              focus:outline-none focus:ring-2 focus:ring-green-500
-              "
-              value={account}
-              onChange={(e) => setAccount(e.target.value)}
-            >
-              <option>Cash</option>
-              <option>Bank</option>
-            </select>
-    
-            {(action === "INCOME" || action === "EXPENSE") && (
-              <select
-                className="
-                p-3 rounded-2xl
-                bg-gray-50 dark:bg-zinc-950
-                border border-gray-200 dark:border-zinc-900
-                text-black dark:text-white
-                focus:outline-none focus:ring-2 focus:ring-green-500
-                "
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                <option value="">Select Category</option>
-    
-                {categories
-                  .filter((c) => c.type === action)
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-              </select>
-            )}
-    
-            {["BORROW", "GIVE", "REPAY", "RECEIVE"].includes(action) && (
+            {/* Amount input block */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Amount</label>
               <input
-                className="
-                p-3 rounded-2xl
-                bg-gray-50 dark:bg-zinc-950
-                border border-gray-200 dark:border-zinc-900
-                text-black dark:text-white
-                placeholder:text-gray-400 dark:placeholder:text-zinc-500
-                focus:outline-none focus:ring-2 focus:ring-green-500
-                "
-                placeholder="Person / Bank"
-                value={entity}
-                onChange={(e) => setEntity(e.target.value)}
+                type="number"
+                required
+                min="0.01"
+                step="any"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "" || Number(val) >= 0) {
+                    setAmount(val);
+                  }
+                }}
+                className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
-            )}
+            </div>
+
+            {/* ✅ Custom Frosted Glass Account Selector */}
+            <div ref={accountRef} className="relative flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Account</label>
+              <div
+                onClick={() => setShowAccountDropdown(!showAccountDropdown)}
+                className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white text-sm cursor-pointer flex justify-between items-center"
+              >
+                <span className="font-semibold text-slate-700 dark:text-zinc-300">{account}</span>
+                <ChevronDown size={14} className="text-slate-400 dark:text-zinc-500 shrink-0" />
+              </div>
+
+              {showAccountDropdown && (
+                <div className="absolute top-full left-0 w-full mt-1.5 p-1 bg-white/95 dark:bg-black/95 border border-black/[0.05] dark:border-white/[0.05] rounded-2xl shadow-xl z-50 flex flex-col animate-modalIn" onClick={(e) => e.stopPropagation()}>
+                  {["Cash", "Bank"].map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => {
+                        setAccount(opt);
+                        setShowAccountDropdown(false);
+                      }}
+                      className="px-4 py-2.5 text-left text-xs font-bold rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition text-slate-700 dark:text-zinc-300"
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
     
-            <input
-              className="
-              p-3 rounded-2xl
-              bg-gray-50 dark:bg-zinc-950
-              border border-gray-200 dark:border-zinc-900
-              text-black dark:text-white
-              placeholder:text-gray-400 dark:placeholder:text-zinc-500
-              focus:outline-none focus:ring-2 focus:ring-green-500
-              "
-              placeholder="Add note (optional)"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
-    
-            {error && (
-              <div className="text-red-500 text-sm text-center">
-                {error}
+            {/* ✅ Custom Frosted Glass Category Selector */}
+            {(action === "INCOME" || action === "EXPENSE") && (
+              <div ref={categoryRef} className="relative flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Category</label>
+                <div
+                  onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                  className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white text-sm cursor-pointer flex justify-between items-center"
+                >
+                  <span className="font-semibold text-slate-700 dark:text-zinc-300">
+                    {category ? categories.find((c) => c.id === category)?.name : "Select Category"}
+                  </span>
+                  <ChevronDown size={14} className="text-slate-400 dark:text-zinc-500 shrink-0" />
+                </div>
+
+                {showCategoryDropdown && (
+                  <div className="absolute top-full left-0 w-full mt-1.5 p-1 max-h-40 overflow-y-auto bg-white/95 dark:bg-black/95 border border-black/[0.05] dark:border-white/[0.05] rounded-2xl shadow-xl z-50 flex flex-col animate-modalIn" onClick={(e) => e.stopPropagation()}>
+                    {categories
+                      .filter((c) => c.type === action)
+                      .map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            setCategory(c.id);
+                            setShowCategoryDropdown(false);
+                          }}
+                          className="px-4 py-2.5 text-left text-xs font-bold rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition text-slate-700 dark:text-zinc-300"
+                        >
+                          {c.name}
+                        </button>
+                      ))}
+                    {categories.filter((c) => c.type === action).length === 0 && (
+                      <span className="px-4 py-3 text-center text-xs text-slate-400">No categories found</span>
+                    )}
+                  </div>
+                )}
               </div>
             )}
     
+            {/* Note / Counterparty block */}
+            {["BORROW", "GIVE", "REPAY", "RECEIVE"].includes(action) && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Counterparty</label>
+                <input
+                  type="text"
+                  placeholder="Person / Bank (e.g. Rahim)"
+                  value={entity}
+                  onChange={(e) => setEntity(e.target.value)}
+                  className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm"
+                />
+              </div>
+            )}
+    
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Add Note (Optional)</label>
+              <input
+                type="text"
+                placeholder="Add note..."
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm"
+              />
+            </div>
+    
+            {error && <div className="text-xs text-red-500 font-bold leading-normal">{error}</div>}
+    
             <button
+              type="button"
               onClick={handleSubmit}
               disabled={loading}
-              className={`
-              py-3 rounded-2xl
-              font-semibold transition
-              ${
-                loading
-                  ? "bg-gray-400 dark:bg-zinc-700 cursor-not-allowed text-white"
-                  : "bg-green-500 hover:bg-green-400 active:scale-95 text-black"
-              }
-              `}
+              className="w-full py-3 mt-2 rounded-xl bg-green-500 hover:bg-green-400 disabled:bg-slate-300 dark:disabled:bg-zinc-800 text-black font-extrabold text-sm transition active:scale-95 shadow-md"
             >
-              {loading ? "Processing..." : "Save"}
+              {loading ? "Saving..." : "Save"}
             </button>
     
             {!isDirectFlow && (
               <button
                 onClick={() => setStep("ACTION")}
                 className="
-                bg-gray-100 dark:bg-zinc-900
-                hover:bg-gray-200 dark:hover:bg-zinc-800
+                bg-black/[0.03] dark:bg-white/[0.03]
+                hover:bg-black/[0.06] dark:hover:bg-white/[0.06]
+                border border-black/[0.04] dark:border-white/[0.04]
                 text-black dark:text-white
-                py-3 rounded-2xl
+                py-3 rounded-xl
                 transition
+                text-xs sm:text-sm font-bold
                 "
               >
                 Back
@@ -413,10 +459,11 @@ export default function TransactionModal() {
           </>
         )}
       </div>
-    </div>   
-    
+    </div>
   );
 }
+
+// ================= SIDEBAR COMPONENTS (FROSTED GLASS) ================= //
 
 function ActionCard({ label, onClick }: any) {
   const styles: any = {
@@ -433,7 +480,7 @@ function ActionCard({ label, onClick }: any) {
   return (
     <div
       onClick={onClick}
-      className={`p-4 rounded-xl text-center cursor-pointer transition active:scale-95 hover:scale-[1.03] ${styles[label]}`}
+      className={`p-4 rounded-xl text-center cursor-pointer transition font-bold text-xs sm:text-sm active:scale-95 hover:scale-[1.03] ${styles[label]}`}
     >
       {label}
     </div>

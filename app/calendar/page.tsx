@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
 import { useRouter } from "next/navigation";
 
@@ -18,11 +18,10 @@ type Transaction = {
 };
 
 export default function CalendarPage() {
+  const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [selectedDateStr, setSelectedDateStr] = useState<string | null>(null);
-
-  const router = useRouter();
 
   // =========================
   // LOAD TRANSACTIONS
@@ -140,44 +139,42 @@ export default function CalendarPage() {
           1. MONTH VIEW (CALENDAR GRID)
           ============================================== */}
       {!selectedDateStr ? (
-        <div className="max-w-4xl mx-auto px-1 sm:px-4">
-          {/* Header Controls */}
-          <div className="flex items-center justify-between mb-6">
+        <div className="w-full px-1 sm:px-4 space-y-6 animate-fadeIn">
+        {/* Header Controls */}
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
             <div className="flex items-center gap-3">
               <button
-                onClick={() => router.back()}
+                onClick={() => router.push("/dashboard")} // ✅ Returns users to dashboard
                 className="
                   p-2 rounded-xl
-                  bg-gray-100 dark:bg-zinc-900
-                  border border-gray-200 dark:border-zinc-800
-                  hover:bg-gray-200 dark:hover:bg-zinc-800
-                  transition active:scale-95
+                  bg-black/[0.03] dark:bg-white/[0.03]
+                  border border-black/[0.04] dark:border-white/[0.04]
+                  hover:bg-black/[0.06] dark:hover:bg-white/[0.06]
+                  transition active:scale-95 shrink-0
                 "
+                aria-label="Back to dashboard"
               >
-                <ArrowLeft
-                  size={18}
-                  className="text-black dark:text-white"
-                />
+                <ArrowLeft size={18} className="text-black dark:text-white" />
               </button>
-          
-              <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2 text-black dark:text-white">
-                {monthName}
+
+              <h1 className="text-2xl font-bold flex items-center gap-2 text-black dark:text-white tracking-tight">
+                <Calendar size={22} className="text-emerald-500" /> {monthName}
               </h1>
             </div>
-          
-            <div className="flex gap-2">
+
+            <div className="flex gap-2 self-end sm:self-center">
               <button
                 onClick={handlePrevMonth}
-                className="flex items-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl bg-gray-100 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-800 transition active:scale-95 text-black dark:text-white"
+                className="flex items-center gap-1 px-3.5 py-1.5 text-xs font-bold rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.04] text-slate-700 dark:text-zinc-300 hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition active:scale-95"
               >
-                <ChevronLeft size={14} className="sm:w-4 sm:h-4" /> Prev
+                <ChevronLeft size={14} /> Prev
               </button>
 
               <button
                 onClick={handleNextMonth}
-                className="flex items-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl bg-gray-100 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-800 transition active:scale-95 text-black dark:text-white"
+                className="flex items-center gap-1 px-3.5 py-1.5 text-xs font-bold rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.04] text-slate-700 dark:text-zinc-300 hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition active:scale-95"
               >
-                Next <ChevronRight size={14} className="sm:w-4 sm:h-4" />
+                Next <ChevronRight size={14} />
               </button>
             </div>
           </div>
@@ -185,7 +182,7 @@ export default function CalendarPage() {
           {/* Weekday Labels */}
           <div className="grid grid-cols-7 text-center mb-1">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <span key={day} className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500 py-1">
+              <span key={day} className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-500 py-1">
                 {day}
               </span>
             ))}
@@ -198,7 +195,7 @@ export default function CalendarPage() {
                 return (
                   <div
                     key={`empty-${idx}`}
-                    className="aspect-square bg-gray-50/20 dark:bg-zinc-950/10 rounded-xl sm:rounded-2xl border border-transparent"
+                    className="aspect-square bg-black/[0.01] dark:bg-white/[0.01] border border-transparent rounded-xl sm:rounded-2xl"
                   />
                 );
               }
@@ -211,18 +208,19 @@ export default function CalendarPage() {
                   key={`day-${day}`}
                   onClick={() => setSelectedDateStr(dateKey)}
                   className="
-                    aspect-square p-1.5 rounded-xl sm:rounded-2xl cursor-pointer transition flex flex-col justify-between
-                    bg-white dark:bg-zinc-950/40
-                    border border-gray-200 dark:border-zinc-900/80
-                    shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.06)]
-                    hover:border-green-500 dark:hover:border-green-500/80
-                    hover:bg-gray-50 dark:hover:bg-zinc-900/30
+                    aspect-square p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl cursor-pointer transition flex flex-col justify-between
+                    bg-white/45 dark:bg-black/35
+                    border border-black/[0.05] dark:border-white/[0.04]
+                    backdrop-blur-md shadow-sm shadow-black/[0.01]
+                    shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.05)]
+                    hover:border-emerald-500 dark:hover:border-emerald-500/80
+                    hover:bg-white/60 dark:hover:bg-black/45
                     hover:scale-[1.02]
                     active:scale-95
                   "
                 >
                   {/* Day Number */}
-                  <span className="text-lg sm:text-xl font-bold text-gray-700 dark:text-zinc-300 self-end leading-none">
+                  <span className="text-xs sm:text-sm font-bold text-gray-700 dark:text-zinc-300 self-end leading-none">
                     {day}
                   </span>
 
@@ -231,11 +229,11 @@ export default function CalendarPage() {
                     {/* Income Slot */}
                     <div className="h-3 sm:h-4 flex items-center">
                       {income > 0 ? (
-                        <div className="text-green-600 dark:text-green-400 font-semibold truncate leading-none w-full">
+                        <div className="text-emerald-600 dark:text-emerald-400 font-bold truncate leading-none w-full">
                           <span className="md:hidden text-[7.5px] tracking-tighter block leading-none">
                             +{formatCompact(income)}
                           </span>
-                          <span className="hidden md:block text-xs leading-none">
+                          <span className="hidden md:block text-[10px] leading-none">
                             +{income.toLocaleString()}
                           </span>
                         </div>
@@ -247,11 +245,11 @@ export default function CalendarPage() {
                     {/* Expense Slot */}
                     <div className="h-3 sm:h-4 flex items-center">
                       {expense > 0 ? (
-                        <div className="text-red-500 dark:text-red-400 font-semibold truncate leading-none w-full">
+                        <div className="text-rose-500 dark:text-rose-400 font-bold truncate leading-none w-full">
                           <span className="md:hidden text-[7.5px] tracking-tighter block leading-none">
                             -{formatCompact(expense)}
                           </span>
-                          <span className="hidden md:block text-xs leading-none">
+                          <span className="hidden md:block text-[10px] leading-none">
                             -{expense.toLocaleString()}
                           </span>
                         </div>
@@ -269,23 +267,23 @@ export default function CalendarPage() {
         /* ==============================================
             2. DAILY DETAIL VIEW
             ============================================== */
-        <div className="max-w-2xl mx-auto px-2 sm:px-4">
+        <div className="w-full px-2 sm:px-4 space-y-6 animate-fadeIn pb-16">
           {/* Header Controls */}
-          <div className="flex items-center gap-3 mb-8">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setSelectedDateStr(null)}
               className="
                 p-2 rounded-xl
-                bg-gray-100 dark:bg-zinc-900
-                border border-gray-200 dark:border-zinc-800
-                hover:bg-gray-200 dark:hover:bg-zinc-800
+                bg-black/[0.03] dark:bg-white/[0.03]
+                border border-black/[0.04] dark:border-white/[0.04]
+                hover:bg-black/[0.06] dark:hover:bg-white/[0.06]
                 transition active:scale-95
               "
             >
               <ArrowLeft size={18} className="text-black dark:text-white" />
             </button>
 
-            <h1 className="text-lg sm:text-2xl font-bold text-black dark:text-white">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-black dark:text-white">
               {new Date(selectedDateStr + "T00:00:00").toLocaleDateString("en-US", {
                 weekday: "long",
                 month: "long",
@@ -314,13 +312,14 @@ export default function CalendarPage() {
                 <div
                   key={t.id}
                   className="
-                    bg-white dark:bg-zinc-950
-                    border border-gray-200 dark:border-zinc-900
+                    bg-white/25 dark:bg-zinc-950/10
+                    border border-black/[0.03] dark:border-white/[0.03]
+                    backdrop-blur-sm
                     rounded-2xl
                     px-4 sm:px-5 py-3.5 sm:py-4
                     flex justify-between items-center
-                    hover:bg-gray-50 dark:hover:bg-zinc-900/50
-                    transition-all duration-200
+                    hover:bg-white/35 dark:hover:bg-zinc-950/20
+                    transition-all duration-200 shadow-sm
                   "
                 >
                   <div className="min-w-0 flex-1 pr-4">
@@ -333,28 +332,30 @@ export default function CalendarPage() {
                     </div>
                   </div>
 
-                  <div className="text-right shrink-0">
-                    <div className={`font-bold text-sm sm:text-base ${isPositive ? "text-green-500" : "text-red-500"}`}>
-                      {isPositive ? "+" : "-"}
-                      {amount.toLocaleString("en-BD")} Tk
-                    </div>
+                  <div className="text-right shrink-0 flex items-center gap-4">
+                    <div className="text-right">
+                      <div className={`font-bold text-sm sm:text-base ${isPositive ? "text-emerald-500" : "text-rose-500"}`}>
+                        {isPositive ? "+" : "-"}
+                        {amount.toLocaleString("en-BD")} Tk
+                      </div>
 
-                    <div className="mt-1">
-                      <span
-                        className={`text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                          t.type === "INCOME"
-                            ? "bg-green-500/10 text-green-400"
-                            : t.type === "EXPENSE"
-                            ? "bg-red-500/10 text-red-400"
-                            : t.type.includes("DEBT")
-                            ? "bg-blue-500/10 text-blue-400"
-                            : t.type.includes("RECEIVABLE")
-                            ? "bg-yellow-500/10 text-yellow-400"
-                            : "bg-zinc-800 text-zinc-400"
-                        }`}
-                      >
-                        {formatType(t.type)}
-                      </span>
+                      <div className="mt-1">
+                        <span
+                          className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                            t.type === "INCOME"
+                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                              : t.type === "EXPENSE"
+                              ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                              : t.type.includes("DEBT")
+                              ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                              : t.type.includes("RECEIVABLE")
+                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                              : "bg-zinc-800 text-zinc-400"
+                          }`}
+                        >
+                          {formatType(t.type)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
