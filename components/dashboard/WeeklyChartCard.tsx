@@ -56,7 +56,8 @@ export default function WeeklyChartCard() {
       <div className="h-44 flex items-end justify-between gap-3">
     
         {data.map((item, index) => {
-          const normalized = (Math.abs(item.amount) / maxAmount) * 100;
+          const amount = Math.abs(item.amount);
+          const normalized = (amount / maxAmount) * 100;
     
           const today = new Date().toLocaleDateString("en-US", {
             weekday: "short",
@@ -66,6 +67,8 @@ export default function WeeklyChartCard() {
             activeIndex === index ||
             (activeIndex === null && item.day === today);
     
+          const hasData = amount > 0;
+
           return (
             <div
               key={item.day}
@@ -74,7 +77,7 @@ export default function WeeklyChartCard() {
               onMouseLeave={() => setActiveIndex(null)}
             >
     
-              {/* ✅ Updated active floating pill to a cohesive glassmorphic style */}
+              {/* PILL */}
               {isActive && (
                 <div
                   className="
@@ -89,24 +92,35 @@ export default function WeeklyChartCard() {
                   shadow-md z-10 animate-modalIn
                   "
                 >
-                  {Math.abs(item.amount).toLocaleString()} Tk
+                  {amount.toLocaleString()} Tk
                 </div>
               )}
     
-                {/* BAR AREA */}
-                  <div className="flex items-end h-40 w-full">
-        
-                    <div
-                      className={`w-8 sm:w-12 mx-auto rounded-full transition-all duration-300 ${
-                        isActive
-                          ? "bg-green-500 dark:bg-green-500" 
-                          : "bg-black/[0.08] dark:bg-white/[0.08]" 
-                      }`}
-                      style={{
-                        height: `${Math.max(normalized, 12)}%`,
-                      }}
-                    />
-                  </div>
+              {/* BAR AREA */}
+              <div className="flex items-end h-32 w-full">
+                {hasData ? (
+                  /* Thick vertical capsule for days with actual expenses */
+                  <div
+                    className={`w-8 sm:w-12 mx-auto rounded-full transition-all duration-300 ${
+                      isActive
+                        ? "bg-emerald-500 dark:bg-emerald-500 shadow-md shadow-emerald-500/10" 
+                        : "bg-black/[0.08] dark:bg-white/[0.08]" 
+                    }`}
+                    style={{
+                      height: `${Math.max(normalized, 16)}%`,
+                    }}
+                  />
+                ) : (
+                  /* Minimalist clean dot for empty days (prevents flat oval squishing) */
+                  <div
+                    className={`w-2 h-2 rounded-full mx-auto mb-1 transition-all duration-300 ${
+                      isActive
+                        ? "bg-emerald-500 dark:bg-emerald-500 animate-pulse shadow-md shadow-emerald-500/20"
+                        : "bg-black/[0.12] dark:bg-white/[0.12]"
+                    }`}
+                  />
+                )}
+              </div>
     
               {/* LABEL */}
               <span className="mt-3 text-[10px] sm:text-xs font-semibold text-gray-400 dark:text-zinc-500">

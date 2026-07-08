@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, ArrowLeft, ArrowRight, Check } from "lucide-react";
-import { useTheme } from "@/components/ThemeProvider"; // Imported useTheme
+import { Plus, Trash2, ArrowLeft, ArrowRight, Check, Sun, Moon } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
 
 type EntryRow = {
   name: string;
@@ -243,18 +243,19 @@ export default function OnboardingPage() {
         <button
           onClick={toggleTheme}
           type="button"
-          className="relative w-12 h-6 rounded-full transition-colors duration-300 bg-black/[0.04] dark:bg-white/[0.04] border border-black/[0.05] dark:border-white/[0.05] focus:outline-none"
+          className="relative w-12 h-6 rounded-full transition-colors duration-300 bg-black/[0.04] dark:bg-white/[0.04] border border-black/[0.05] dark:border-white/[0.05] focus:outline-none shrink-0"
           aria-label="Toggle theme"
         >
           <div
             className={`
-              absolute top-[1.5px] left-[1px] w-5 h-5 rounded-full bg-white dark:bg-zinc-400
-              shadow-md flex items-center justify-center text-[10px]
+              absolute top-[1.5px] left-[1px] w-5 h-5 rounded-full bg-white dark:bg-zinc-800
+              shadow-md flex items-center justify-center text-zinc-500 dark:text-yellow-400
               transition-transform duration-300
               ${theme === "dark" ? "translate-x-6" : "translate-x-0"}
             `}
           >
-            {theme === "dark" ? "🌙" : "☀️"}
+            {/* ✅ Replaced emojis with vector Moon and Sun icons */}
+            {theme === "dark" ? <Moon size={11} /> : <Sun size={11} />}
           </div>
         </button>
       </header>

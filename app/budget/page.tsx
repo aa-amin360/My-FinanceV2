@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   ArrowRightLeft,
+  Calendar,
   Save
 } from "lucide-react";
 
@@ -619,7 +620,6 @@ export default function BudgetPage() {
           {plans.map((p) => {
             const amt = Number(p.amount);
             return (
-              // ✅ Updated cards to standard translucent glassmorphic style
               <div 
                 key={p.id} 
                 className="bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md p-4 rounded-2xl shadow-sm shadow-black/[0.01] flex flex-col gap-3"
@@ -823,7 +823,7 @@ export default function BudgetPage() {
                 <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Scheduled Date</label>
                 <div
                   onClick={() => setShowDatePicker(!showDatePicker)}
-                  className="px-3 py-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-xs sm:text-sm text-slate-500 dark:text-zinc-400 cursor-pointer flex justify-between items-center"
+                  className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:outline-none text-xs sm:text-sm text-slate-500 dark:text-zinc-400 cursor-pointer flex justify-between items-center"
                 >
                   <span>
                     {date 
@@ -831,7 +831,7 @@ export default function BudgetPage() {
                       : "Select expected date..."
                     }
                   </span>
-                  <span className="text-zinc-400">📅</span>
+                  <Calendar size={14} className="text-slate-400 dark:text-zinc-500 shrink-0" />
                 </div>
 
                 {/* Floating Custom Mini Calendar Dropdown */}
@@ -1058,7 +1058,7 @@ export default function BudgetPage() {
                         : "Select new date..."
                       }
                     </span>
-                    <span className="text-zinc-400">📅</span>
+                    <Calendar size={14} className="text-slate-400 dark:text-zinc-500 shrink-0" />
                   </div>
 
                   {/* Reschedule Mini Calendar Dropdown */}
