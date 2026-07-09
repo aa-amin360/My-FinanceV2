@@ -37,27 +37,13 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { toggleTheme, theme } = useTheme();
   const pathname = usePathname();
 
   const [cashBalance, setCashBalance] = useState(0);
   const [bankBalance, setBankBalance] = useState(0);
 
-  // Safe default for both SSR and initial client-side hydration
-  const [collapsed, setCollapsed] = useState(false); 
-
-  // Run once on mount (client-only) to restore the saved state without hydration conflicts
-  useEffect(() => {
-    const saved = localStorage.getItem("sidebar-collapsed") === "true";
-    setCollapsed(saved);
-  }, []);
-
-  // Update localStorage only when the user explicitly clicks the button
-  const handleToggleCollapse = () => {
-    const nextState = !collapsed;
-    setCollapsed(nextState);
-    localStorage.setItem("sidebar-collapsed", String(nextState));
-  };
+  // Directly consume globally persisted theme and layout metrics
+  const { toggleTheme, theme, collapsed, toggleCollapse } = useTheme();
 
   // ================= LOAD BALANCE =================
   useEffect(() => {
@@ -102,8 +88,8 @@ export default function DashboardLayout({
           )}
 
           <button
-            onClick={handleToggleCollapse}
-            className={`w-9 h-9 flex items-center justify-center rounded-lg bg-black/[0.03] dark:bg-white/[0.03] hover:bg-black/[0.06] dark:hover:bg-white/[0.06] border border-black/[0.04] dark:border-white/[0.04] backdrop-blur-sm transition active:scale-95 ${collapsed ? "mx-auto" : ""}`}
+            onClick={toggleCollapse}
+            className={`w-9 h-9 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition active:scale-95 ${collapsed ? "mx-auto" : ""}`}
           >
             {collapsed ? (
               <PanelRightClose size={18} />
@@ -132,7 +118,7 @@ export default function DashboardLayout({
       <div className="relative z-10 flex flex-col flex-1 h-full">
         
         {/* HEADER (FROSTED GLASS STATUSBAR - REDESIGNED) */}
-        <div className="h-14 flex items-center justify-between px-6 bg-white/40 dark:bg-black/30 border-b border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md animate-fadeIn relative z-30">
+        <div className="h-14 flex items-center justify-between px-6 bg-white/40 dark:bg-black/30 border-b border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md relative z-30">
           <div className="flex items-center gap-2.5">
             {/* Logo wrapper */}
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 p-0.5 shadow-sm shadow-emerald-500/10 hover:rotate-3 hover:scale-105 transition-all duration-300 cursor-pointer flex items-center justify-center overflow-hidden shrink-0">
@@ -247,7 +233,7 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
   );
 }
 
-// ================= MOBILE NAV (HORIZONTALLY SCROLLABLE FROSTED PILL) ================= //
+// ================= MOBILE NAV (HORIZONTALLY SCROLLABLE) ================= //
 
 function FloatingNav({ pathname }: { pathname: string }) {
   const items = [
@@ -261,9 +247,20 @@ function FloatingNav({ pathname }: { pathname: string }) {
     { label: "Reports", href: "/reports", icon: BarChart3 },
   ];
 
+  useEffect(() => {
+    const activeElement = document.getElementById("active-nav-pill");
+    if (activeElement) {
+      activeElement.scrollIntoView({
+        behavior: "auto", // ✅ Changed from "smooth" to "auto" to snap instantly with no slide lag
+        block: "nearest",
+        inline: "center", 
+      });
+    }
+  }, [pathname]);
+
   return (
-    <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md animate-fadeIn">
-      {/* Custom styled scrollable mobile pill */}
+    <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md">
+      {/* Scrollable Container with Hidden Scrollbars */}
       <div className="
         flex gap-3 items-center w-full px-4 py-2.5 rounded-full 
         bg-white/45 dark:bg-black/30 border border-black/[0.05] dark:border-white/[0.04] 
@@ -278,16 +275,21 @@ function FloatingNav({ pathname }: { pathname: string }) {
           const Icon = item.icon;
 
           return (
-            <Link key={item.href} href={item.href} className="shrink-0">
+            <Link 
+              key={item.href} 
+              href={item.href} 
+              className="shrink-0"
+              id={isActive ? "active-nav-pill" : undefined} // ✅ Identified the active tab for auto-scrolling
+            >
               <div
                 className={`flex items-center justify-center gap-2 py-2 rounded-full transition shrink-0 ${
                   isActive
                     ? "bg-green-500 text-black px-4 scale-105 shadow-md shadow-green-500/10"
-                    : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.04] w-10 h-10"
+                    : "text-slate-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.04] w-10 h-10"
                 }`}
               >
                 <Icon size={20} />
-                <span className={`${isActive ? "block ml-1 font-semibold text-xs animate-fadeIn" : "hidden"}`}>
+                <span className={`${isActive ? "block ml-1 font-semibold text-xs" : "hidden"}`}>
                   {item.label}
                 </span>
               </div>
