@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { 
@@ -15,59 +15,32 @@ import {
   ArrowRight,
   Play,
   Users,
-  CheckCircle2,
   Calendar,
   Grid,
   Bell,
   Plus,
   ChevronDown,
-  Info
+  Info,
+  X
 } from "lucide-react";
-
-type Transaction = {
-  id: string;
-  type: string;
-  amount: string;
-  date: string;
-  note: string | null;
-  parent_id?: string | null;
-};
 
 export default function LandingPage() {
   const router = useRouter();
   
-  // Interactive Phone Screen State: "DEMO" or "AUTH"
-  const [phoneScreen, setPhoneScreen] = useState<"DEMO" | "AUTH">("DEMO");
+  // Interactive Auth Modal Control State (Spacious, full-sized inputs)
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [tab, setTab] = useState<"LOGIN" | "SIGNUP">("LOGIN");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // FAQ Accordion State
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
-
   // Input Fields State
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Created Ref to target the Phone Mockup wrapper
-  const phoneRef = useRef<HTMLDivElement | null>(null);
-
-  // Custom UX handler: Sets states and smoothly scrolls to the phone if on mobile
-  const handleOpenAuth = (tabType: "LOGIN" | "SIGNUP") => {
-    setPhoneScreen("AUTH");
-    setTab(tabType);
-    setError("");
-    setSuccess("");
-
-    if (typeof window !== "undefined" && window.innerWidth < 1024) {
-      setTimeout(() => {
-        phoneRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 80);
-    }
-  };
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   // ==========================================
   // SIGN IN HANDLER
@@ -147,25 +120,20 @@ export default function LandingPage() {
     signIn("google", { callbackUrl: "/dashboard" });
   };
 
-  // Smooth scroll handler for nav items
-  const handleScrollToSection = (e: React.MouseEvent<HTMLElement>, targetId: string) => {
-    e.preventDefault();
-    const targetElement = document.getElementById(targetId);
-    if (targetElement) {
-      targetElement.scrollIntoView({ behavior: "smooth" });
-    }
+  const openAuthPortal = (authTab: "LOGIN" | "SIGNUP") => {
+    setTab(authTab);
+    setError("");
+    setSuccess("");
+    setShowAuthModal(true);
   };
 
   return (
-    <div className="relative min-h-screen bg-[#131B21] text-slate-100 flex flex-col justify-between transition-colors duration-300 overflow-y-auto overflow-x-hidden font-sans scroll-smooth">
+    <div className="relative min-h-screen bg-[#131B21] text-slate-100 flex flex-col justify-between transition-colors duration-300 overflow-y-auto overflow-x-hidden font-sans select-none scroll-smooth">
       
       {/* ==========================================
           INLINE ANIMATION & BEHAVIOR STYLES
           ========================================== */}
       <style dangerouslySetInnerHTML={{__html: `
-        html {
-          scroll-behavior: smooth;
-        }
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(24px); }
           to { opacity: 1; transform: translateY(0); }
@@ -216,14 +184,9 @@ export default function LandingPage() {
           <span className="font-extrabold text-lg tracking-wide text-green-500">My Finance</span>
         </div>
 
-        <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-400">
-          <a href="#features" onClick={(e) => handleScrollToSection(e, "features")} className="hover:text-white transition">Features</a>
-          <a href="#how-it-works" onClick={(e) => handleScrollToSection(e, "how-it-works")} className="hover:text-white transition">How It Works</a>
-          <a href="#faq" onClick={(e) => handleScrollToSection(e, "faq")} className="hover:text-white transition">FAQ</a>
-        </nav>
-
+        {/* Action Button (Launches fully readable glass modal) */}
         <button 
-          onClick={() => handleOpenAuth("LOGIN")}
+          onClick={() => openAuthPortal("LOGIN")}
           className="px-5 py-2.5 rounded-full bg-green-500 hover:bg-green-400 text-black font-extrabold text-xs tracking-wider transition hover:scale-105 active:scale-[0.98] shadow-sm shadow-green-500/10"
         >
           Get Started
@@ -231,7 +194,6 @@ export default function LandingPage() {
       </header>
 
       {/* ================= HERO FOLD CONTAINER ================= */}
-      {/* ✅ Optimized padding for better fit on tablets and phones */}
       <main className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 md:py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
         
         {/* Left column info */}
@@ -240,7 +202,6 @@ export default function LandingPage() {
             <ShieldCheck size={14} className="shrink-0 animate-pulse" /> Smart. Simple. Powerful.
           </div>
 
-          {/* ✅ Scaled text sizes dynamically for small viewports to prevent wrapping */}
           <h2 className="text-3xl xs:text-4xl sm:text-5xl lg:text-5.5xl font-extrabold tracking-tight leading-tight lg:leading-none pt-1">
             Take Control of <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-400 to-green-500">Your Money</span>
@@ -251,21 +212,16 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-wrap gap-3 sm:gap-4 pt-1">
+            {/* Button triggers readable registration modal */}
             <button
-              onClick={() => handleOpenAuth("SIGNUP")}
+              onClick={() => openAuthPortal("SIGNUP")}
               className="px-5 py-3 sm:px-6 sm:py-3.5 rounded-full bg-green-500 hover:bg-green-400 text-black font-extrabold text-xs sm:text-sm transition hover:scale-[1.03] active:scale-[0.98] shadow-lg shadow-green-500/10 flex items-center gap-1.5"
             >
               Get Started Free <ArrowRight size={16} />
             </button>
-            <button
-              onClick={(e) => handleScrollToSection(e, "how-it-works")}
-              className="px-5 py-3 sm:px-6 sm:py-3.5 rounded-full border border-zinc-800 bg-zinc-900/30 text-slate-300 font-bold text-xs sm:text-sm hover:bg-zinc-900/60 transition flex items-center gap-2 hover:scale-[1.03]"
-            >
-              <Play size={14} className="fill-slate-300" /> See How It Works
-            </button>
           </div>
 
-          {/* ✅ Core Pillars Grid updated to stack vertically on mobile (cols-1) and double-column on tablet (cols-2) */}
+          {/* Core Pillars Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4 pt-4">
             <MiniCard icon={ArrowLeftRight} title="All Transactions" desc="Income, Expense, Debt & Receivable" />
             <MiniCard icon={TrendingUp} title="Clear Overview" desc="Beautiful insights at a glance" />
@@ -273,7 +229,7 @@ export default function LandingPage() {
             <MiniCard icon={Wallet} title="Grow Savings" desc="Track progress and achieve goals" />
           </div>
 
-          {/* ✅ Trust Statistics updated to perfectly centered columns on mobile grids */}
+          {/* Trust Statistics */}
           <div className="grid grid-cols-3 gap-2 pt-6 border-t border-zinc-900/80 sm:flex sm:flex-wrap sm:gap-x-8 sm:gap-y-4">
             <Stat icon={Users} label="Happy Users" value="10K+" />
             <Stat icon={ShieldCheck} label="Secure & Private" value="100%" />
@@ -281,11 +237,10 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Right column: Interactive dual mockups */}
-        <div ref={phoneRef} className="lg:col-span-6 flex justify-center items-center h-[520px] sm:h-[600px] relative">
+        {/* Right column: Overlapping glassmorphic device mockups */}
+        <div className="lg:col-span-6 flex justify-center items-center h-[520px] sm:h-[600px] relative">
           
           {/* PHONE 2: THE CALENDAR SCREEN */}
-          {/* ✅ Hidden on phones (hidden) to prevent overflow scrolling, and rendered from small tablet upwards (sm:block) */}
           <div className="hidden sm:block absolute right-[5%] sm:right-[10%] top-[10%] w-[240px] sm:w-[270px] aspect-[9/19] rounded-[36px] bg-[#020408] border-[3px] border-zinc-800 shadow-[20px_20px_50px_rgba(0,0,0,0.5)] overflow-hidden pointer-events-none opacity-40 sm:opacity-60 scale-95 origin-bottom-right rotate-[6deg] animate-float-medium z-0">
             <div className="w-full h-full p-3 sm:p-4 text-[10px] space-y-4 select-none">
               <div className="w-20 h-4 bg-black rounded-full mx-auto" />
@@ -314,170 +269,60 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* PHONE 1: FOREGROUND INTERACTIVE SCREEN */}
-          {/* ✅ Scaled to responsive width (w-[250px] sm:w-[290px]) so it sits centered comfortably on any mobile device */}
+          {/* PHONE 1: FOREGROUND INTERACTIVE APP DEMO SHOWCASE */}
           <div className="relative lg:absolute left-0 lg:left-[10%] mx-auto lg:mx-0 w-[250px] sm:w-[290px] aspect-[9/19] rounded-[38px] bg-[#020408] border-[4px] border-zinc-800 shadow-[0_25px_60px_rgba(0,0,0,0.8)] overflow-hidden scale-100 hover:scale-[1.02] transition-transform duration-300 z-10 animate-float-slow">
             <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-24 h-5 bg-black rounded-full z-50 flex items-center justify-between px-3 text-[9px] text-zinc-500 font-bold">
               <span>9:41</span>
               <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
             </div>
 
-            <div className="w-full h-full pt-9 pb-4 px-3 sm:px-4 flex flex-col justify-between relative overflow-y-auto [&::-webkit-scrollbar]:hidden select-none">
-
-              {/* DEMO DISPLAY STATE */}
-              {phoneScreen === "DEMO" && (
-                <div className="flex flex-col gap-3.5 flex-1 animate-fadeIn pb-6">
-                  <div className="flex justify-between items-center pt-2">
-                    <div>
-                      <p className="text-[9px] text-zinc-500 font-bold">Welcome back!</p>
-                      <h4 className="text-xs font-black text-white flex items-center gap-1">Hello, Imran 👋</h4>
-                    </div>
-                    <div className="w-6 h-6 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 relative">
-                      <Bell size={11} />
-                      <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-red-500" />
-                    </div>
+            {/* Always displays your beautiful demo dashboard (Zero tiny inputs!) */}
+            <div className="w-full h-full pt-9 pb-4 px-3.5 sm:px-4 flex flex-col justify-between relative overflow-y-auto [&::-webkit-scrollbar]:hidden select-none">
+              <div className="flex flex-col gap-3.5 flex-1 animate-fadeIn pb-6">
+                <div className="flex justify-between items-center pt-2">
+                  <div>
+                    <p className="text-[9px] text-zinc-500 font-bold">Welcome back!</p>
+                    <h4 className="text-xs font-black text-white flex items-center gap-1">Hello, Imran 👋</h4>
                   </div>
-
-                  <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 text-black shadow-lg shadow-green-500/10 space-y-2">
-                    <p className="text-[8px] font-extrabold uppercase tracking-wider opacity-85">Total Balance</p>
-                    <div className="flex justify-between items-baseline">
-                      <span className="text-base font-black tracking-tight sm:text-lg">৳ 48,750.00</span>
-                    </div>
+                  <div className="w-6 h-6 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 relative">
+                    <Bell size={11} />
+                    <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-red-500" />
                   </div>
-
-                  <div className="grid grid-cols-3 gap-1.5">
-                    <MiniPill label="Income" val="৳ 75.2K" color="text-emerald-400" />
-                    <MiniPill label="Expense" val="৳ 26.4K" color="text-rose-400" />
-                    <MiniPill label="Savings" val="৳ 18.7K" color="text-indigo-400" />
-                  </div>
-
-                  <div className="space-y-1.5 flex-1 overflow-hidden">
-                    <span className="text-[9px] font-extrabold text-zinc-500 uppercase tracking-widest block">Recent Transactions</span>
-                    <TransactionRow name="Salary" type="INCOME" val="+৳ 50,000" isPositive={true} />
-                    <TransactionRow name="Groceries" type="EXPENSE" val="-৳ 2,450" isPositive={false} />
-                    <TransactionRow name="Friend Loan" type="RECEIVABLE" val="+৳ 3,200" isPositive={true} />
-                    <TransactionRow name="Electricity" type="EXPENSE" val="-৳ 1,850" isPositive={false} />
-                  </div>
-
-                  <button 
-                    onClick={() => handleOpenAuth("LOGIN")}
-                    className="w-full py-2 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-green-500 font-extrabold text-[10px] rounded-xl transition flex items-center justify-center gap-1 shrink-0"
-                  >
-                    Click to Open Auth Portal <ArrowRight size={11} />
-                  </button>
                 </div>
-              )}
 
-              {/* INTERACTIVE AUTH SCREEN STATE */}
-              {phoneScreen === "AUTH" && (
-                <div className="flex flex-col gap-4 flex-1 animate-fadeIn pt-2 justify-center pb-6">
-                  <div className="grid grid-cols-2 p-0.5 bg-zinc-900 rounded-xl">
-                    <button
-                      onClick={() => { setTab("LOGIN"); setError(""); setSuccess(""); }}
-                      className={`py-1 text-[10px] font-black rounded-lg transition-all duration-200 ${
-                        tab === "LOGIN" ? "bg-zinc-800 text-white shadow-md" : "text-zinc-500 hover:text-zinc-300"
-                      }`}
-                    >
-                      Sign In
-                    </button>
-                    <button
-                      onClick={() => { setTab("SIGNUP"); setError(""); setSuccess(""); }}
-                      className={`py-1 text-[10px] font-black rounded-lg transition-all duration-200 ${
-                        tab === "SIGNUP" ? "bg-zinc-800 text-white shadow-md" : "text-zinc-500 hover:text-zinc-300"
-                      }`}
-                    >
-                      Sign Up
-                    </button>
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 text-black shadow-lg shadow-green-500/10 space-y-2">
+                  <p className="text-[8px] font-extrabold uppercase tracking-wider opacity-85">Total Balance</p>
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-base font-black tracking-tight sm:text-lg">৳ 48,750.00</span>
                   </div>
-
-                  <form onSubmit={tab === "LOGIN" ? handleSignIn : handleSignUp} className="flex flex-col gap-2">
-                    {tab === "SIGNUP" && (
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[8px] font-bold text-zinc-500 uppercase tracking-wide">Full Name</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="Your Name"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          className="px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800 focus:outline-none focus:ring-1 focus:ring-green-500 text-[10px] focus:bg-zinc-950 transition-all text-white"
-                        />
-                      </div>
-                    )}
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[8px] font-bold text-zinc-500 uppercase tracking-wide">Email Address</label>
-                      <input
-                        type="email"
-                        required
-                        placeholder="name@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800 focus:outline-none focus:ring-1 focus:ring-green-500 text-[10px] focus:bg-zinc-950 transition-all text-white"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[8px] font-bold text-zinc-500 uppercase tracking-wide">Password</label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          required
-                          placeholder="••••••••"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800 focus:outline-none focus:ring-1 focus:ring-green-500 text-[10px] focus:bg-zinc-950 pr-8 text-white"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute top-1/2 -translate-y-1/2 right-2.5 text-zinc-500 hover:text-zinc-300 transition"
-                        >
-                          {showPassword ? <EyeOff size={12} /> : <Eye size={12} />}
-                        </button>
-                      </div>
-                    </div>
-
-                    {error && <div className="text-[8px] text-red-500 font-bold text-center leading-normal mt-1">{error}</div>}
-                    {success && <div className="text-[8px] text-green-500 font-bold text-center leading-normal mt-1">{success}</div>}
-
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full py-2.5 mt-2 rounded-lg bg-green-500 hover:bg-green-400 text-black font-extrabold text-[10px] transition active:scale-[0.98] shadow-md shadow-green-500/10"
-                    >
-                      {loading ? "Processing..." : tab === "LOGIN" ? "Sign In" : "Create Account"}
-                    </button>
-                  </form>
-
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-[1px] bg-zinc-900" />
-                    <span className="text-[7px] text-zinc-500 font-bold tracking-widest uppercase">Or</span>
-                    <div className="flex-1 h-[1px] bg-zinc-900" />
-                  </div>
-
-                  <button
-                    onClick={handleGoogleSignIn}
-                    className="w-full py-2 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-300 font-bold text-[10px] hover:bg-zinc-900 transition flex items-center justify-center gap-1.5"
-                  >
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
-                      <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                      <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                      <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                      <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                    </svg>
-                    Continue with Google
-                  </button>
-
-                  <button onClick={() => setPhoneScreen("DEMO")} className="text-[8.5px] font-bold text-zinc-500 hover:text-green-500 transition text-center mt-1">
-                    ← Back to App Tour
-                  </button>
                 </div>
-              )}
 
-              {/* Phone footer nav (FAB triggers auth toggle) */}
+                <div className="grid grid-cols-3 gap-1.5">
+                  <MiniPill label="Income" val="৳ 75.2K" color="text-emerald-400" />
+                  <MiniPill label="Expense" val="৳ 26.4K" color="text-rose-400" />
+                  <MiniPill label="Savings" val="৳ 18.7K" color="text-indigo-400" />
+                </div>
+
+                <div className="space-y-1.5 flex-1 overflow-hidden">
+                  <span className="text-[9px] font-extrabold text-zinc-500 uppercase tracking-widest block">Recent Transactions</span>
+                  <TransactionRow name="Salary" type="INCOME" val="+৳ 50,000" isPositive={true} />
+                  <TransactionRow name="Groceries" type="EXPENSE" val="-৳ 2,450" isPositive={false} />
+                  <TransactionRow name="Friend Loan" type="RECEIVABLE" val="+৳ 3,200" isPositive={true} />
+                  <TransactionRow name="Electricity" type="EXPENSE" val="-৳ 1,850" isPositive={false} />
+                </div>
+
+                {/* Triggers readable modal popup */}
+                <button 
+                  onClick={() => openAuthPortal("LOGIN")}
+                  className="w-full py-2 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-green-500 font-extrabold text-[10px] rounded-xl transition flex items-center justify-center gap-1 shrink-0 cursor-pointer"
+                >
+                  Click to Sign In Now <ArrowRight size={11} />
+                </button>
+              </div>
+
+              {/* Phone footer nav */}
               <div className="h-10 border-t border-zinc-900/60 pt-1.5 flex justify-between items-center text-[7px] font-extrabold text-zinc-500 select-none shrink-0 relative z-30">
-                <div onClick={() => setPhoneScreen("DEMO")} className="flex flex-col items-center gap-0.5 text-green-500 cursor-pointer">
+                <div className="flex flex-col items-center gap-0.5 text-green-500 cursor-pointer">
                   <Grid size={11} /> Dashboard
                 </div>
                 <div className="flex flex-col items-center gap-0.5 cursor-pointer">
@@ -485,7 +330,7 @@ export default function LandingPage() {
                 </div>
                 
                 <div 
-                  onClick={() => handleOpenAuth("SIGNUP")}
+                  onClick={() => openAuthPortal("SIGNUP")}
                   className="w-7 h-7 rounded-full bg-green-500 text-black flex items-center justify-center -translate-y-3 cursor-pointer shadow-lg shadow-green-500/20 active:scale-95"
                 >
                   <Plus size={14} />
@@ -504,6 +349,144 @@ export default function LandingPage() {
         </div>
 
       </main>
+
+      {/* ======================================================================
+          ✅ GORGEOUS CENTRAL GLASS AUTH MODAL (SPACIOUS & ULTRA-READABLE)
+          ====================================================================== */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn" onClick={() => setShowAuthModal(false)}>
+          {/* Complete, compile-safe dark Gunmetal and light silver gradient container */}
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="
+            w-full max-w-[400px]
+            bg-gradient-to-br from-white to-slate-50
+            dark:bg-gradient-to-br dark:from-[#0d1318] dark:to-[#080b0f]
+            backdrop-blur-xl
+            border border-black/[0.06] dark:border-white/[0.06]
+            text-black dark:text-white
+            rounded-3xl p-6 sm:p-8
+            shadow-2xl flex flex-col gap-6
+            animate-modalIn relative
+            "
+          >
+            {/* Header Tabs */}
+            <div className="flex items-center justify-between border-b border-black/[0.04] dark:border-white/[0.04] pb-4">
+              <div className="flex gap-4">
+                <button
+                  onClick={() => { setTab("LOGIN"); setError(""); setSuccess(""); }}
+                  className={`text-sm font-bold pb-2 border-b-2 transition-all duration-200 ${
+                    tab === "LOGIN" 
+                      ? "border-green-500 text-black dark:text-white font-extrabold" 
+                      : "border-transparent text-slate-400 dark:text-zinc-500 hover:text-black dark:hover:text-white"
+                  }`}
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => { setTab("SIGNUP"); setError(""); setSuccess(""); }}
+                  className={`text-sm font-bold pb-2 border-b-2 transition-all duration-200 ${
+                    tab === "SIGNUP" 
+                      ? "border-green-500 text-black dark:text-white font-extrabold" 
+                      : "border-transparent text-slate-400 dark:text-zinc-500 hover:text-black dark:hover:text-white"
+                  }`}
+                >
+                  Sign Up
+                </button>
+              </div>
+
+              {/* Close Button */}
+              <button 
+                onClick={() => setShowAuthModal(false)}
+                className="w-7 h-7 flex items-center justify-center rounded-full bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.04] text-slate-400 hover:text-black dark:hover:text-white transition"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Action Form with standard desktop text sizing */}
+            <form onSubmit={tab === "LOGIN" ? handleSignIn : handleSignUp} className="flex flex-col gap-4">
+              {tab === "SIGNUP" && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Your name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="px-4 py-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm"
+                  />
+                </div>
+              )}
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="px-4 py-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 pr-10 transition-all duration-200 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute top-1/2 -translate-y-1/2 right-3 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              {error && <div className="text-xs text-red-500 font-bold text-center leading-normal mt-2">{error}</div>}
+              {success && <div className="text-xs text-green-500 font-bold text-center leading-normal mt-2">{success}</div>}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 mt-2 rounded-xl bg-green-500 hover:bg-green-400 text-black font-extrabold text-sm transition active:scale-[0.98] shadow-md shadow-green-500/10"
+              >
+                {loading ? "Processing..." : tab === "LOGIN" ? "Sign In" : "Create Account"}
+              </button>
+            </form>
+
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-[1px] bg-black/[0.06] dark:bg-white/[0.06]" />
+              <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-bold tracking-widest uppercase">Or</span>
+              <div className="flex-1 h-[1px] bg-black/[0.06] dark:bg-white/[0.06]" />
+            </div>
+
+            {/* Google Sign In inside clean modal */}
+            <button
+              onClick={handleGoogleSignIn}
+              className="w-full py-3 rounded-xl border border-black/[0.05] dark:border-white/[0.05] bg-black/[0.02] dark:bg-zinc-950 text-slate-700 dark:text-zinc-300 font-bold text-sm hover:bg-black/[0.04] dark:hover:bg-zinc-900 transition flex items-center justify-center gap-2 shadow-sm"
+            >
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              Continue with Google
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ======================================================================
           SECTION 2: DETAILED VALUE SHOWCASE & FEATURES (#features)
@@ -599,7 +582,7 @@ export default function LandingPage() {
 
 function MiniCard({ icon: Icon, title, desc }: any) {
   return (
-    <div className="flex gap-3 p-3.5 rounded-2xl bg-[#131B21]/40 border border-white/[0.04] backdrop-blur-md shadow-sm">
+    <div className="flex gap-3 p-3.5 rounded-2xl bg-[#131B21]/45 border border-white/[0.04] backdrop-blur-md shadow-sm">
       <div className="w-8 h-8 rounded-lg bg-green-500/10 text-green-500 flex items-center justify-center shrink-0 shadow-inner border border-green-500/10">
         <Icon size={16} />
       </div>
