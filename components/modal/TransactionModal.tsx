@@ -9,6 +9,11 @@ type Category = {
   type: string;
 };
 
+type Goal = {
+  id: number;
+  name: string;
+};
+
 export default function TransactionModal() {
   const [showModal, setShowModal] = useState(false);
   const [step, setStep] = useState<"ACTION" | "FORM">("ACTION");
@@ -21,17 +26,22 @@ export default function TransactionModal() {
   const [category, setCategory] = useState("");
   const [note, setNote] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [selectedGoalId, setSelectedGoalId] = useState("");
+  const [direction, setDirection] = useState("TO_SAVINGS");
+  const [showGoalDropdown, setShowGoalDropdown] = useState(false);
 
   const [error, setError] = useState("");
   const [isDirectFlow, setIsDirectFlow] = useState(false);
 
-  // Custom Dropdown Open States
-  const [showAccountDropdown, setShowAccountDropdown] = useState(false);
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-
   // References for Click-Outside Detectors
   const accountRef = useRef<HTMLDivElement | null>(null);
   const categoryRef = useRef<HTMLDivElement | null>(null);
+  const goalRef = useRef<HTMLDivElement | null>(null);
+
+  // Custom Dropdown Open States
+  const [showAccountDropdown, setShowAccountDropdown] = useState(false);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   // ==========================================
   // CLICK OUTSIDE DETECTOR
@@ -43,6 +53,9 @@ export default function TransactionModal() {
       }
       if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
         setShowCategoryDropdown(false);
+      }
+      if (goalRef.current && !goalRef.current.contains(e.target as Node)) {
+        setShowGoalDropdown(false);
       }
     };
 
@@ -61,8 +74,11 @@ export default function TransactionModal() {
     setError("");
     setAction("");
     setAccount("Cash");
+    setSelectedGoalId("");
+    setDirection("TO_SAVINGS");
     setShowAccountDropdown(false);
     setShowCategoryDropdown(false);
+    setShowGoalDropdown(false);
   };
 
   const closeModal = () => {
@@ -73,11 +89,15 @@ export default function TransactionModal() {
     window.dispatchEvent(new Event("refreshData"));
   };
 
-  // ================= LOAD CATEGORIES =================
+  // ================= LOAD DATA =================
   useEffect(() => {
     fetch("/api/categories")
       .then((res) => res.json())
       .then((data) => setCategories(data.data || []));
+
+    fetch("/api/savings")
+      .then((res) => res.json())
+      .then((data) => setGoals(data.data || []));
   }, []);
 
   // ================= EVENT HANDLER =================
@@ -113,6 +133,14 @@ export default function TransactionModal() {
           setStep("FORM");
           setIsDirectFlow(true);
           setEntity(e.detail.entity || "");
+        } else if (e.detail.type === "TRANSFER") {
+          // 👈 Support for "Add Funds" from Savings page
+          setAction("TRANSFER");
+          setDirection(e.detail.direction || "TO_SAVINGS");
+          setStep("FORM");
+          setIsDirectFlow(true);
+          if (e.detail.goalId) setSelectedGoalId(e.detail.goalId.toString());
+          if (e.detail.goalName) setNote(`Goal: ${e.detail.goalName}`);
         }
       }
     };
@@ -125,6 +153,7 @@ export default function TransactionModal() {
   const actionToTypeMap: Record<string, string> = {
     INCOME: "INCOME",
     EXPENSE: "EXPENSE",
+    TRANSFER: "TRANSFER",
     BORROW: "DEBT_TAKEN",
     GIVE: "RECEIVABLE_GIVEN",
     REPAY: "DEBT_REPAID",
@@ -165,6 +194,8 @@ export default function TransactionModal() {
         account,
         date: new Date().toLocaleDateString("en-CA"),
         note: note.trim() || null,
+        direction: action === "TRANSFER" ? direction : null,
+        savings_goal_id: action === "TRANSFER" && selectedGoalId ? parseInt(selectedGoalId) : null,
       };
 
       if (category) body.category_id = category;
@@ -268,6 +299,16 @@ export default function TransactionModal() {
                   setStep("FORM");
                 }}
               />
+
+              <div className="col-span-2">
+                <ActionCard
+                  label="Transfer"
+                  onClick={() => {
+                    setAction("TRANSFER");
+                    setStep("FORM");
+                  }}
+                />
+              </div>
             </div>
     
             <button
@@ -334,6 +375,66 @@ export default function TransactionModal() {
                 className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             </div>
+
+            {/* ✅ Transfer Direction Toggle (New) */}
+            {action === "TRANSFER" && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Direction</label>
+                <div className="flex gap-2 p-1 bg-black/5 dark:bg-white/5 rounded-2xl">
+                  <button
+                    type="button"
+                    onClick={() => setDirection("TO_SAVINGS")}
+                    className={`flex-1 py-2 rounded-xl text-[10px] font-bold transition ${direction === "TO_SAVINGS" ? "bg-indigo-500 text-white shadow-sm" : "text-slate-500"}`}
+                  >
+                    To Savings
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDirection("FROM_SAVINGS")}
+                    className={`flex-1 py-2 rounded-xl text-[10px] font-bold transition ${direction === "FROM_SAVINGS" ? "bg-indigo-500 text-white shadow-sm" : "text-slate-500"}`}
+                  >
+                    From Savings
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ✅ Goal Link Dropdown (New) */}
+            {action === "TRANSFER" && goals.length > 0 && (
+              <div ref={goalRef} className="relative flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Link to Goal</label>
+                <div 
+                  onClick={() => setShowGoalDropdown(!showGoalDropdown)} 
+                  className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white text-sm cursor-pointer flex justify-between items-center"
+                >
+                  <span className="font-semibold text-slate-700 dark:text-zinc-300 text-xs truncate">
+                    {selectedGoalId ? goals.find(g => g.id.toString() === selectedGoalId)?.name : "General Savings"}
+                  </span>
+                  <ChevronDown size={14} className="text-slate-400" />
+                </div>
+                {showGoalDropdown && (
+                  <div className="absolute top-full left-0 w-full mt-1.5 p-1 bg-white/95 dark:bg-black/95 border border-black/[0.05] dark:border-white/[0.05] rounded-2xl shadow-xl z-50 flex flex-col animate-modalIn" onClick={(e) => e.stopPropagation()}>
+                    <button 
+                      type="button"
+                      onClick={() => { setSelectedGoalId(""); setShowGoalDropdown(false); }} 
+                      className="px-4 py-2.5 text-left text-xs font-bold rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition text-slate-700 dark:text-zinc-300"
+                    >
+                      General Savings
+                    </button>
+                    {goals.map(g => (
+                      <button 
+                        key={g.id} 
+                        type="button"
+                        onClick={() => { setSelectedGoalId(g.id.toString()); setShowGoalDropdown(false); }} 
+                        className="px-4 py-2.5 text-left text-xs font-bold rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition text-slate-700 dark:text-zinc-300"
+                      >
+                        {g.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* ✅ Custom Frosted Glass Account Selector */}
             <div ref={accountRef} className="relative flex flex-col gap-1">
@@ -475,6 +576,8 @@ function ActionCard({ label, onClick }: any) {
       "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/30",
     Give:
       "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20 hover:bg-yellow-500/30",
+    Transfer:
+      "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/30",
   };
 
   return (

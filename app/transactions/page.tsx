@@ -7,6 +7,7 @@ import {
   ChevronRight,
   ChevronDown,
   CornerDownRight,
+  ChevronLeft,
 } from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
 
@@ -35,16 +36,28 @@ export default function TransactionsPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [confirmAll, setConfirmAll] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [loading, setLoading] = useState(false); // ✅ Maintained loading state
+  const [loading, setLoading] = useState(false);
+
+  // ✅ New Pagination States
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   // =========================
-  // LOAD DATA
+  // LOAD DATA (Updated for Pagination)
   // =========================
   const loadData = () => {
-    fetch("/api/transactions")
+    fetch(`/api/transactions?page=${page}&limit=20`)
       .then((res) => res.json())
-      .then((data) => setTransactions(data.data || []));
+      .then((data) => {
+        setTransactions(data.data || []);
+        setTotalPages(data.pagination?.totalPages || 1);
+      });
   };
+
+  // Re-run loadData whenever the page changes
+  useEffect(() => {
+    loadData();
+  }, [page]);
 
   useRefresh(loadData);
   
@@ -68,12 +81,12 @@ export default function TransactionsPage() {
   const getDisplayName = (t: Transaction) => {
     const isChild = !!t.parent_id;
   
-    // 🔥 DEBT OVERPAY → becomes receivable
+    // DEBT OVERPAY → becomes receivable
     if (isChild && t.type === "RECEIVABLE_GIVEN") {
       return "Overpaid → now receivable";
     }
   
-    // 🔥 RECEIVABLE OVER-COLLECT → becomes debt
+    // RECEIVABLE OVER-COLLECT → becomes debt
     if (isChild && t.type === "DEBT_TAKEN") {
       return "Over-collected → now debt";
     }
@@ -617,6 +630,39 @@ export default function TransactionsPage() {
               );
             })}
           </div>
+
+          {/* ✅ Pagination Controls (New) */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 bg-black/[0.02] dark:bg-white/[0.02] border-t border-black/[0.05] dark:border-white/[0.04]">
+              <div className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+                Page {page} of {totalPages}
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  disabled={page === 1 || loading}
+                  onClick={() => {
+                    setPage(page - 1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="p-2 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.04] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+
+                <button
+                  disabled={page === totalPages || loading}
+                  onClick={() => {
+                    setPage(page + 1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="p-2 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.04] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         
         {/* EMPTY */}

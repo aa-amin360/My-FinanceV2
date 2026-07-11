@@ -45,7 +45,6 @@ export async function POST(req: Request) {
     const body = await req.json();
     
     const {
-      id,
       type,
       amount,
       account,
@@ -54,6 +53,7 @@ export async function POST(req: Request) {
       date,
       note,
       direction,
+      savings_goal_id,
     } = body;
     
     const amountNumber = Number(amount);
@@ -100,7 +100,25 @@ export async function POST(req: Request) {
         date,
         note,
         userId,
+        savings_goal_id || null,
       ]);
+    }
+
+    // ==========================================
+    // SAVINGS GOAL PROGRESS LOGIC
+    // ==========================================
+    if (type === "TRANSFER" && savings_goal_id) {
+      if (direction === "TO_SAVINGS") {
+        await client.query(
+          "UPDATE savings_goals SET current_amount = current_amount + $1 WHERE id = $2 AND user_id = $3",
+          [amountNumber, savings_goal_id, userId]
+        );
+      } else if (direction === "FROM_SAVINGS") {
+        await client.query(
+          "UPDATE savings_goals SET current_amount = current_amount - $1 WHERE id = $2 AND user_id = $3",
+          [amountNumber, savings_goal_id, userId]
+        );
+      }
     }
 
     // debt
@@ -161,10 +179,10 @@ export async function POST(req: Request) {
 }
 
 // =========================
-// GET
+// GET (With Pagination)
 // =========================
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user?.email) {
@@ -172,10 +190,24 @@ export async function GET() {
   }
 
   const userId = session.user.email;
+  const { searchParams } = new URL(req.url);
+  
+  // Pagination Params
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "20");
+  const offset = (page - 1) * limit;
 
   const client = await pool.connect();
 
   try {
+    // 1. Get Total Count (for the frontend pagination controls)
+    const countRes = await client.query(
+      `SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND parent_id IS NULL`,
+      [userId]
+    );
+    const total = parseInt(countRes.rows[0].count);
+
+    // 2. Get Paginated Data
     const result = await client.query(
       `
       SELECT 
@@ -187,6 +219,7 @@ export async function GET() {
         t.entity_id,
         t.category_id,
         t.parent_id,
+        t.savings_goal_id,
       
         EXISTS (
           SELECT 1 
@@ -204,14 +237,21 @@ export async function GET() {
       LEFT JOIN accounts fa ON t.from_account = fa.id
       LEFT JOIN accounts ta ON t.to_account = ta.id
       WHERE t.user_id = $1
-      ORDER BY t.date DESC, t.created_at DESC;
+      ORDER BY t.date DESC, t.created_at DESC
+      LIMIT $2 OFFSET $3;
       `,
-      [userId]
+      [userId, limit, offset]
     );
 
     return NextResponse.json({
       success: true,
       data: result.rows,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
     });
 
   } catch (err: any) {

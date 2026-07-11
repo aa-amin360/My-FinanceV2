@@ -4,32 +4,51 @@ import pool from "@/lib/db";
 import crypto from "crypto";
 import { AuthOptions } from "next-auth"; // Added AuthOptions
 
-// ==========================================
+// ===========================
 // AUTOMATIC SCHEMA MIGRATIONS
-// ==========================================
+// ===========================
 pool.query(`
   ALTER TABLE users ADD COLUMN IF NOT EXISTS history_initialized BOOLEAN DEFAULT FALSE;
   ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
 
   CREATE TABLE IF NOT EXISTS budget_plans (
     id SERIAL PRIMARY KEY,
-    type VARCHAR(50) NOT NULL, -- 'EXPENSE' | 'INCOME' | 'DEBT' | 'RECEIVABLE'
+    type VARCHAR(50) NOT NULL,
     amount NUMERIC(15, 2) NOT NULL,
-    target_id VARCHAR(255), -- references categories.id or entities.id
-    target_name VARCHAR(255) NOT NULL, -- display backup (e.g. 'Rent', 'Rahim')
+    target_id VARCHAR(255),
+    target_name VARCHAR(255) NOT NULL,
     date DATE NOT NULL,
     note TEXT,
-    status VARCHAR(50) DEFAULT 'PENDING', -- 'PENDING' | 'CONFIRMED' | 'SKIPPED'
+    status VARCHAR(50) DEFAULT 'PENDING',
     user_id VARCHAR(255) REFERENCES users(email) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS savings_goals (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    target_amount NUMERIC(15, 2) NOT NULL,
+    current_amount NUMERIC(15, 2) DEFAULT 0,
+    target_date DATE,
+    user_id VARCHAR(255) REFERENCES users(email) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  -- 1. Add Assistant Columns to Savings
+  ALTER TABLE savings_goals ADD COLUMN IF NOT EXISTS installment_amount NUMERIC(15, 2);
+  ALTER TABLE savings_goals ADD COLUMN IF NOT EXISTS frequency VARCHAR(50) DEFAULT 'MONTHLY';
+  ALTER TABLE savings_goals ADD COLUMN IF NOT EXISTS reminder_day INTEGER;
+
+  -- 2. Link Transactions to Savings Goals
+  ALTER TABLE transactions ADD COLUMN IF NOT EXISTS savings_goal_id INTEGER REFERENCES savings_goals(id) ON DELETE SET NULL;
+
 `).catch((err) => {
   console.error("Database schema migration failed:", err);
 });
 
-// ==========================================
+// ===============================
 // SECURE PASSWORD HASHING UTILITY
-// ==========================================
+// ===============================
 export function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString("hex");
   const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, "sha512").toString("hex");
@@ -44,9 +63,9 @@ export function verifyPassword(password: string, storedValue: string): boolean {
   return hash === originalHash;
 }
 
-// ==========================================
+// ==============================
 // NEXTAUTH CONFIGURATION OPTIONS
-// ==========================================
+// ==============================
 export const authOptions: AuthOptions = {
   providers: [
     // 1. Google Provider
@@ -146,6 +165,6 @@ export const authOptions: AuthOptions = {
   },
 
   pages: {
-    signIn: "/", // Direct login flows to your root Landing Page instead of separate login pages
+    signIn: "/",
   },
 };
