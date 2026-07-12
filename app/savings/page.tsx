@@ -90,6 +90,10 @@ export default function SavingsPage() {
     setGoals(json.data || []);
   };
 
+  const closeAddModal = () => {
+    resetForm();
+    setShowAddModal(false);
+  };
 
   // Click outside detector
   useEffect(() => {
@@ -291,16 +295,15 @@ export default function SavingsPage() {
 
         {/* NEW GOAL MODAL - REFINED COMPACT SIZE */}
         {showAddModal && (
-          <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn" onClick={() => setShowAddModal(false)}>
+          <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn" onClick={closeAddModal}>
             <div 
               onClick={(e) => e.stopPropagation()}
-              // ✅ Reduced Width: 340px on mobile, 400px on desktop
               className="w-full max-w-[340px] sm:max-w-[400px] bg-white dark:bg-[#0d1318] border border-black/10 dark:border-white/10 rounded-[32px] p-5 sm:p-6 shadow-2xl animate-modalIn relative"
             >
               {/* Header */}
               <div className="flex justify-between items-center mb-4 sm:mb-5">
                 <h3 className="text-base sm:text-lg font-bold text-black dark:text-white leading-none">Setup Commitment</h3>
-                <button onClick={() => setShowAddModal(false)} className="p-1.5 bg-black/5 dark:bg-white/5 rounded-full text-slate-400 hover:scale-110 transition">
+                <button onClick={closeAddModal} className="p-1.5 bg-black/5 dark:bg-white/5 rounded-full text-slate-400 hover:scale-110 transition">
                   <X size={16}/>
                 </button>
               </div>
