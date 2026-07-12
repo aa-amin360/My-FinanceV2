@@ -5,7 +5,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import CashflowChart from "@/components/charts/CashflowChart";
 import WeeklyChartCard from "@/components/dashboard/WeeklyChartCard";
 import Link from "next/link";
-import { Trash2, Wallet, Landmark, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Activity } from "lucide-react";
+import { Trash2, Wallet, Landmark, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Activity, Bell, ArrowRight } from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
 
 type Transaction = {
@@ -18,6 +18,14 @@ type Transaction = {
   has_child?: boolean;
 };
 
+type Goal = {
+  id: number;
+  name: string;
+  installment_amount: string | null;
+  frequency: string;
+  reminder_day: number | null;
+};
+
 export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balance, setBalance] = useState(0);
@@ -26,22 +34,25 @@ export default function DashboardPage() {
   const [debt, setDebt] = useState(0);
   const [receivable, setReceivable] = useState(0);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [goals, setGoals] = useState<Goal[]>([]);
 
   // ================= LOAD DATA =================
   const loadData = async () => {
     try {
-      const [txRes, bRes, dRes, rRes] = await Promise.all([
+      const [txRes, bRes, dRes, rRes, gRes] = await Promise.all([
         fetch("/api/transactions", { cache: "no-store" }),
         fetch("/api/balance", { cache: "no-store" }),
         fetch("/api/debts", { cache: "no-store" }),
         fetch("/api/receivables", { cache: "no-store" }),
+        fetch("/api/savings", { cache: "no-store" }),
       ]);
 
-      const [txData, bData, dData, rData] = await Promise.all([
+      const [txData, bData, dData, rData, gData] = await Promise.all([
         txRes.json(),
         bRes.json(),
         dRes.json(),
         rRes.json(),
+        gRes.json(),
       ]);
 
       setTransactions(txData.data || []);
@@ -50,6 +61,7 @@ export default function DashboardPage() {
       setBankBalance(Number(bData.bankBalance || 0));
       setDebt(Number(dData.total || 0));
       setReceivable(Number(rData.total || 0));
+      setGoals(gData.data || []);
     } catch (err) {
       console.error("Failed to load dashboard data in parallel:", err);
     }
@@ -120,9 +132,43 @@ export default function DashboardPage() {
     }
   };
 
+  const dueGoals = goals.filter((goal) => {
+    if (!goal.reminder_day) return false;
+    const today = new Date();
+    if (goal.frequency === "MONTHLY") return today.getDate() === goal.reminder_day;
+    if (goal.frequency === "WEEKLY") return today.getDay() === goal.reminder_day;
+    if (goal.frequency === "DAILY") return true;
+    return false;
+  });
+
+  const totalDueAmount = dueGoals.reduce((sum, g) => sum + Number(g.installment_amount || 0), 0);
+
   return (
     <DashboardLayout>
       <div className="w-full space-y-6 pb-12 animate-fadeIn">
+
+        {/* ✅ ASSISTANT NOTIFICATION WIDGET */}
+      {dueGoals.length > 0 && (
+        <div className="mb-6 bg-indigo-600/10 border border-indigo-500/20 backdrop-blur-md rounded-3xl p-4 sm:p-5 flex items-center justify-between group hover:bg-indigo-600/15 transition-all duration-300">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/20 animate-pulse">
+              <Bell size={24} />
+            </div>
+            <div>
+              <h4 className="text-sm sm:text-base font-bold text-indigo-600 dark:text-indigo-400">Commitments Due Today</h4>
+              <p className="text-xs text-indigo-500/80 font-medium">
+                You have {dueGoals.length} savings {dueGoals.length === 1 ? 'installment' : 'installments'} scheduled ({totalDueAmount.toLocaleString()} Tk).
+              </p>
+            </div>
+          </div>
+          <Link 
+            href="/savings" 
+            className="px-4 py-2 bg-indigo-500 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 hover:bg-indigo-400 transition active:scale-95 shadow-md shadow-indigo-500/10"
+          >
+            Deposit <ArrowRight size={14} />
+          </Link>
+        </div>
+      )}
         
         {/* ==========================================
             1. HERO BALANCE EMERALD GLASS CARD

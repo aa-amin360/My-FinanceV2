@@ -134,13 +134,12 @@ export default function TransactionModal() {
           setIsDirectFlow(true);
           setEntity(e.detail.entity || "");
         } else if (e.detail.type === "TRANSFER") {
-          // 👈 Support for "Add Funds" from Savings page
           setAction("TRANSFER");
           setDirection(e.detail.direction || "TO_SAVINGS");
           setStep("FORM");
           setIsDirectFlow(true);
           if (e.detail.goalId) setSelectedGoalId(e.detail.goalId.toString());
-          if (e.detail.goalName) setNote(`Goal: ${e.detail.goalName}`);
+          if (e.detail.goalName) setNote(`Funding Goal: ${e.detail.goalName}`);
         }
       }
     };
@@ -340,6 +339,8 @@ export default function TransactionModal() {
                   ? "Repay Debt"
                   : action === "RECEIVE"
                   ? "Receive Money"
+                  : action === "TRANSFER"
+                  ? "Savings Deposit"
                   : "Give Money"}
               </h3>
     
@@ -399,18 +400,22 @@ export default function TransactionModal() {
               </div>
             )}
 
-            {/* ✅ Goal Link Dropdown (New) */}
+            {/* Goal Link Dropdown */}
             {action === "TRANSFER" && goals.length > 0 && (
               <div ref={goalRef} className="relative flex flex-col gap-1.5">
                 <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Link to Goal</label>
                 <div 
-                  onClick={() => setShowGoalDropdown(!showGoalDropdown)} 
-                  className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white text-sm cursor-pointer flex justify-between items-center"
+                  onClick={() => !isDirectFlow && setShowGoalDropdown(!showGoalDropdown)} 
+                  className={`p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] text-sm flex justify-between items-center transition-all ${
+                    isDirectFlow ? "opacity-50 cursor-not-allowed grayscale-[0.5]" : "cursor-pointer"
+                  }`}
                 >
                   <span className="font-semibold text-slate-700 dark:text-zinc-300 text-xs truncate">
                     {selectedGoalId ? goals.find(g => g.id.toString() === selectedGoalId)?.name : "General Savings"}
                   </span>
-                  <ChevronDown size={14} className="text-slate-400" />
+                  
+                  {/* Hide the arrow if the field is locked */}
+                  {!isDirectFlow && <ChevronDown size={14} className="text-slate-400" />}                  
                 </div>
                 {showGoalDropdown && (
                   <div className="absolute top-full left-0 w-full mt-1.5 p-1 bg-white/95 dark:bg-black/95 border border-black/[0.05] dark:border-white/[0.05] rounded-2xl shadow-xl z-50 flex flex-col animate-modalIn" onClick={(e) => e.stopPropagation()}>
