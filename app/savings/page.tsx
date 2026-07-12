@@ -181,16 +181,31 @@ export default function SavingsPage() {
     <DashboardLayout>
       <div className="w-full space-y-6 animate-fadeIn pb-16">
         
-        <div className="flex justify-between items-center px-1">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-black dark:text-white">Savings Goals</h1>
-            <p className="text-sm text-slate-500 dark:text-zinc-500">Your smart savings assistant and virtual buckets.</p>
+        {/* ✅ RESPONSIVE HEADER */}
+        <div className="flex flex-row justify-between items-center gap-4 px-1">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-black dark:text-white truncate">
+              Savings Goals
+            </h1>
+            <p className="text-[11px] sm:text-sm text-slate-500 dark:text-zinc-500 truncate">
+              Assistant & virtual buckets.
+            </p>
           </div>
+
           <button 
             onClick={() => setShowAddModal(true)}
-            className="px-4 py-2.5 rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs sm:text-sm transition active:scale-95 flex items-center gap-2 shadow-lg shadow-indigo-500/20"
+            className="
+              shrink-0 whitespace-nowrap 
+              px-4 py-2.5 rounded-2xl 
+              bg-indigo-500 hover:bg-indigo-400 
+              text-white font-bold text-xs sm:text-sm 
+              transition active:scale-95 
+              flex items-center gap-2 
+              shadow-lg shadow-indigo-500/20
+            "
           >
-            <Plus size={16} /> New Goal
+            <Plus size={16} className="shrink-0" /> 
+            <span>New Goal</span>
           </button>
         </div>
 
