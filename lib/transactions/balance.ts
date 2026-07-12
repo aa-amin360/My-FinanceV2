@@ -6,7 +6,7 @@ export async function checkBalance(
   amount: number,
   TYPE_META: any
 ) {
-  // Lock related transactions during calculation
+  // Logic: Calculate the balance of the specific 'accountId' passed from the API
   const res = await client.query(
     `
     SELECT COALESCE(SUM(
@@ -37,11 +37,12 @@ export async function checkBalance(
   );
 
   const balance = Number(res.rows[0].balance || 0);
+  const flowType = TYPE_META[type].flow;
 
   if (
-    TYPE_META[type].flow === "OUT" &&
+    (flowType === "OUT" || flowType === "MOVE") &&
     amount > balance
   ) {
-    throw new Error("Insufficient balance");
+    throw new Error("Insufficient balance in source account");
   }
 }

@@ -401,9 +401,9 @@ export default function TransactionModal() {
             )}
 
             {/* Goal Link Dropdown */}
-            {action === "TRANSFER" && goals.length > 0 && (
-              <div ref={goalRef} className="relative flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Link to Goal</label>
+            {action === "TRANSFER" && (
+            <div ref={goalRef} className="relative flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest ml-1">Link to Goal</label>
                 <div 
                   onClick={() => !isDirectFlow && setShowGoalDropdown(!showGoalDropdown)} 
                   className={`p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] text-sm flex justify-between items-center transition-all ${

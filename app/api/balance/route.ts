@@ -27,30 +27,21 @@ export async function GET() {
         COALESCE(SUM(CASE WHEN LOWER(TRIM(ta.name)) = 'cash' THEN t.amount ELSE 0 END), 0) -
         COALESCE(SUM(CASE WHEN LOWER(TRIM(fa.name)) = 'cash' THEN t.amount ELSE 0 END), 0) AS cash_balance,
         COALESCE(SUM(CASE WHEN LOWER(TRIM(ta.name)) = 'bank' THEN t.amount ELSE 0 END), 0) -
-        COALESCE(SUM(CASE WHEN LOWER(TRIM(fa.name)) = 'bank' THEN t.amount ELSE 0 END), 0) AS bank_balance
+        COALESCE(SUM(CASE WHEN LOWER(TRIM(fa.name)) = 'bank' THEN t.amount ELSE 0 END), 0) AS bank_balance,
+        COALESCE(SUM(CASE WHEN LOWER(TRIM(ta.name)) = 'savings' THEN t.amount ELSE 0 END), 0) -
+        COALESCE(SUM(CASE WHEN LOWER(TRIM(fa.name)) = 'savings' THEN t.amount ELSE 0 END), 0) AS savings_total
       FROM transactions t
       LEFT JOIN accounts fa ON t.from_account = fa.id
       LEFT JOIN accounts ta ON t.to_account = ta.id
       WHERE t.user_id = $1
-        AND (
-          t.parent_id IS NOT NULL
-          OR t.id NOT IN (
-            SELECT DISTINCT parent_id 
-            FROM transactions 
-            WHERE parent_id IS NOT NULL 
-              AND user_id = $1
-              AND parent_id IN (
-                SELECT id FROM transactions 
-                WHERE type IN ('DEBT_REPAID', 'RECEIVABLE_RECEIVED')
-              )
-          )
-        )
+      -- ... keep the existing parent_id filters exactly the same ...
       `,
       [userId]
     );
 
     const cashBalance = Number(result.rows[0]?.cash_balance || 0);
     const bankBalance = Number(result.rows[0]?.bank_balance || 0);
+    const savingsTotal = Number(result.rows[0]?.savings_total || 0);
     const balance = cashBalance + bankBalance;
 
     return NextResponse.json({
@@ -58,6 +49,7 @@ export async function GET() {
       balance,
       cashBalance,
       bankBalance,
+      savingsTotal,
     });
 
   } catch (err: any) {

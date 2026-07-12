@@ -21,6 +21,7 @@ export default function SavingsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [goalToDeleteId, setGoalToDeleteId] = useState<number | null>(null);
+  const [totalSavings, setTotalSavings] = useState(0);
 
   const handleDelete = async (id: number) => {
     setLoading(true);
@@ -88,7 +89,14 @@ export default function SavingsPage() {
     const res = await fetch("/api/savings");
     const json = await res.json();
     setGoals(json.data || []);
+
+    const balRes = await fetch("/api/balance");
+    const balJson = await balRes.json();
+    setTotalSavings(balJson.savingsTotal || 0);
   };
+
+  const allocatedAmount = goals.reduce((sum, g) => sum + Number(g.current_amount), 0);
+  const unallocated = totalSavings - allocatedAmount;
 
   const closeAddModal = () => {
     resetForm();
@@ -188,6 +196,22 @@ export default function SavingsPage() {
 
         {/* GOALS GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+          {/* ✅ GENERAL SAVINGS CARD (New) */}
+          {unallocated > 0 && (
+            <div className="bg-emerald-500/5 border border-emerald-500/20 backdrop-blur-md p-6 rounded-[32px] space-y-4 animate-fadeIn">
+              <div className="flex justify-between items-start">
+                <h3 className="text-xl font-bold text-black dark:text-white">General Savings</h3>
+                <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded-lg">Unallocated</span>
+              </div>
+              <p className="text-sm text-slate-400">Money in your savings account not assigned to a specific goal.</p>
+              <div className="text-2xl font-normal text-emerald-600 dark:text-emerald-400">
+                {unallocated.toLocaleString()} <span className="text-xs font-bold text-slate-400">Tk</span>
+              </div>
+            </div>
+          )}
+
+
           {goals.map((goal) => {
             const current = Number(goal.current_amount);
             const target = Number(goal.target_amount);

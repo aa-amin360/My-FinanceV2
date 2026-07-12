@@ -79,9 +79,16 @@ export async function POST(req: Request) {
       entity_id
     );
 
+    // Determine which account to check for sufficient funds
+    let accountToCheck = accounts.accountId; // Default to Cash/Bank
+
+    if (type === "TRANSFER" && direction === "FROM_SAVINGS") {
+      accountToCheck = accounts.savingsId; // Check Savings balance if withdrawing
+    }
+
     await checkBalance(
       client,
-      accounts.accountId,
+      accountToCheck, // Now dynamically picks the source
       userId,
       type,
       amountNumber,
