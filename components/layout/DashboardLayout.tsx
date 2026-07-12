@@ -241,6 +241,7 @@ function FloatingNav({ pathname }: { pathname: string }) {
     { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
     { label: "Planning", href: "/budget", icon: TrendingUp },
     { label: "Categories", href: "/categories", icon: Tag },
+    { label: "Savings", href: "/savings", icon: Wallet },
     { label: "Debt", href: "/debts", icon: CreditCard },
     { label: "Receivable", href: "/receivables", icon: Wallet },
     { label: "Add History", href: "/add-history", icon: History },
