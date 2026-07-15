@@ -240,31 +240,40 @@ export default function TransactionsPage() {
         </button>
       </div>    
 
-      {/* ✅ SEARCH & FILTER BAR */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 mb-6 animate-fadeIn">
+      {/* ✅ LOGICAL RESPONSIVE FILTER BAR */}
+      <div className="grid grid-cols-12 gap-2 sm:gap-3 mb-6 animate-fadeIn items-center">
         
-        {/* Search Input */}
-        <div className="md:col-span-6 relative">
-          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+        {/* 1. Search Input - Desktop: 5 cols | Mobile: 10 cols */}
+        <div className="relative col-span-10 md:col-span-5 group order-1">
+          <Search 
+            size={18} 
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none z-20" 
+          />
           <input 
-            placeholder="Search notes, categories, or people..."
+            placeholder="Search transactions..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm transition-all"
+            className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm transition-all h-[46px] relative z-10"
           />
         </div>
 
-        {/* Start Date */}
-        <div className="md:col-span-2">
+        {/* 2. Reset Button - Desktop: Order 3 (End) | Mobile: Order 2 (Next to Search) */}
+        <button 
+          onClick={() => { setSearch(""); setStartDate(""); setEndDate(""); }}
+          title="Reset Filters"
+          className="col-span-2 md:col-span-2 h-[46px] flex items-center justify-center gap-2 rounded-2xl bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-all active:scale-95 order-2 md:order-3"
+        >
+          <RotateCcw size={18} />
+          <span className="hidden lg:inline text-xs font-bold uppercase tracking-wider">Reset</span>
+        </button>
+
+        {/* 3. Date Pickers - Desktop: 5 cols | Mobile: 12 cols (Below) */}
+        <div className="col-span-12 md:col-span-5 grid grid-cols-2 gap-2 order-3 md:order-2">
           <GlassCalendar 
             value={startDate} 
             onChange={setStartDate} 
             placeholder="Start Date" 
           />
-        </div>
-
-        {/* End Date */}
-        <div className="md:col-span-2">
           <GlassCalendar 
             value={endDate} 
             onChange={setEndDate} 
@@ -272,14 +281,7 @@ export default function TransactionsPage() {
           />
         </div>
 
-        {/* Reset Button */}
-        <button 
-          onClick={() => { setSearch(""); setStartDate(""); setEndDate(""); }}
-          className="md:col-span-2 flex items-center justify-center gap-2 py-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/[0.05] dark:border-white/[0.04] text-slate-500 hover:text-black dark:hover:text-white transition active:scale-95 text-xs font-bold"
-        >
-          <RotateCcw size={14} /> Reset
-        </button>
-      </div>  
+      </div>
 
       {/* ==========================================
           DESKTOP TABLE VIEW (GLASS CONTAINER)
