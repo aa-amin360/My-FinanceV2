@@ -186,9 +186,8 @@ export async function POST(req: Request) {
 }
 
 // =========================
-// GET (With Pagination)
+// GET
 // =========================
-
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
 
@@ -199,56 +198,77 @@ export async function GET(req: Request) {
   const userId = session.user.email;
   const { searchParams } = new URL(req.url);
   
-  // Pagination Params
+  // 1. Pagination & Filter Params
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "20");
   const offset = (page - 1) * limit;
 
+  const searchTerm = searchParams.get("search") || "";
+  const startDate = searchParams.get("startDate"); // YYYY-MM-DD
+  const endDate = searchParams.get("endDate");     // YYYY-MM-DD
+
   const client = await pool.connect();
 
   try {
-    // 1. Get Total Count (for the frontend pagination controls)
-    const countRes = await client.query(
-      `SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND parent_id IS NULL`,
-      [userId]
-    );
+    // 2. Build the WHERE clause dynamically
+    let whereClause = `WHERE t.user_id = $1 AND t.parent_id IS NULL`;
+    let queryParams: any[] = [userId];
+    let paramIndex = 2;
+
+    // Search filter (Keyword in note, category, or entity)
+    if (searchTerm) {
+      whereClause += ` AND (
+        t.note ILIKE $${paramIndex} OR 
+        c.name ILIKE $${paramIndex} OR 
+        e.name ILIKE $${paramIndex}
+      )`;
+      queryParams.push(`%${searchTerm}%`);
+      paramIndex++;
+    }
+
+    // Date range filters
+    if (startDate) {
+      whereClause += ` AND t.date >= $${paramIndex}`;
+      queryParams.push(startDate);
+      paramIndex++;
+    }
+    if (endDate) {
+      whereClause += ` AND t.date <= $${paramIndex}`;
+      queryParams.push(endDate);
+      paramIndex++;
+    }
+
+    // 3. Get Total Count for the filtered set
+    const countQuery = `
+      SELECT COUNT(*) 
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      LEFT JOIN entities e ON t.entity_id = e.id
+      ${whereClause}
+    `;
+    const countRes = await client.query(countQuery, queryParams);
     const total = parseInt(countRes.rows[0].count);
 
-    // 2. Get Paginated Data
-    const result = await client.query(
-      `
+    // 4. Get Paginated & Filtered Data
+    const dataQuery = `
       SELECT 
-        t.id,
-        t.type,
-        t.amount,
-        t.date,
-        t.note,
-        t.entity_id,
-        t.category_id,
-        t.parent_id,
-        t.savings_goal_id,
-      
-        EXISTS (
-          SELECT 1 
-          FROM transactions t2
-          WHERE t2.parent_id = t.id
-        ) AS has_child,
-      
-        c.name AS category_name,
-        e.name AS entity_name,
-        fa.name AS from_account,
-        ta.name AS to_account
+        t.id, t.type, t.amount, t.date, t.note, 
+        t.entity_id, t.category_id, t.parent_id, t.savings_goal_id,
+        EXISTS (SELECT 1 FROM transactions t2 WHERE t2.parent_id = t.id) AS has_child,
+        c.name AS category_name, e.name AS entity_name,
+        fa.name AS from_account, ta.name AS to_account
       FROM transactions t
       LEFT JOIN categories c ON t.category_id = c.id
       LEFT JOIN entities e ON t.entity_id = e.id
       LEFT JOIN accounts fa ON t.from_account = fa.id
       LEFT JOIN accounts ta ON t.to_account = ta.id
-      WHERE t.user_id = $1
+      ${whereClause}
       ORDER BY t.date DESC, t.created_at DESC
-      LIMIT $2 OFFSET $3;
-      `,
-      [userId, limit, offset]
-    );
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1};
+    `;
+    
+    queryParams.push(limit, offset);
+    const result = await client.query(dataQuery, queryParams);
 
     return NextResponse.json({
       success: true,
@@ -262,7 +282,8 @@ export async function GET(req: Request) {
     });
 
   } catch (err: any) {
-    return NextResponse.json({ error: err.message });
+    console.error("GET TRANSACTIONS ERROR:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   } finally {
     client.release();
   }

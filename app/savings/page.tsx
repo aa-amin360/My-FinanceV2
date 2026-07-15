@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
+import GlassCalendar from "@/components/modal/GlassCalendar";
 import { useRefresh } from "@/hooks/useRefresh";
 import { Target, Plus, X, Calendar, Save, Loader2, TrendingUp, Bell, AlertCircle, ChevronDown, Trash2 } from "lucide-react";
 
@@ -351,19 +352,39 @@ export default function SavingsPage() {
                 
                 {/* Goal Name */}
                 <div className="space-y-1">
-                  <label className="text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest ml-1">Goal Name</label>
-                  <input required placeholder="e.g. New Laptop" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-2.5 rounded-xl sm:rounded-2xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] outline-none focus:bg-white dark:focus:bg-black transition-all text-xs sm:text-sm" />
+                  <label className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest ml-1">
+                    Goal Name
+                  </label>
+                  <input 
+                    required placeholder="e.g. New Laptop" 
+                    value={name} onChange={(e) => setName(e.target.value)} 
+                    className="w-full px-4 py-2.5 rounded-xl sm:rounded-2xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] outline-none focus:bg-white dark:focus:bg-black transition-all text-xs sm:text-sm" />
                 </div>
 
-                {/* Target & Date Grid */}
+                {/* Target & Date Grid - Synchronized Labels */}
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-1">
-                    <label className="text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest ml-1">Target (Tk)</label>
-                    <input required type="number" placeholder="50000" value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)} className="w-full px-4 py-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] outline-none text-xs sm:text-sm" />
+                    <label className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest ml-1">
+                      Target (Tk)
+                    </label>
+                    <input 
+                      required 
+                      type="number" 
+                      placeholder="50000" 
+                      value={targetAmount} 
+                      onChange={(e) => setTargetAmount(e.target.value)} 
+                      className="w-full px-4 py-2.5 rounded-xl sm:rounded-2xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] outline-none text-xs sm:text-sm" 
+                    />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest ml-1">End Date</label>
-                    <input required type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} className="w-full px-4 py-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] outline-none text-xs sm:text-sm color-scheme-dark" />
+                    <label className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest ml-1">
+                      End Date
+                    </label>
+                    <GlassCalendar 
+                      value={targetDate} 
+                      onChange={setTargetDate} 
+                      placeholder="Select Date" 
+                    />
                   </div>
                 </div>
 
@@ -423,10 +444,7 @@ export default function SavingsPage() {
       {/* DELETE CONFIRMATION MODAL */}
       {goalToDeleteId && (
         <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn" onClick={() => setGoalToDeleteId(null)}>
-          <div 
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[320px] bg-white dark:bg-[#0d1318] border border-black/10 dark:border-white/10 rounded-[32px] p-6 text-center shadow-2xl animate-modalIn"
-          >
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[340px] sm:max-w-[400px] bg-white dark:bg-[#0d1318] border border-black/10 dark:border-white/10 rounded-[32px] p-5 sm:p-6 shadow-2xl animate-modalIn relative">
             <h3 className="text-lg font-bold mb-2">Remove Goal?</h3>
             <p className="text-xs text-slate-500 dark:text-zinc-400 mb-6 leading-relaxed">
               This will stop the assistant and remove the bucket. Any money already saved in your ledger will remain in your balance.

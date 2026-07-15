@@ -1,13 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
+import GlassCalendar from "@/components/modal/GlassCalendar";
 import {
   Trash2,
   ChevronRight,
+  ChevronLeft,
   ChevronDown,
   CornerDownRight,
-  ChevronLeft,
+  Search,
+  Calendar,
+  RotateCcw
 } from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
 
@@ -42,11 +46,25 @@ export default function TransactionsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // =========================
-  // LOAD DATA (Updated for Pagination)
-  // =========================
+  // ✅ New Filter States
+  const [search, setSearch] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  const startDateRef = useRef<HTMLInputElement>(null);
+  const endDateRef = useRef<HTMLInputElement>(null);
+  
+  // ==========
+  // LOAD DATA 
+  // ==========
   const loadData = () => {
-    fetch(`/api/transactions?page=${page}&limit=20`)
+    let url = `/api/transactions?page=${page}&limit=20`;
+    
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (startDate) url += `&startDate=${startDate}`;
+    if (endDate) url += `&endDate=${endDate}`;
+
+    fetch(url)
       .then((res) => res.json())
       .then((data) => {
         setTransactions(data.data || []);
@@ -54,10 +72,16 @@ export default function TransactionsPage() {
       });
   };
 
-  // Re-run loadData whenever the page changes
+  // Trigger reload when page OR filters change
   useEffect(() => {
     loadData();
-  }, [page]);
+  }, [page, startDate, endDate]);
+
+  // Reset page to 1 when searching to avoid "empty page" bugs
+  useEffect(() => {
+    setPage(1);
+    loadData();
+  }, [search]);
 
   useRefresh(loadData);
   
@@ -207,14 +231,55 @@ export default function TransactionsPage() {
     <DashboardLayout>
       <div className="flex justify-between items-center mb-6 px-1 animate-fadeIn">
         <h1 className="text-2xl font-bold">Transactions</h1>
-      
+          
         <button
           onClick={() => setConfirmAll(true)}
           className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm hover:bg-red-700 active:scale-95 transition"
         >
           Delete All
         </button>
-      </div>      
+      </div>    
+
+      {/* ✅ SEARCH & FILTER BAR */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 mb-6 animate-fadeIn">
+        
+        {/* Search Input */}
+        <div className="md:col-span-6 relative">
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input 
+            placeholder="Search notes, categories, or people..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm transition-all"
+          />
+        </div>
+
+        {/* Start Date */}
+        <div className="md:col-span-2">
+          <GlassCalendar 
+            value={startDate} 
+            onChange={setStartDate} 
+            placeholder="Start Date" 
+          />
+        </div>
+
+        {/* End Date */}
+        <div className="md:col-span-2">
+          <GlassCalendar 
+            value={endDate} 
+            onChange={setEndDate} 
+            placeholder="End Date" 
+          />
+        </div>
+
+        {/* Reset Button */}
+        <button 
+          onClick={() => { setSearch(""); setStartDate(""); setEndDate(""); }}
+          className="md:col-span-2 flex items-center justify-center gap-2 py-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/[0.05] dark:border-white/[0.04] text-slate-500 hover:text-black dark:hover:text-white transition active:scale-95 text-xs font-bold"
+        >
+          <RotateCcw size={14} /> Reset
+        </button>
+      </div>  
 
       {/* ==========================================
           DESKTOP TABLE VIEW (GLASS CONTAINER)
