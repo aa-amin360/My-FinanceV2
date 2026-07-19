@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import GlassCalendar from "@/components/modal/GlassCalendar";
 import { useRefresh } from "@/hooks/useRefresh";
-import { Target, Plus, X, Calendar, Save, Loader2, TrendingUp, Bell, AlertCircle, ChevronDown, Trash2 } from "lucide-react";
+import { Calendar, Trash2, Award } from "lucide-react";
 
 type Goal = {
   id: number;
@@ -19,73 +18,12 @@ type Goal = {
 
 export default function SavingsPage() {
   const [goals, setGoals] = useState<Goal[]>([]);
-  const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [goalToDeleteId, setGoalToDeleteId] = useState<number | null>(null);
+  const [goalToAchieveId, setGoalToAchieveId] = useState<number | null>(null);
   const [totalSavings, setTotalSavings] = useState(0);
 
-  const handleDelete = async (id: number) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/savings/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        setGoalToDeleteId(null);
-        loadData();
-      }
-    } catch (err) {
-      console.error("Delete failed:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Form State
-  const [name, setName] = useState("");
-  const [targetAmount, setTargetAmount] = useState("");
-  const [targetDate, setTargetDate] = useState("");
-  
-  // Assistant Form State
-  const [installment, setInstallment] = useState("");
-  const [frequency, setFrequency] = useState("MONTHLY");
-  const [reminderDay, setReminderDay] = useState("1");
-  const [showFreqDropdown, setShowFreqDropdown] = useState(false);
-  const freqRef = useRef<HTMLDivElement | null>(null);
-
-  // ✅ Advanced Assistant Forecast Logic
-  const getForecast = () => {
-    const total = Number(targetAmount);
-    const inst = Number(installment);
-    if (!total || !inst || inst <= 0) return null;
-    
-    const cycles = Math.ceil(total / inst);
-    const projectedDate = new Date();
-
-    if (frequency === "MONTHLY") {
-      projectedDate.setMonth(projectedDate.getMonth() + cycles);
-      return { text: `${cycles} Months`, date: projectedDate };
-    }
-    if (frequency === "WEEKLY") {
-      projectedDate.setDate(projectedDate.getDate() + (cycles * 7));
-      return { text: `${cycles} Weeks`, date: projectedDate };
-    }
-    if (frequency === "DAILY") {
-      projectedDate.setDate(projectedDate.getDate() + cycles);
-      return { text: `${cycles} Days`, date: projectedDate };
-    }
-    return null;
-  };
-
-  const forecast = getForecast();
-
-  // ✅ Auto-set the Date based on the forecast
-  useEffect(() => {
-    if (forecast?.date) {
-      // Formats the date to YYYY-MM-DD for the input field
-      const dateString = forecast.date.toISOString().split('T')[0];
-      setTargetDate(dateString);
-    }
-  }, [targetAmount, installment, frequency]);
-
+  // Fetch initial goals and ledger balance
   const loadData = async () => {
     const res = await fetch("/api/savings");
     const json = await res.json();
@@ -96,58 +34,29 @@ export default function SavingsPage() {
     setTotalSavings(balJson.savingsTotal || 0);
   };
 
+  useRefresh(loadData);
+
   const allocatedAmount = goals.reduce((sum, g) => sum + Number(g.current_amount), 0);
   const unallocated = totalSavings - allocatedAmount;
 
-  const closeAddModal = () => {
-    resetForm();
-    setShowAddModal(false);
-  };
-
-  // Click outside detector
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (freqRef.current && !freqRef.current.contains(e.target as Node)) setShowFreqDropdown(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  useRefresh(loadData);
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Handle goals removal with automatic refund option or converting to Spent expense
+  const handleDelete = async (id: number, actionType: "REFUND" | "SPENT") => {
     setLoading(true);
     try {
-      const res = await fetch("/api/savings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          name, 
-          target_amount: targetAmount, 
-          target_date: targetDate,
-          installment_amount: installment,
-          frequency,
-          reminder_day: reminderDay
-        }),
-      });
+      const res = await fetch(`/api/savings/${id}?action=${actionType}`, { method: "DELETE" });
       if (res.ok) {
-        setShowAddModal(false);
-        resetForm();
+        setGoalToDeleteId(null);
+        setGoalToAchieveId(null);
         loadData();
       }
     } catch (err) {
-      console.error(err);
+      console.error("Action failed:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setName(""); setTargetAmount(""); setTargetDate("");
-    setInstallment(""); setFrequency("MONTHLY"); setReminderDay("1");
-  };
-
+  // Dispatch global custom event to trigger transfer inputs in the modular TransactionModal
   const handleAddFunds = (goal: Goal) => {
     window.dispatchEvent(new CustomEvent("openAdd", {
       detail: {
@@ -160,9 +69,7 @@ export default function SavingsPage() {
     }));
   };
 
-  // ==========================================
-  // ASSISTANT NOTIFICATION LOGIC
-  // ==========================================
+  // Verify if reminder installment is triggered for today
   const isPaymentDue = (goal: Goal) => {
     if (!goal.reminder_day) return false;
     const today = new Date();
@@ -171,7 +78,6 @@ export default function SavingsPage() {
       return today.getDate() === goal.reminder_day;
     }
     if (goal.frequency === "WEEKLY") {
-      // 0 = Sunday, 1 = Monday...
       return today.getDay() === goal.reminder_day;
     }
     if (goal.frequency === "DAILY") return true;
@@ -182,145 +88,161 @@ export default function SavingsPage() {
     <DashboardLayout>
       <div className="w-full space-y-6 animate-fadeIn pb-16">
         
-        {/* ✅ RESPONSIVE HEADER */}
-        <div className="flex flex-row justify-between items-center gap-4 px-1">
-          <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-black dark:text-white truncate">
-              Savings Goals
-            </h1>
-            <p className="text-[11px] sm:text-sm text-slate-500 dark:text-zinc-500 truncate">
-              Assistant & virtual buckets.
-            </p>
-          </div>
-
-          <button 
-            onClick={() => setShowAddModal(true)}
-            className="
-              shrink-0 whitespace-nowrap 
-              px-4 py-2.5 rounded-2xl 
-              bg-indigo-500 hover:bg-indigo-400 
-              text-white font-bold text-xs sm:text-sm 
-              transition active:scale-95 
-              flex items-center gap-2 
-              shadow-lg shadow-indigo-500/20
-            "
-          >
-            <Plus size={16} className="shrink-0" /> 
-            <span>New Goal</span>
-          </button>
+        {/* Header Section: Now clean and minimalist without the duplicated header button */}
+        <div className="px-1">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-black dark:text-white truncate">
+            Savings Goals
+          </h1>
+          <p className="text-[11px] sm:text-sm text-slate-500 dark:text-zinc-500 truncate mt-1">
+            Assistant & virtual buckets.
+          </p>
         </div>
 
-        {/* GOALS GRID */}
+        {/* Savings Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-          {/* ✅ GENERAL SAVINGS CARD (New) */}
+          {/* Unallocated General Savings Bucket */}
           {unallocated > 0 && (
-            <div className="bg-emerald-500/5 border border-emerald-500/20 backdrop-blur-md p-6 rounded-[32px] space-y-4 animate-fadeIn">
-              <div className="flex justify-between items-start">
-                <h3 className="text-xl font-bold text-black dark:text-white">General Savings</h3>
-                <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded-lg">Unallocated</span>
+            <div className="bg-emerald-500/5 border border-emerald-500/20 backdrop-blur-md p-6 rounded-[28px] flex flex-col justify-between h-[250px]">
+              <div className="space-y-2">
+                <div className="flex justify-between items-start">
+                  <h3 className="text-lg font-bold text-black dark:text-white">General Savings</h3>
+                  <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2.5 py-1 rounded-lg">Unallocated</span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
+                  Money stored inside your savings accounts that has not been explicitly assigned to any virtual target goal yet.
+                </p>
               </div>
-              <p className="text-sm text-slate-400">Money in your savings account not assigned to a specific goal.</p>
-              <div className="text-2xl font-normal text-emerald-600 dark:text-emerald-400">
-                {unallocated.toLocaleString()} <span className="text-xs font-bold text-slate-400">Tk</span>
+              <div className="pt-4 border-t border-black/[0.04] dark:border-white/[0.04]">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Available Reserve</span>
+                <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+                  {unallocated.toLocaleString()} <span className="text-xs font-bold text-slate-500">Tk</span>
+                </div>
               </div>
             </div>
           )}
-
 
           {goals.map((goal) => {
             const current = Number(goal.current_amount);
             const target = Number(goal.target_amount);
             const progress = Math.min((current / target) * 100, 100);
+            const remaining = Math.max(target - current, 0);
             const dueToday = isPaymentDue(goal);
+
+            // Circular progress SVG configuration parameters
+            const radius = 26;
+            const circumference = 2 * Math.PI * radius;
+            const strokeDashoffset = circumference - (progress / 100) * circumference;
 
             return (
               <div 
                 key={goal.id} 
                 className={`
-                  bg-white/45 dark:bg-black/35 
-                  border ${dueToday ? 'border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.15)]' : 'border-black/[0.05] dark:border-white/[0.04]'} 
-                  backdrop-blur-md p-6 rounded-[32px] space-y-5 animate-modalIn transition-all duration-300
+                  relative overflow-hidden
+                  bg-white/60 dark:bg-[#11161d]/50 
+                  border ${dueToday ? 'border-indigo-500/60 shadow-[0_0_25px_rgba(99,102,241,0.12)]' : 'border-black/[0.06] dark:border-white/[0.05]'} 
+                  backdrop-blur-xl p-6 rounded-[28px] flex flex-col justify-between h-[250px]
+                  transition-all duration-300 hover:scale-[1.01] hover:border-black/10 dark:hover:border-white/10
+                  animate-modalIn
                 `}
               >
-                {/* TOP ROW: NAME & COMMITMENT */}
+                {/* Visual Ambient Glow for due installations */}
+                {dueToday && (
+                  <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-indigo-500/5 blur-xl pointer-events-none" />
+                )}
+
+                {/* Upper Body: Name and Circle Ring */}
                 <div className="flex justify-between items-start gap-4">
-                  <div className="min-w-0">
-                    <h3 className="text-xl font-bold text-black dark:text-white truncate tracking-tight">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <span className="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block leading-none">
+                      Savings Target
+                    </span>
+                    <h3 className="text-base sm:text-lg font-black text-black dark:text-white truncate tracking-tight leading-tight">
                       {goal.name}
                     </h3>
-                    <div className="flex items-center gap-2 mt-1">
-                       <Calendar size={12} className="text-slate-400" />
-                       <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
-                         Target: {new Date(goal.target_date).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
-                       </span>
-                    </div>
-                  </div>
-
-                  <div className="text-right shrink-0">
-                    {goal.installment_amount && (
-                      <div className="text-lg font-black text-indigo-600 dark:text-indigo-400 leading-none">
-                        {Number(goal.installment_amount).toLocaleString()} Tk
-                      </div>
-                    )}
-                    <span className="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
-                      {goal.frequency} Commit
-                    </span>
-                  </div>
-                </div>
-
-                {/* MIDDLE ROW: PROGRESS NUMBERS */}
-                <div className="flex justify-between items-end">
-                  <div className="space-y-0.5">
-                    <div className="flex items-baseline gap-1.5">
-                      {/* ✅ font-normal: Deposited amount is now regular weight */}
-                      <span className="text-2xl font-normal text-black dark:text-white leading-none">
-                        {current.toLocaleString()}
-                      </span>
-                      <span className="text-xs font-bold text-slate-400">
-                        / {target.toLocaleString()} Tk
+                    
+                    <div className="pt-2 flex flex-col gap-0.5">
+                      <span className="text-[8px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider block leading-none">Remaining Needed</span>
+                      <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 tracking-tight">
+                        {remaining === 0 ? "Goal Achieved!" : `${remaining.toLocaleString()} Tk left`}
                       </span>
                     </div>
                   </div>
-                  
-                  <div className="text-right">
-                    <span className="text-xl font-black text-indigo-500 leading-none">
-                      {progress.toFixed(0)}%
-                    </span>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Complete</p>
+
+                  <div className="relative w-16 h-16 shrink-0 flex items-center justify-center">
+                    <svg className="w-16 h-16 transform -rotate-90">
+                      <circle
+                        cx="32"
+                        cy="32"
+                        r={radius}
+                        className="text-black/5 dark:text-white/5 stroke-current"
+                        strokeWidth="3.5"
+                        fill="transparent"
+                      />
+                      <circle
+                        cx="32"
+                        cy="32"
+                        r={radius}
+                        className="text-indigo-500 stroke-current transition-all duration-1000 ease-out"
+                        strokeWidth="3.5"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={strokeDashoffset}
+                        strokeLinecap="round"
+                        fill="transparent"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
+                      <span className="text-[11px] font-black text-black dark:text-white">{progress.toFixed(0)}%</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* PROGRESS BAR */}
-                <div className="h-2.5 w-full bg-black/5 dark:bg-white/5 rounded-full overflow-hidden border border-black/[0.03] dark:border-white/[0.03]">
-                  <div 
-                    className={`h-full rounded-full transition-all duration-1000 ${dueToday ? 'bg-indigo-400 animate-pulse' : 'bg-indigo-500'}`}
-                    style={{ width: `${progress}%` }}
-                  />
+                {/* Dynamic Metrics Divider */}
+                <div className="grid grid-cols-2 gap-3 py-3 border-t border-b border-black/[0.04] dark:border-white/[0.04] text-left">
+                  <div>
+                    <span className="text-[8px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">Saved Balance</span>
+                    <span className="text-xs font-black text-black dark:text-white">{current.toLocaleString()} Tk</span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">Target Cap</span>
+                    <span className="text-xs font-black text-black dark:text-white">{target.toLocaleString()} Tk</span>
+                  </div>
                 </div>
 
-                {/* BOTTOM ROW: ACTIONS */}
+                {/* Action buttons footer */}
                 <div className="flex justify-between items-center pt-2">
+                   {/* Delete button: pure cancel and refund flow */}
                    <button 
                     onClick={() => setGoalToDeleteId(goal.id)}
-                    className="p-2 rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-500/10 transition-all active:scale-90"
+                    title="Cancel & Refund Goal"
+                    className="p-2 rounded-xl text-slate-300 dark:text-zinc-600 hover:text-red-500 hover:bg-red-500/10 transition-all active:scale-90"
                    >
-                    <Trash2 size={16} />
+                    <Trash2 size={15} />
                    </button>
 
-                   {/* ✅ Added hover and color change effect */}
-                   <button 
-                    onClick={() => handleAddFunds(goal)}
-                    className={`
-                      px-6 py-2 rounded-2xl text-xs font-bold transition-all duration-300 active:scale-95
-                      ${dueToday 
-                        ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-400 hover:shadow-indigo-500/40' 
-                        : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500 hover:text-white'
-                      }
-                    `}
-                   >
-                    {dueToday ? 'Deposit Due Today' : 'Add Funds'}
-                   </button>
+                   <div className="flex gap-2">
+                     {current > 0 && (
+                       <button
+                         onClick={() => setGoalToAchieveId(goal.id)}
+                         className="px-3.5 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 dark:text-emerald-400 hover:text-black border border-emerald-500/20 transition-all active:scale-95"
+                       >
+                         Achieve
+                       </button>
+                     )}
+
+                     <button 
+                      onClick={() => handleAddFunds(goal)}
+                      className={`
+                        px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 active:scale-95
+                        ${dueToday 
+                          ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-400 hover:shadow-indigo-500/40' 
+                          : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500 hover:text-white'
+                        }
+                      `}
+                     >
+                      {dueToday ? 'Due Today' : 'Add Funds'}
+                     </button>
+                   </div>
                 </div>
               </div>
             );
@@ -333,142 +255,75 @@ export default function SavingsPage() {
           </div>
         )}
 
-        {/* NEW GOAL MODAL - REFINED COMPACT SIZE */}
-        {showAddModal && (
-          <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn" onClick={closeAddModal}>
-            <div 
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-[340px] sm:max-w-[400px] bg-white dark:bg-[#0d1318] border border-black/10 dark:border-white/10 rounded-[32px] p-5 sm:p-6 shadow-2xl animate-modalIn relative"
-            >
-              {/* Header */}
-              <div className="flex justify-between items-center mb-4 sm:mb-5">
-                <h3 className="text-base sm:text-lg font-bold text-black dark:text-white leading-none">Setup Commitment</h3>
-                <button onClick={closeAddModal} className="p-1.5 bg-black/5 dark:bg-white/5 rounded-full text-slate-400 hover:scale-110 transition">
-                  <X size={16}/>
+        {/* Pure Delete & Cancel Modal */}
+        {goalToDeleteId && (
+          <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn" onClick={() => setGoalToDeleteId(null)}>
+            <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[340px] sm:max-w-[400px] bg-white dark:bg-[#0d1318] border border-black/10 dark:border-white/10 rounded-[32px] p-5 sm:p-6 shadow-2xl animate-modalIn relative text-center">
+              <h3 className="text-lg font-bold mb-2">Cancel & Delete Goal?</h3>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 mb-6 leading-relaxed">
+                This will remove the goal. All saved funds currently allocated to this goal will be automatically refunded back to your primary accounts (Cash/Bank).
+              </p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => handleDelete(goalToDeleteId, "REFUND")}
+                  disabled={loading}
+                  className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-2xl transition active:scale-95 text-xs shadow-sm shadow-red-500/10"
+                >
+                  {loading ? "Refunding..." : "Delete & Refund"}
+                </button>
+                <button 
+                  onClick={() => setGoalToDeleteId(null)}
+                  className="flex-1 py-3 bg-black/5 dark:bg-white/5 text-slate-600 dark:text-zinc-400 font-bold rounded-2xl transition text-xs"
+                >
+                  Cancel
                 </button>
               </div>
-
-              <form onSubmit={handleCreate} className="space-y-3 sm:space-y-4">
-                
-                {/* Goal Name */}
-                <div className="space-y-1">
-                  <label className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest ml-1">
-                    Goal Name
-                  </label>
-                  <input 
-                    required placeholder="e.g. New Laptop" 
-                    value={name} onChange={(e) => setName(e.target.value)} 
-                    className="w-full px-4 py-2.5 rounded-xl sm:rounded-2xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] outline-none focus:bg-white dark:focus:bg-black transition-all text-xs sm:text-sm" />
-                </div>
-
-                {/* Target & Date Grid - Synchronized Labels */}
-                <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest ml-1">
-                      Target (Tk)
-                    </label>
-                    <input 
-                      required 
-                      type="number" 
-                      placeholder="50000" 
-                      value={targetAmount} 
-                      onChange={(e) => setTargetAmount(e.target.value)} 
-                      className="w-full px-4 py-2.5 rounded-xl sm:rounded-2xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] outline-none text-xs sm:text-sm" 
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest ml-1">
-                      End Date
-                    </label>
-                    <GlassCalendar 
-                      value={targetDate} 
-                      onChange={setTargetDate} 
-                      placeholder="Select Date" 
-                    />
-                  </div>
-                </div>
-
-                {/* Assistant Section - Compact Widget Style */}
-                <div className="p-3 sm:p-4 rounded-2xl bg-indigo-500/[0.03] border border-indigo-500/10 space-y-3">
-                  <p className="text-[8px] sm:text-[9px] font-black text-indigo-500/80 uppercase tracking-widest text-center">Commitment Settings</p>
-                  
-                  <div className="space-y-1">
-                    <label className="text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest ml-1">Cycle Amount</label>
-                    <input type="number" placeholder="5000" value={installment} onChange={(e) => setInstallment(e.target.value)} className="w-full px-4 py-2 rounded-xl bg-white dark:bg-black border border-indigo-500/20 outline-none text-xs sm:text-sm font-medium" />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1 relative" ref={freqRef}>
-                      <label className="text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest ml-1">Frequency</label>
-                      <div onClick={() => setShowFreqDropdown(!showFreqDropdown)} className="w-full px-3 py-2 rounded-xl bg-white dark:bg-black border border-indigo-500/20 text-xs font-bold flex justify-between items-center cursor-pointer">
-                        <span className="truncate">{frequency}</span>
-                        <ChevronDown size={12} className="text-indigo-500" />
-                      </div>
-                      {showFreqDropdown && (
-                        <div className="absolute bottom-full left-0 w-full mb-2 p-1 bg-white/95 dark:bg-[#161b22] backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-xl shadow-2xl z-[110] animate-modalIn">
-                          {['DAILY', 'WEEKLY', 'MONTHLY'].map((opt) => (
-                            <button key={opt} type="button" onClick={() => { setFrequency(opt); setShowFreqDropdown(false); }} className={`w-full text-left px-3 py-2 text-[10px] font-bold rounded-lg transition ${frequency === opt ? 'bg-indigo-500 text-white' : 'text-slate-600 dark:text-zinc-400 hover:bg-black/5'}`}>
-                              {opt}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest ml-1">
-                        {frequency === 'MONTHLY' ? 'Date' : 'Day'}
-                      </label>
-                      <input type="number" min="0" max="31" value={reminderDay} onChange={(e) => setReminderDay(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-white dark:bg-black border border-indigo-500/20 outline-none text-xs font-bold text-indigo-500" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Assistant Forecast - Slim Version */}
-                {forecast && (
-                  <div className="p-2 sm:p-2.5 rounded-xl bg-indigo-500/5 border border-indigo-500/10 text-center animate-fadeIn">
-                    <p className="text-[10px] sm:text-xs font-bold text-black dark:text-white leading-none">
-                      Approx <span className="text-indigo-500">{forecast.text}</span> to reach goal
-                    </p>
-                  </div>
-                )}
-
-                <button disabled={loading} className="w-full py-3 sm:py-3.5 bg-indigo-500 hover:bg-indigo-400 text-white font-black text-[10px] sm:text-xs uppercase tracking-widest rounded-xl sm:rounded-2xl transition active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20">
-                  {loading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16}/>}
-                  {loading ? "Saving..." : "Start Assistant"}
-                </button>
-              </form>
             </div>
           </div>
         )}
 
-      {/* DELETE CONFIRMATION MODAL */}
-      {goalToDeleteId && (
-        <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn" onClick={() => setGoalToDeleteId(null)}>
-          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[340px] sm:max-w-[400px] bg-white dark:bg-[#0d1318] border border-black/10 dark:border-white/10 rounded-[32px] p-5 sm:p-6 shadow-2xl animate-modalIn relative">
-            <h3 className="text-lg font-bold mb-2">Remove Goal?</h3>
-            <p className="text-xs text-slate-500 dark:text-zinc-400 mb-6 leading-relaxed">
-              This will stop the assistant and remove the bucket. Any money already saved in your ledger will remain in your balance.
-            </p>
-            <div className="flex gap-3">
-              <button 
-                onClick={() => handleDelete(goalToDeleteId)}
-                disabled={loading}
-                className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-2xl transition active:scale-95 text-xs"
-              >
-                {loading ? "Removing..." : "Delete Goal"}
-              </button>
-              <button 
-                onClick={() => setGoalToDeleteId(null)}
-                className="flex-1 py-3 bg-black/5 dark:bg-white/5 text-slate-600 dark:text-zinc-400 font-bold rounded-2xl transition text-xs"
-              >
-                Cancel
-              </button>
+        {/* Triumph State (Achieved) Modal */}
+        {goalToAchieveId && (
+          <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn" onClick={() => setGoalToAchieveId(null)}>
+            <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[360px] bg-white dark:bg-[#0d1318] border border-black/10 dark:border-white/10 rounded-[32px] p-6 shadow-2xl animate-modalIn relative text-center flex flex-col gap-4">
+              <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto shadow-inner">
+                <Award size={24} />
+              </div>
+              
+              <h3 className="text-lg font-bold text-black dark:text-white">Congratulations!</h3>
+              
+              <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed mb-1">
+                Are you ready to mark this goal as achieved and spent?
+              </p>
+
+              <div className="p-3 bg-emerald-500/[0.03] border border-emerald-500/10 rounded-2xl text-left">
+                <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1 text-center">Ledger Reconciliation</p>
+                <p className="text-[10px] text-slate-500 leading-relaxed">
+                  This will automatically convert your total saved balance for this goal into an <b>EXPENSE</b> transaction on your ledger, ensuring your cash flow and net worth remain completely balanced.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <button 
+                  onClick={() => handleDelete(goalToAchieveId, "SPENT")}
+                  disabled={loading}
+                  className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-black font-extrabold rounded-2xl transition active:scale-95 text-xs shadow-md shadow-emerald-500/10"
+                >
+                  {loading ? "Reconciling Ledger..." : "Yes, Mark as Achieved & Spent"}
+                </button>
+                
+                <button 
+                  onClick={() => setGoalToAchieveId(null)}
+                  className="w-full py-3 bg-black/5 dark:bg-white/5 text-slate-600 dark:text-zinc-400 font-bold rounded-2xl transition text-xs"
+                >
+                  Go Back
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      </div>
-    </DashboardLayout>
-  );
-}
+        </div>
+      </DashboardLayout>
+    );
+  }

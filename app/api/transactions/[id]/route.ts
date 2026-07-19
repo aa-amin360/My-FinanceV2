@@ -60,27 +60,12 @@ export async function DELETE(
     }
 
     // ==========================================
-    // 3. REVERSE SAVINGS GOAL PROGRESS (NEW)
+    // SAVINGS GOAL PROGRESS REVERSAL REMOVED
+    // (Because it is now calculated dynamically from ledger on GET)
     // ==========================================
-    // If this transaction was linked to a savings goal, we must "undo" the progress
-    // before the record is actually deleted from the ledger.
-    if (t.savings_goal_id) {
-      await client.query(
-        `UPDATE savings_goals 
-         SET current_amount = CASE 
-            -- If money went TO the Savings account, we subtract the amount (Deposit reversal)
-            WHEN (SELECT name FROM accounts WHERE id = $1) = 'Savings' THEN current_amount - $2
-            -- If money came FROM the Savings account, we add it back (Withdrawal reversal)
-            WHEN (SELECT name FROM accounts WHERE id = $3) = 'Savings' THEN current_amount + $2
-            ELSE current_amount
-         END
-         WHERE id = $4 AND user_id = $5`,
-        [t.to_account, t.amount, t.from_account, t.savings_goal_id, userId]
-      );
-    }
 
     // =========================
-    // 4. DELETE CHILDREN
+    // 3. DELETE CHILDREN
     // =========================
     if (hasChildren) {
       await client.query(
@@ -90,7 +75,7 @@ export async function DELETE(
     }
 
     // =========================
-    // 5. DELETE MAIN
+    // 4. DELETE MAIN
     // =========================
     await client.query(
       `DELETE FROM transactions WHERE id = $1 AND user_id = $2`,
@@ -98,7 +83,7 @@ export async function DELETE(
     );
 
     // =========================
-    // 6. REBUILD STATE
+    // 5. REBUILD STATE
     // =========================
     if (t.entity_id) {
       // Clear existing state
@@ -112,7 +97,7 @@ export async function DELETE(
         [t.entity_id, userId]
       );
 
-      // Rebuild from history using your original filtered query
+      // Rebuild from history
       const history = await client.query(
         `
         SELECT * FROM transactions
@@ -189,7 +174,7 @@ export async function DELETE(
         }
       }
       
-      // ✅ Clean up any fully settled records
+      // Clean up any fully settled records
       await client.query(
         `DELETE FROM debts
          WHERE entity_id = $1 AND user_id = $2 AND remaining_amount <= 0`,

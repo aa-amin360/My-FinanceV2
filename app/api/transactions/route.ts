@@ -26,9 +26,8 @@ const TYPE_META = {
 } as const;
 
 // =========================
-// POST
+// POST (CREATE A NEW TRANSACTION)
 // =========================
-
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
 
@@ -112,21 +111,9 @@ export async function POST(req: Request) {
     }
 
     // ==========================================
-    // SAVINGS GOAL PROGRESS LOGIC
+    // SAVINGS GOAL PROGRESS LOGIC IS NOW REMOVED
+    // (We calculation this dynamically on GET method)
     // ==========================================
-    if (type === "TRANSFER" && savings_goal_id) {
-      if (direction === "TO_SAVINGS") {
-        await client.query(
-          "UPDATE savings_goals SET current_amount = current_amount + $1 WHERE id = $2 AND user_id = $3",
-          [amountNumber, savings_goal_id, userId]
-        );
-      } else if (direction === "FROM_SAVINGS") {
-        await client.query(
-          "UPDATE savings_goals SET current_amount = current_amount - $1 WHERE id = $2 AND user_id = $3",
-          [amountNumber, savings_goal_id, userId]
-        );
-      }
-    }
 
     // debt
     const debtResult = await handleDebt({
@@ -186,7 +173,7 @@ export async function POST(req: Request) {
 }
 
 // =========================
-// GET
+// GET ALL TRANSACTIONS
 // =========================
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);

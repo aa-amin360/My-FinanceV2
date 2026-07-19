@@ -7,9 +7,10 @@ type Props = {
   value: string;
   onChange: (date: string) => void;
   placeholder: string;
+  blockPastDates?: boolean;
 };
 
-export default function GlassCalendar({ value, onChange, placeholder }: Props) {
+export default function GlassCalendar({ value, onChange, placeholder, blockPastDates = false }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [viewDate, setViewDate] = useState(value ? new Date(value) : new Date());
   const containerRef = useRef<HTMLDivElement>(null);
@@ -42,9 +43,17 @@ export default function GlassCalendar({ value, onChange, placeholder }: Props) {
     setIsOpen(false);
   };
 
+  // Helper utility to identify if a specific day is in the past
+  const isPastDay = (day: number) => {
+    if (!blockPastDates) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const checkDate = new Date(year, month, day);
+    return checkDate < today;
+  };
+
   return (
     <div className="relative w-full" ref={containerRef}>
-      {/* ✅ RESPONSIVE TRIGGER BUTTON */}
       <div
         onClick={() => setIsOpen(!isOpen)}
         className="
@@ -76,7 +85,6 @@ export default function GlassCalendar({ value, onChange, placeholder }: Props) {
         )}
       </div>
 
-      {/* ✅ RESPONSIVE DROPDOWN POPUP */}
       {isOpen && (
         <div className="
           absolute top-full mt-2 
@@ -87,7 +95,6 @@ export default function GlassCalendar({ value, onChange, placeholder }: Props) {
           rounded-3xl shadow-2xl z-[120] p-4 sm:p-5 
           animate-modalIn
         ">
-          {/* Calendar Header */}
           <div className="flex items-center justify-between mb-4">
             <button 
               type="button"
@@ -108,33 +115,37 @@ export default function GlassCalendar({ value, onChange, placeholder }: Props) {
             </button>
           </div>
 
-          {/* Week Labels */}
           <div className="grid grid-cols-7 gap-1 mb-2">
             {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
               <span key={d} className="text-[10px] font-black text-slate-400 uppercase text-center tracking-tighter">{d}</span>
             ))}
           </div>
 
-          {/* Days Grid */}
           <div className="grid grid-cols-7 gap-1">
-            {[...padding, ...days].map((day, i) => (
-              <div key={i} className="aspect-square flex items-center justify-center">
-                {day && (
-                  <button
-                    type="button"
-                    onClick={() => handleDateSelect(day)}
-                    className={`
-                      w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-xs font-bold transition-all
-                      ${value === `${year}-${(month+1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
-                        ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 scale-110"
-                        : "text-slate-600 dark:text-slate-300 hover:bg-indigo-500/10 hover:text-indigo-500"}
-                    `}
-                  >
-                    {day}
-                  </button>
-                )}
-              </div>
-            ))}
+            {[...padding, ...days].map((day, i) => {
+              const isPast = day ? isPastDay(day) : false;
+              return (
+                <div key={i} className="aspect-square flex items-center justify-center">
+                  {day && (
+                    <button
+                      type="button"
+                      disabled={isPast}
+                      onClick={() => handleDateSelect(day)}
+                      className={`
+                        w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-xs font-bold transition-all
+                        ${isPast 
+                          ? "text-zinc-300 dark:text-zinc-700 cursor-not-allowed opacity-35" 
+                          : value === `${year}-${(month+1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
+                          ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 scale-110"
+                          : "text-slate-600 dark:text-slate-300 hover:bg-indigo-500/10 hover:text-indigo-500"}
+                      `}
+                    >
+                      {day}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

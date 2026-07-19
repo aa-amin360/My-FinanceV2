@@ -2,13 +2,10 @@
 
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Plus, Trash2, Save, AlertTriangle, CheckCircle2 } from "lucide-react";
+import DebtSetupGrid from "@/components/features/history/DebtSetupGrid";
+import ReceivableSetupGrid from "@/components/features/history/ReceivableSetupGrid";
+import { Save, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
-
-type EntryRow = {
-  name: string;
-  amount: string;
-};
 
 export default function AddHistoryPage() {
   const [loading, setLoading] = useState(false);
@@ -25,15 +22,11 @@ export default function AddHistoryPage() {
   const [cashBalance, setCashBalance] = useState("");
   const [bankBalance, setBankBalance] = useState("");
 
-  const [debts, setDebts] = useState<EntryRow[]>([{ name: "", amount: "" }]);
-  const [bulkDebtsText, setBulkDebtsText] = useState("");
+  // Self-contained grid payloads (managed via callback triggers)
+  const [debtsPayload, setDebtsPayload] = useState<{ name: string; amount: number }[]>([]);
+  const [receivablesPayload, setReceivablesPayload] = useState<{ name: string; amount: number }[]>([]);
 
-  const [receivables, setReceivables] = useState<EntryRow[]>([{ name: "", amount: "" }]);
-  const [bulkReceivablesText, setBulkReceivablesText] = useState("");
-
-  // ==========================================
-  // LOAD CONFIGURATION STATUS
-  // ==========================================
+  // Load configuration status of opening balances from API
   const checkBalanceStatus = async () => {
     try {
       const res = await fetch("/api/transactions/history", { cache: "no-store" });
@@ -56,103 +49,14 @@ export default function AddHistoryPage() {
 
   useRefresh(checkBalanceStatus);
 
-  // ==========================================
-  // BULK PASTE PARSER HELPERS
-  // ==========================================
-  const parseBulkText = (text: string): EntryRow[] => {
-    const lines = text.split("\n");
-    const parsed: EntryRow[] = [];
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
-
-      const lastSpaceIndex = trimmed.lastIndexOf(" ");
-      if (lastSpaceIndex === -1) continue;
-
-      const name = trimmed.substring(0, lastSpaceIndex).trim();
-      const amountStr = trimmed.substring(lastSpaceIndex + 1).trim();
-      const amountNum = Number(amountStr);
-
-      if (name && !isNaN(amountNum) && amountNum > 0) {
-        parsed.push({ name, amount: amountStr });
-      }
-    }
-    return parsed;
-  };
-
-  const handleBulkParseDebts = () => {
-    const parsed = parseBulkText(bulkDebtsText);
-    if (parsed.length === 0) return alert("No valid entries found to parse. Format: Name Amount (e.g. Rahim 5000)");
-
-    const cleanCurrent = debts.filter(d => d.name || d.amount);
-    setDebts([...cleanCurrent, ...parsed]);
-    setBulkDebtsText("");
-  };
-
-  const handleBulkParseReceivables = () => {
-    const parsed = parseBulkText(bulkReceivablesText);
-    if (parsed.length === 0) return alert("No valid entries found to parse. Format: Name Amount (e.g. Rahim 5000)");
-
-    const cleanCurrent = receivables.filter(r => r.name || r.amount);
-    setReceivables([...cleanCurrent, ...parsed]);
-    setBulkReceivablesText("");
-  };
-
-  // ==========================================
-  // ROW HANDLERS
-  // ==========================================
-  const addRow = (type: "DEBTS" | "RECEIVABLES") => {
-    if (type === "DEBTS") {
-      setDebts([...debts, { name: "", amount: "" }]);
-    } else {
-      setReceivables([...receivables, { name: "", amount: "" }]);
-    }
-  };
-
-  const removeRow = (type: "DEBTS" | "RECEIVABLES", index: number) => {
-    if (type === "DEBTS") {
-      const updated = debts.filter((_, i) => i !== index);
-      setDebts(updated.length === 0 ? [{ name: "", amount: "" }] : updated);
-    } else {
-      const updated = receivables.filter((_, i) => i !== index);
-      setReceivables(updated.length === 0 ? [{ name: "", amount: "" }] : updated);
-    }
-  };
-
-  const updateRow = (
-    type: "DEBTS" | "RECEIVABLES",
-    index: number,
-    field: "name" | "amount",
-    value: string
-  ) => {
-    if (type === "DEBTS") {
-      const updated = [...debts];
-      updated[index][field] = value;
-      setDebts(updated);
-    } else {
-      const updated = [...receivables];
-      updated[index][field] = value;
-      setReceivables(updated);
-    }
-  };
-
-  // ==========================================
-  // SAVE CHANGES HANDLER
-  // ==========================================
   const handleSave = async () => {
     setLoading(true);
     setError("");
     setSuccess("");
 
     const payload: any = {
-      debts: debts.filter(d => d.name.trim() && Number(d.amount) > 0).map(d => ({
-        name: d.name.trim(),
-        amount: Number(d.amount),
-      })),
-      receivables: receivables.filter(r => r.name.trim() && Number(r.amount) > 0).map(r => ({
-        name: r.name.trim(),
-        amount: Number(r.amount),
-      })),
+      debts: debtsPayload,
+      receivables: receivablesPayload,
     };
 
     if (!isBalancesInitialized) {
@@ -183,8 +87,6 @@ export default function AddHistoryPage() {
       setSuccess("Historical records added successfully!");
       setCashBalance("");
       setBankBalance("");
-      setDebts([{ name: "", amount: "" }]);
-      setReceivables([{ name: "", amount: "" }]);
       
       window.dispatchEvent(new Event("refreshData"));
       await checkBalanceStatus();
@@ -200,7 +102,7 @@ export default function AddHistoryPage() {
     <DashboardLayout>
       <div className="w-full space-y-6 animate-fadeIn pb-16 px-1 sm:px-4">
         
-        {/* HEADER */}
+        {/* Header Title */}
         <div className="space-y-1">
           <h1 className="text-2xl font-bold tracking-tight text-black dark:text-white">Add History</h1>
           <p className="text-sm text-slate-500 dark:text-zinc-500">Log forgotten starting balances, active debts, or receivables to keep your ledger starting position accurate.</p>
@@ -211,14 +113,11 @@ export default function AddHistoryPage() {
         ) : (
           <div className="grid grid-cols-1 gap-6">
 
-            {/* ==========================================
-                1. OPENING BALANCES SECTION (GLASS)
-                ========================================== */}
+            {/* 1. OPENING BALANCES SECTION */}
             <div className="bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md rounded-3xl p-4 sm:p-6 shadow-sm shadow-black/[0.01] space-y-4">
               <h3 className="text-lg font-bold text-black dark:text-white leading-none">Opening Balances</h3>
               
               {isBalancesInitialized ? (
-                /* Already Configured Panel (Simplified) */
                 <div className="flex items-center gap-3 p-4 rounded-2xl bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20 animate-fadeIn">
                   <CheckCircle2 size={18} className="shrink-0" />
                   <span className="text-xs sm:text-sm font-semibold">
@@ -226,7 +125,6 @@ export default function AddHistoryPage() {
                   </span>
                 </div>
               ) : (
-                /* Editable Balance Inputs */
                 <div className="space-y-4">
                   <div className="flex gap-3 p-4 rounded-2xl bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-500/20">
                     <AlertTriangle size={20} className="shrink-0 mt-0.5" />
@@ -262,118 +160,16 @@ export default function AddHistoryPage() {
               )}
             </div>
 
-            {/* ==========================================
-                2. EXISTING DEBTS SECTION (GLASS)
-                ========================================== */}
+            {/* 2. EXISTING DEBTS SECTION */}
             <div className="bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md rounded-3xl p-4 sm:p-6 shadow-sm shadow-black/[0.01] space-y-4">
               <h3 className="text-lg font-bold text-black dark:text-white leading-none">Existing Debts</h3>
-              
-              <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-                {debts.map((row, index) => (
-                  <div key={index} className="flex gap-1.5 sm:gap-2 items-center w-full">
-                    <input
-                      type="text"
-                      placeholder="Name (e.g. Rahim)"
-                      value={row.name}
-                      onChange={(e) => updateRow("DEBTS", index, "name", e.target.value)}
-                      className="flex-grow min-w-0 px-2.5 sm:px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm text-black dark:text-white"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Amount"
-                      value={row.amount}
-                      onChange={(e) => updateRow("DEBTS", index, "amount", e.target.value)}
-                      className="w-20 sm:w-32 px-2 sm:px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
-                    <button
-                      onClick={() => removeRow("DEBTS", index)}
-                      className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-red-500 hover:bg-red-500/10 transition shrink-0"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={() => addRow("DEBTS")}
-                className="self-start flex items-center gap-1.5 text-xs font-bold text-green-500 hover:text-green-400 transition"
-              >
-                <Plus size={14} /> Add Row
-              </button>
-
-              <div className="pt-2 border-t border-black/[0.05] dark:border-white/[0.05] dark:border-white/[0.04] space-y-2">
-                <label className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block">Paste Multiple Debts (Format: Name Amount)</label>
-                <textarea
-                  placeholder={"Rahim 8000\nKarim 3000\nHasan 12000"}
-                  value={bulkDebtsText}
-                  onChange={(e) => setBulkDebtsText(e.target.value)}
-                  className="w-full h-20 px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm resize-none font-mono text-black dark:text-white"
-                />
-                <button
-                  onClick={handleBulkParseDebts}
-                  className="px-3 py-1.5 rounded-lg bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.04] text-xs font-bold hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition"
-                >
-                  Parse & Add
-                </button>
-              </div>
+              <DebtSetupGrid onChange={setDebtsPayload} />
             </div>
 
-            {/* ==========================================
-                3. EXISTING RECEIVABLES SECTION (GLASS)
-                ========================================== */}
+            {/* 3. EXISTING RECEIVABLES SECTION */}
             <div className="bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md rounded-3xl p-4 sm:p-6 shadow-sm shadow-black/[0.01] space-y-4">
               <h3 className="text-lg font-bold text-black dark:text-white leading-none">Existing Receivables</h3>
-              
-              <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-                {receivables.map((row, index) => (
-                  <div key={index} className="flex gap-1.5 sm:gap-2 items-center w-full">
-                    <input
-                      type="text"
-                      placeholder="Name (e.g. Rahim)"
-                      value={row.name}
-                      onChange={(e) => updateRow("RECEIVABLES", index, "name", e.target.value)}
-                      className="flex-grow min-w-0 px-2.5 sm:px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm text-black dark:text-white"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Amount"
-                      value={row.amount}
-                      onChange={(e) => updateRow("RECEIVABLES", index, "amount", e.target.value)}
-                      className="w-20 sm:w-32 px-2 sm:px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200 text-sm shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
-                    <button
-                      onClick={() => removeRow("RECEIVABLES", index)}
-                      className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-red-500 hover:bg-red-500/10 transition shrink-0"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={() => addRow("RECEIVABLES")}
-                className="self-start flex items-center gap-1.5 text-xs font-bold text-green-500 hover:text-green-400 transition"
-              >
-                <Plus size={14} /> Add Row
-              </button>
-
-              <div className="pt-2 border-t border-black/[0.05] dark:border-white/[0.05] dark:border-white/[0.04] space-y-2">
-                <label className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block">Paste Multiple Receivables (Format: Name Amount)</label>
-                <textarea
-                  placeholder={"Rahim 8000\nKarim 3000\nHasan 12000"}
-                  value={bulkReceivablesText}
-                  onChange={(e) => setBulkReceivablesText(e.target.value)}
-                  className="w-full h-20 px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm focus:bg-white dark:focus:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm resize-none font-mono text-black dark:text-white"
-                />
-                <button
-                  onClick={handleBulkParseReceivables}
-                  className="px-3 py-1.5 rounded-lg bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.04] text-xs font-semibold hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition"
-                >
-                  Parse & Add
-                </button>
-              </div>
+              <ReceivableSetupGrid onChange={setReceivablesPayload} />
             </div>
 
             {/* Error and Success Indicators */}
@@ -391,7 +187,6 @@ export default function AddHistoryPage() {
 
           </div>
         )}
-
       </div>
     </DashboardLayout>
   );

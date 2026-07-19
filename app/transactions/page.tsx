@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import GlassCalendar from "@/components/modal/GlassCalendar";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import {
   Trash2,
   ChevronRight,
@@ -10,7 +11,6 @@ import {
   ChevronDown,
   CornerDownRight,
   Search,
-  Calendar,
   RotateCcw
 } from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
@@ -29,7 +29,6 @@ type Transaction = {
   note: string | null;
   category_name?: string;
   entity_name?: string;
-
   parent_id?: string | null;
   has_child?: boolean;  
 };
@@ -42,21 +41,16 @@ export default function TransactionsPage() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
 
-  // ✅ New Pagination States
+  // Pagination States
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // ✅ New Filter States
+  // Filter States
   const [search, setSearch] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-
-  const startDateRef = useRef<HTMLInputElement>(null);
-  const endDateRef = useRef<HTMLInputElement>(null);
   
-  // ==========
-  // LOAD DATA 
-  // ==========
+  // Fetch dynamic transactions list based on pagination and filters
   const loadData = () => {
     let url = `/api/transactions?page=${page}&limit=20`;
     
@@ -72,12 +66,10 @@ export default function TransactionsPage() {
       });
   };
 
-  // Trigger reload when page OR filters change
   useEffect(() => {
     loadData();
   }, [page, startDate, endDate]);
 
-  // Reset page to 1 when searching to avoid "empty page" bugs
   useEffect(() => {
     setPage(1);
     loadData();
@@ -85,9 +77,6 @@ export default function TransactionsPage() {
 
   useRefresh(loadData);
   
-  // =========================
-  // NAME RESOLVER (CORE FIX)
-  // =========================
   const formatName = (name: string) => {
     return name
       .split(" ")
@@ -105,22 +94,18 @@ export default function TransactionsPage() {
   const getDisplayName = (t: Transaction) => {
     const isChild = !!t.parent_id;
   
-    // DEBT OVERPAY → becomes receivable
     if (isChild && t.type === "RECEIVABLE_GIVEN") {
       return "Overpaid → now receivable";
     }
   
-    // RECEIVABLE OVER-COLLECT → becomes debt
     if (isChild && t.type === "DEBT_TAKEN") {
       return "Over-collected → now debt";
     }
   
-    // Counterparty names for debt/receivable flows
     if (t.entity_name) {
       return formatName(t.entity_name);
     }
   
-    // Expense / Income should prioritize category
     if (t.category_name) {
       return formatName(t.category_name);
     }
@@ -128,19 +113,6 @@ export default function TransactionsPage() {
     return formatType(t.type);
   };
 
-  // =========================
-  // CATEGORY RESOLVER
-  // =========================
-  const getCategory = (t: Transaction) => {
-    if (t.category_name) return t.category_name;
-
-    // fallback to readable type
-    return formatType(t.type);
-  };
-
-  // =========================
-  // TYPE STYLE (Updated to soft colors)
-  // =========================
   const getTypeStyle = (type: string) => {
     switch (type) {
       case "INCOME":
@@ -161,7 +133,7 @@ export default function TransactionsPage() {
   };
   
   const handleDelete = async (id: string) => {
-    setLoading(true); // ✅ Maintained loading toggles
+    setLoading(true);
     try {
       const res = await fetch(`/api/transactions/${id}`, {
         method: "DELETE",
@@ -172,10 +144,10 @@ export default function TransactionsPage() {
       if (!res.ok) {
         setDeleteId(null);
         setErrorMessage(data.error || "Cannot delete transaction");
-        setLoading(false);
         return;
       }
     
+      setDeleteId(null);
       loadData();
     } catch (err) {
       console.error(err);
@@ -186,15 +158,16 @@ export default function TransactionsPage() {
   };
 
   const handleDeleteAll = async () => {
-    setLoading(true); // ✅ Maintained loading toggles
+    setLoading(true);
     try {
       const res = await fetch("/api/transactions/all", {
         method: "DELETE",
       });
   
       if (res.ok) {
-        window.dispatchEvent(new Event("refreshData"));
         setConfirmAll(false);
+        window.dispatchEvent(new Event("refreshData"));
+        loadData();
       } else {
         setErrorMessage("Failed to delete transactions");
         setConfirmAll(false);
@@ -208,14 +181,10 @@ export default function TransactionsPage() {
     }
   };
 
-  // =========================
-  // SORT (Parent → Child)
-  // =========================
   const sortedTransactions = [...transactions].sort((a, b) => {
     const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
     if (dateDiff !== 0) return dateDiff;
   
-    // Parent comes before child
     if (a.id === b.parent_id) return -1;
     if (b.id === a.parent_id) return 1;
   
@@ -224,9 +193,6 @@ export default function TransactionsPage() {
 
   const roots = sortedTransactions.filter((t) => !t.parent_id);
 
-  const getChildren = (id: string) =>
-    transactions.filter((t) => t.parent_id === id);
-  
   return (
     <DashboardLayout>
       <div className="flex justify-between items-center mb-6 px-1 animate-fadeIn">
@@ -240,10 +206,9 @@ export default function TransactionsPage() {
         </button>
       </div>    
 
-      {/* ✅ LOGICAL RESPONSIVE FILTER BAR */}
+      {/* Filters Bar */}
       <div className="grid grid-cols-12 gap-2 sm:gap-3 mb-6 animate-fadeIn items-center">
         
-        {/* 1. Search Input - Desktop: 5 cols | Mobile: 10 cols */}
         <div className="relative col-span-10 md:col-span-5 group order-1">
           <Search 
             size={18} 
@@ -257,7 +222,6 @@ export default function TransactionsPage() {
           />
         </div>
 
-        {/* 2. Reset Button - Desktop: Order 3 (End) | Mobile: Order 2 (Next to Search) */}
         <button 
           onClick={() => { setSearch(""); setStartDate(""); setEndDate(""); }}
           title="Reset Filters"
@@ -267,7 +231,6 @@ export default function TransactionsPage() {
           <span className="hidden lg:inline text-xs font-bold uppercase tracking-wider">Reset</span>
         </button>
 
-        {/* 3. Date Pickers - Desktop: 5 cols | Mobile: 12 cols (Below) */}
         <div className="col-span-12 md:col-span-5 grid grid-cols-2 gap-2 order-3 md:order-2">
           <GlassCalendar 
             value={startDate} 
@@ -283,13 +246,10 @@ export default function TransactionsPage() {
 
       </div>
 
-      {/* ==========================================
-          DESKTOP TABLE VIEW (GLASS CONTAINER)
-          ========================================== */}
-      {/* ✅ Updated to standard translucent glassmorphic panel */}
+      {/* Main List Layout Container */}
       <div className="bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md rounded-3xl overflow-hidden shadow-sm shadow-black/[0.01]">
 
-        {/* HEADER */}
+        {/* Desktop Table Headers */}
         <div className="grid grid-cols-6 px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-black/[0.05] dark:border-white/[0.04] leading-none">
           <div>Name</div>
           <div>Date</div>
@@ -300,7 +260,7 @@ export default function TransactionsPage() {
         </div>
 
         <div className="pb-24 md:pb-0">
-          {/* ROWS */}
+          {/* Desktop Rows Render Block */}
           <div className="hidden md:block divide-y divide-slate-100 dark:divide-zinc-900/60">
             {roots.map((parent) => {
               const children = sortedTransactions.filter(
@@ -318,8 +278,6 @@ export default function TransactionsPage() {
         
               return (
                 <div key={parent.id}>
-                  {/* ================= PARENT ROW (GLASS HOVER) ================= */}
-                  {/* ✅ Updated to clean translucent glass hover effects */}
                   <div
                     className="
                     grid grid-cols-6 items-center
@@ -331,7 +289,6 @@ export default function TransactionsPage() {
                     "
                   >
         
-                    {/* NAME */}
                     <div className="font-semibold text-black dark:text-white text-base flex items-center">
                       {parent.has_child && (
                         <span
@@ -352,7 +309,6 @@ export default function TransactionsPage() {
                       <span>{getDisplayName(parent)}</span>
                     </div>
         
-                    {/* DATE */}
                     <div className="text-xs text-gray-500 dark:text-zinc-500">
                       {new Date(parent.date).toLocaleDateString("en-US", {
                         weekday: "short",
@@ -363,7 +319,6 @@ export default function TransactionsPage() {
                       })}
                     </div>
         
-                    {/* TYPE */}
                     <div>
                       <span
                         className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${getTypeStyle(
@@ -374,12 +329,10 @@ export default function TransactionsPage() {
                       </span>
                     </div>
 
-                    {/* NOTE */}
                     <div className="text-xs text-gray-500 dark:text-zinc-500 truncate">
                       {parent.note || "—"}
                     </div>                    
         
-                    {/* AMOUNT */}
                     <div
                       className={`text-right font-semibold ${
                         isPositive ? "text-emerald-500" : "text-rose-500"
@@ -390,27 +343,20 @@ export default function TransactionsPage() {
                       Tk
                     </div>
         
-                    {/* ACTIONS */}
                     <div className="flex justify-center items-center gap-2">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           setDeleteId(parent.id);
                         }}
-                        className="
-                        p-1.5 rounded-xl
-                        hover:bg-red-500/10
-                        text-red-400 hover:text-red-300
-                        transition
-                        "
+                        className="p-1.5 rounded-xl hover:bg-red-500/10 text-red-400 hover:text-red-300 transition"
                       >
                         <Trash2 size={15} />
                       </button>
                     </div>
                   </div>
         
-                  {/* ================= CHILDREN ROWS (SUBTLE NESTED GLASS) ================= */}
-                  {/* ✅ Updated child rows to beautiful transparent inner-glass style */}
+                  {/* Nested Children Rendering Block */}
                   {isExpanded &&
                     children.map((child) => {
                       const isPositiveChild =
@@ -431,7 +377,6 @@ export default function TransactionsPage() {
                           backdrop-blur-sm
                           "
                         >
-                          {/* NAME */}
                           <div className="flex items-center gap-2">
                             <CornerDownRight
                               size={14}
@@ -440,7 +385,6 @@ export default function TransactionsPage() {
                             <span>{getDisplayName(child)}</span>
                           </div>
         
-                          {/* DATE */}
                           <div className="text-xs">
                             {new Date(child.date).toLocaleDateString("en-US", {
                               weekday: "short",
@@ -451,7 +395,6 @@ export default function TransactionsPage() {
                             })}
                           </div>
         
-                          {/* TYPE */}
                           <div>
                             <span
                               className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${getTypeStyle(
@@ -462,12 +405,10 @@ export default function TransactionsPage() {
                             </span>
                           </div>
 
-                          {/* NOTE */}
                           <div className="text-xs truncate">
                             {child.note || "—"}
                           </div>                        
         
-                          {/* AMOUNT */}
                           <div
                             className={`text-right font-semibold ${
                               isPositiveChild ? "text-emerald-500" : "text-rose-500"
@@ -487,9 +428,7 @@ export default function TransactionsPage() {
             })}
           </div>
         
-          {/* ==========================================
-              MOBILE CARD VIEW (GLASS CARDS)
-              ========================================== */}
+          {/* Mobile Card Layout list */}
           <div className="md:hidden space-y-3 px-2 py-4">
             {roots.map((parent) => {
               const children = sortedTransactions.filter(
@@ -508,8 +447,6 @@ export default function TransactionsPage() {
               return (
                 <div key={parent.id} className="space-y-2">
         
-                  {/* ===== PARENT CARD (GLASS) ===== */}
-                  {/* ✅ Updated to standard translucent glassmorphic panel */}
                   <div
                     className="
                     bg-white/45 dark:bg-black/35
@@ -520,10 +457,8 @@ export default function TransactionsPage() {
                   >
                     <div className="flex justify-between gap-3">
                     
-                      {/* LEFT CONTENT */}
                       <div className="flex-1 min-w-0 space-y-3">
                     
-                        {/* ROW 1 */}
                         <div className="flex items-center gap-2">
                     
                           {parent.has_child && (
@@ -552,7 +487,6 @@ export default function TransactionsPage() {
                     
                         </div>
                     
-                        {/* ROW 2 */}
                         <div className="flex items-center justify-between gap-3">
                     
                           <div className="text-xs text-gray-500 dark:text-zinc-500">
@@ -574,7 +508,6 @@ export default function TransactionsPage() {
                     
                         </div>
                     
-                        {/* ROW 3 */}
                         <div className="flex items-center justify-between gap-3">
                     
                           <div className="text-xs text-gray-500 dark:text-zinc-500 truncate">
@@ -588,12 +521,9 @@ export default function TransactionsPage() {
                           >
                             {formatType(parent.type)}
                           </span>
-                    
                         </div>
-                    
                       </div>
                     
-                      {/* RIGHT ACTION */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -613,8 +543,6 @@ export default function TransactionsPage() {
                     </div>
                   </div>
         
-                  {/* ===== CHILDREN (SUBTLE NESTED GLASS) ===== */}
-                  {/* ✅ Updated child card to beautiful transparent inner-glass style */}
                   {isExpanded &&
                     children.map((child) => {
                       const isPositiveChild =
@@ -636,7 +564,6 @@ export default function TransactionsPage() {
                         >
                           <div className="space-y-2">
                           
-                            {/* TOP */}
                             <div className="flex items-center gap-2">
                               <CornerDownRight
                                 size={14}
@@ -648,7 +575,6 @@ export default function TransactionsPage() {
                               </span>
                             </div>
                           
-                            {/* MIDDLE */}
                             <div className="flex items-center justify-between gap-3">
                           
                               <div className="text-xs text-gray-500 dark:text-zinc-500">
@@ -669,10 +595,8 @@ export default function TransactionsPage() {
                                 {isPositiveChild ? "+" : "-"}
                                 {Number(child.amount).toLocaleString("en-BD")} Tk
                               </span>
-                          
                             </div>
                           
-                            {/* BOTTOM */}
                             <div className="flex items-center justify-between gap-3">
                           
                               <div className="text-xs text-gray-500 dark:text-zinc-500 truncate">
@@ -686,9 +610,7 @@ export default function TransactionsPage() {
                               >
                                 {formatType(child.type)}
                               </span>
-                          
                             </div>
-                          
                           </div>
                         </div>
                       );
@@ -698,7 +620,7 @@ export default function TransactionsPage() {
             })}
           </div>
 
-          {/* ✅ Pagination Controls (New) */}
+          {/* Pagination controls wrapper */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-6 py-4 bg-black/[0.02] dark:bg-white/[0.02] border-t border-black/[0.05] dark:border-white/[0.04]">
               <div className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
@@ -732,7 +654,6 @@ export default function TransactionsPage() {
           )}
         </div>
         
-        {/* EMPTY */}
         {transactions.length === 0 && (
           <div className="p-6 text-center text-gray-400">
             No transactions yet
@@ -740,112 +661,49 @@ export default function TransactionsPage() {
         )}
       </div>
 
-      {/* =========================================================
-          GORGEOUS CUSTOM DELETE CONFIRMATION MODAL (FROSTED GLASS)
-          ========================================================= */}
-      {deleteId && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setDeleteId(null)}>
-          {/* ✅ Updated modal wrapper to heavy frosted glassmorphism */}
-          <div className="bg-white/75 dark:bg-black/60 border border-black/[0.05] dark:border-white/[0.05] text-black dark:text-white backdrop-blur-xl rounded-3xl p-6 w-full max-w-[320px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
-            
-            <h3 className="text-lg font-bold text-black dark:text-white">Delete Transaction?</h3>
-            <p className="text-sm text-slate-500 dark:text-zinc-400 leading-relaxed">
-              Are you sure you want to permanently delete this transaction? This action cannot be undone.
-            </p>
-      
-            <div className="flex gap-3 justify-center">
-              
-              <button
-                disabled={loading}
-                onClick={async () => {
-                  await handleDelete(deleteId);
-                  setDeleteId(null);
-                }}
-                className="px-5 py-2.5 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition disabled:bg-slate-200 dark:disabled:bg-zinc-800 disabled:text-slate-400 dark:disabled:text-zinc-600 disabled:cursor-not-allowed flex items-center justify-center min-w-[100px]"
-              >
-                {loading ? "Deleting..." : "Delete"}
-              </button>
-      
-              <button
-                disabled={loading}
-                onClick={() => setDeleteId(null)}
-                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-semibold text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancel
-              </button>
-      
-            </div>
-      
-          </div>
-      
-        </div>
-      )}
+      {/* 1. Single Delete Confirmation Modal (Replaced with Global ConfirmDialog) */}
+      <ConfirmDialog
+        isOpen={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => deleteId && handleDelete(deleteId)}
+        title="Delete Transaction?"
+        description="Are you sure you want to permanently delete this transaction? This action cannot be undone."
+        confirmText="Delete"
+        loading={loading}
+        variant="danger"
+      />
 
-      {/* =========================================================
-          GORGEOUS CUSTOM DELETE ALL CONFIRMATION MODAL (FROSTED GLASS)
-          ========================================================= */}
-      {confirmAll && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setConfirmAll(false)}>
-          {/* ✅ Updated modal wrapper to heavy frosted glassmorphism */}
-          <div className="bg-white/75 dark:bg-black/60 border border-black/[0.05] dark:border-white/[0.05] text-black dark:text-white backdrop-blur-xl rounded-3xl p-6 w-full max-w-[320px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
-            
-            <h3 className="text-lg font-bold mb-4 text-red-400">
-              Delete All Transactions?
-            </h3>
-      
-            <p className="text-sm text-slate-500 mb-5">
-              This will remove all transaction records permanently.
-            </p>
-      
-            <div className="flex gap-3 justify-center">
-              <button
-                disabled={loading}
-                onClick={handleDeleteAll}
-                className="px-5 py-2.5 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition disabled:bg-slate-200 dark:disabled:bg-zinc-800 disabled:text-slate-400 dark:disabled:text-zinc-600 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]"
-              >
-                {loading ? "Deleting..." : "Delete All"}
-              </button>
-      
-              <button
-                disabled={loading}
-                onClick={() => setConfirmAll(false)}
-                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-semibold text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancel
-              </button>
-            </div>
-      
-          </div>
-        </div>
-      )}
+      {/* 2. Delete All Confirmation Modal (Replaced with Global ConfirmDialog) */}
+      <ConfirmDialog
+        isOpen={confirmAll}
+        onClose={() => setConfirmAll(false)}
+        onConfirm={handleDeleteAll}
+        title="Delete All Transactions?"
+        description="Are you sure you want to permanently delete all transaction records? This action cannot be undone."
+        confirmText="Delete All"
+        loading={loading}
+        variant="danger"
+      />
 
-      {/* =========================================================
-          GORGEOUS CUSTOM ACTION WARNING DIALOG (FROSTED GLASS)
-          ========================================================= */}
+      {/* 3. Action Warning Dialog */}
       {errorMessage && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setErrorMessage(null)}>
-          {/* ✅ Updated modal wrapper to heavy frosted glassmorphism */}
           <div className="bg-white/75 dark:bg-black/60 border border-black/[0.05] dark:border-white/[0.05] text-black dark:text-white backdrop-blur-xl rounded-3xl p-6 w-full max-w-[320px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
-            
             <h3 className="text-lg font-bold mb-3 text-red-400">
               Action Not Allowed
             </h3>
-      
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-5">
               {errorMessage}
             </p>
-      
             <button
               onClick={() => setErrorMessage(null)}
               className="px-6 py-2.5 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold text-sm transition active:scale-95 shadow-md shadow-green-500/10"
             >
               OK
             </button>
-      
           </div>
         </div>
       )}      
-      
     </DashboardLayout>
   );
 }

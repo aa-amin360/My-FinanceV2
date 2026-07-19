@@ -23,13 +23,13 @@ import {
   BarChart3,
   PanelLeftClose,
   PanelRightClose,
-  Home,
   CalendarDays,
   History,
   LogOut,
   TrendingUp,
   Sun,
   Moon,
+  Home
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -39,13 +39,12 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
 
-  // Balance states preserved from your logic
   const [cashBalance, setCashBalance] = useState(0);
   const [bankBalance, setBankBalance] = useState(0);
 
   const { toggleTheme, theme, collapsed, toggleCollapse } = useTheme();
 
-  // ================= LOAD BALANCE (Preserved Logic) =================
+  // Load user balance streams dynamically on mounting
   useEffect(() => {
     const loadBalance = async () => {
       const res = await fetch("/api/balance");
@@ -62,10 +61,10 @@ export default function DashboardLayout({
   return (
     <div className="relative flex h-screen overflow-hidden bg-[#E7EBED] text-black dark:bg-[#131B21] dark:text-white transition-colors duration-300">
       
-      {/* 1. Global Ambient Background Layer */}
+      {/* Global Ambient Background Layer */}
       <div className="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(0,0,0,0.08),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(255,255,255,0.14),rgba(0,0,0,0))]" />
 
-      {/* 2. Sidebar (Hidden on Mobile) */}
+      {/* Sidebar navigation */}
       <aside
         className={`relative z-10 hidden md:flex ${
           collapsed ? "w-16" : "w-60"
@@ -100,10 +99,10 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      {/* 3. Main Panel */}
+      {/* Main Panel Content Container */}
       <div className="relative z-10 flex flex-col flex-1 h-full min-w-0">
         
-        {/* Header */}
+        {/* Header bar controls */}
         <header className="h-14 shrink-0 flex items-center justify-between px-4 sm:px-6 bg-white/40 dark:bg-black/30 border-b border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md relative z-30">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 p-0.5 shadow-sm shadow-emerald-500/10 flex items-center justify-center overflow-hidden shrink-0">
@@ -128,7 +127,7 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        {/* 4. CONTENT WRAPPER (This fixes the screen size blowout) */}
+        {/* Dynamic page main content body */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden">
           <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 pb-32 md:pb-8">
             {children}
@@ -136,14 +135,15 @@ export default function DashboardLayout({
         </main>
       </div>
 
-      {/* 5. Mobile Floating Nav */}
+      {/* Mobile Floating Nav bar */}
       <FloatingNav pathname={pathname} />
 
-      {/* 6. FAB (Adjusted for responsiveness) */}
+      {/* Central Floating Action button mapped dynamically to router paths */}
       <button
         onClick={() => {
           if (pathname === "/debts") window.dispatchEvent(new CustomEvent("openAdd", { detail: "DEBT" }));
           else if (pathname === "/receivables") window.dispatchEvent(new CustomEvent("openAdd", { detail: "RECEIVABLE" }));
+          else if (pathname === "/savings") window.dispatchEvent(new CustomEvent("openAdd", { detail: "NEW_GOAL" }));
           else if (pathname === "/transactions") window.dispatchEvent(new CustomEvent("openAdd", { detail: "TRANSACTION" }));
           else window.dispatchEvent(new CustomEvent("openAdd", { detail: "GENERAL" }));
         }}
@@ -157,7 +157,7 @@ export default function DashboardLayout({
   );
 }
 
-// Side-Nav Item
+// Side-Nav item element component
 function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
   const isActive = pathname === href || pathname.startsWith(href + "/");
   const containerStyle = collapsed
@@ -174,7 +174,7 @@ function Item({ label, href, pathname, icon: Icon, collapsed }: any) {
   );
 }
 
-// Floating Mobile Nav (Optimized for scrolling)
+// Mobile persistent floating menu component
 function FloatingNav({ pathname }: { pathname: string }) {
   const items = [
     { label: "Home", href: "/dashboard", icon: Home },

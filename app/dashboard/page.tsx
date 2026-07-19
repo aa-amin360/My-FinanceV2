@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import CashflowChart from "@/components/charts/CashflowChart";
 import WeeklyChartCard from "@/components/dashboard/WeeklyChartCard";
+import SavingsMonoliths from "@/components/dashboard/SavingsMonoliths";
+import SavingsVault from "@/components/dashboard/SavingsVault";
 import Link from "next/link";
 import { Trash2, Wallet, Landmark, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Activity, Bell, ArrowRight } from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
@@ -21,6 +23,8 @@ type Transaction = {
 type Goal = {
   id: number;
   name: string;
+  target_amount: string;
+  current_amount: string; 
   installment_amount: string | null;
   frequency: string;
   reminder_day: number | null;
@@ -169,7 +173,7 @@ export default function DashboardPage() {
           </Link>
         </div>
       )}
-        
+             
         {/* ==========================================
             1. HERO BALANCE EMERALD GLASS CARD
             ========================================== */}
@@ -208,7 +212,7 @@ export default function DashboardPage() {
               Add History <ArrowUpRight size={13} className="text-emerald-600 dark:text-emerald-400" />
             </Link>
           </div>
-        </div>
+        </div>        
       
         {/* ==========================================
             2. MINIMALIST METRICS ROW
@@ -223,22 +227,30 @@ export default function DashboardPage() {
         {/* ==========================================
             3. CHARTS GRID (FROSTED GLASS PANELS)
             ========================================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">          
-          {/* Main Area curve chart */}
-          {/* ✅ Refined to a highly defined, deep black glassmorphic style */}
-          <div className="lg:col-span-7 bg-white/45 dark:bg-black/30 border border-black/[0.05] dark:border-white/[0.05] backdrop-blur-md rounded-3xl p-5 shadow-sm shadow-black/[0.01]">
-            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-              Balance History
+
+        {/* ✅ DYNAMIC SAVINGS VAULT (Unique Semantic Grid) */}
+        <SavingsVault goals={goals} />
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">          
+          {/* Balance Curve */}
+          <div className="lg:col-span-8 bg-white/45 dark:bg-black/30 border border-black/[0.05] dark:border-white/[0.05] backdrop-blur-md rounded-3xl p-5 shadow-sm">
+            <h3 className="mb-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">
+              Balance Trajectory
             </h3>
-            <div className="bg-black/[0.01] dark:bg-white/[0.01] border border-black/[0.03] dark:border-white/[0.03] rounded-2xl p-2 h-[260px] shadow-[inset_0_2px_4px_rgba(0,0,0,0.01)] dark:shadow-[inset_0_1px_3px_rgba(255,255,255,0.015)]">
+            <div className="h-[280px]">
               <CashflowChart data={chartData} />
             </div>
           </div>
 
-          {/* Weekly Flow Column Chart */}
-          <div className="lg:col-span-5 flex flex-col justify-stretch">
-            <WeeklyChartCard />
+          {/* ✅ UNIQUE SAVINGS MONOLITHS (The new graph) */}
+          <div className="lg:col-span-4">
+            <SavingsMonoliths goals={goals} />
           </div>
+        </div>
+
+        {/* Weekly Chart moved to its own row or below */}
+        <div className="grid grid-cols-1 gap-6">
+           <WeeklyChartCard />
         </div>
 
         {/* ==========================================
@@ -434,7 +446,6 @@ function Card({ title, value, type, href }: any) {
   const { text, bg, border } = getCardStyle(type);
 
   const content = (
-    // ✅ Updated metrics cards to standard translucent glassmorphic style
     <div className={`p-3.5 sm:p-4 rounded-2xl border transition hover:scale-[1.01] duration-200 backdrop-blur-md ${bg} ${border} ${href ? "cursor-pointer" : ""}`}>
       <div className="min-w-0">
         <span className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider block leading-none opacity-85 ${text}`}>
