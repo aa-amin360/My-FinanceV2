@@ -6,7 +6,13 @@ export async function checkBalance(
   amount: number,
   TYPE_META: any
 ) {
-  // Logic: Calculate the balance of the specific 'accountId' passed from the API
+  // Prevent race conditions by acquiring a row-level lock on the account
+  await client.query(
+    `SELECT id FROM accounts WHERE id = $1 AND user_id = $2 FOR UPDATE`,
+    [accountId, userId]
+  );
+
+  // Dynamically calculate the active balance of the account
   const res = await client.query(
     `
     SELECT COALESCE(SUM(
@@ -39,6 +45,7 @@ export async function checkBalance(
   const balance = Number(res.rows[0].balance || 0);
   const flowType = TYPE_META[type].flow;
 
+  // Verify if account has sufficient funds for outflows or transfers
   if (
     (flowType === "OUT" || flowType === "MOVE") &&
     amount > balance

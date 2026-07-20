@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import { Plus, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
+import Dropdown from "@/components/ui/Dropdown";
 
 type Category = {
   id: string;
@@ -21,11 +21,9 @@ export default function CategoriesPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   const [name, setName] = useState("");
-  const [type, setType] = useState("EXPENSE");
+  const [type, setType] = useState<"EXPENSE" | "INCOME">("EXPENSE");
 
-  // =========================
-  // LOAD DATA
-  // =========================
+  // Load active categories and transactions history
   const load = () => {
     fetch("/api/categories")
       .then((res) => res.json())
@@ -40,14 +38,12 @@ export default function CategoriesPage() {
     load();
   }, []);
 
-  // =========================
-  // CREATE CATEGORY
-  // =========================
   const handleCreate = async () => {
     if (!name.trim()) return alert("Enter category name");
 
     await fetch("/api/categories", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: name.trim(), type }),
     });
 
@@ -55,9 +51,7 @@ export default function CategoriesPage() {
     load();
   };
 
-  // =========================
-  // CALCULATE EXPENSE TOTALS
-  // =========================
+  // Calculate dynamic expense totals for each category
   const categoryTotals = categories.map((c) => {
     const total = transactions
       .filter(
@@ -73,11 +67,16 @@ export default function CategoriesPage() {
     };
   });
 
+  const typeOptions = [
+    { value: "EXPENSE", label: "Expense" },
+    { value: "INCOME", label: "Income" },
+  ];
+
   return (
     <DashboardLayout>
       <div className="w-full space-y-6 animate-fadeIn pb-16">
         
-        {/* HEADER */}
+        {/* Header Section */}
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-black dark:text-white">
             Categories
@@ -85,100 +84,91 @@ export default function CategoriesPage() {
           <p className="text-sm text-slate-500 dark:text-zinc-500">Configure your personal expense and income categories.</p>
         </div>
 
-        {/* =========================
-            CREATE CATEGORY (GLASS PANEL)
-            ========================= */}
-        {/* ✅ Updated to standard translucent glassmorphic panel */}
+        {/* Create Category Panel (Updated with relative z-20 to fix dropdown stacking) */}
         <div
           className="
-          bg-white/45 dark:bg-black/30
-          border border-black/[0.05] dark:border-white/[0.04]
-          backdrop-blur-md
-          p-4 rounded-3xl flex gap-3 shadow-sm shadow-black/[0.01]
+            bg-white/45 dark:bg-black/30
+            border border-black/[0.05] dark:border-white/[0.04]
+            backdrop-blur-md
+            p-4 rounded-3xl shadow-sm shadow-black/[0.01]
+            grid grid-cols-12 gap-3 items-end
+            relative z-20
           "
         >
-          <input
-            placeholder="Category name (e.g. Food)"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            // ✅ Applied subtle glass inner-shading to the input
-            className="
-            w-full
-            bg-black/[0.02] dark:bg-white/[0.02]
-            border border-black/[0.05] dark:border-white/[0.04]
-            backdrop-blur-sm
-            rounded-2xl
-            px-4 py-3
-            text-black dark:text-white
-            placeholder:text-gray-400 dark:placeholder:text-zinc-500
-            outline-none
-            focus:bg-white dark:focus:bg-zinc-950
-            transition-all duration-200
-            text-sm
-            "
-          />
+          {/* Category Name Input */}
+          <div className="col-span-12 sm:col-span-6 flex flex-col gap-1.5 text-left">
+            <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest ml-1">
+              Category Name
+            </span>
+            <input
+              placeholder="e.g. Food, Groceries, Salary"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="
+                w-full h-[46px]
+                bg-black/[0.02] dark:bg-white/[0.02]
+                border border-black/[0.05] dark:border-white/[0.04]
+                backdrop-blur-sm
+                rounded-2xl
+                px-4
+                text-black dark:text-white
+                placeholder:text-gray-400 dark:placeholder:text-zinc-500
+                outline-none
+                focus:bg-white dark:focus:bg-zinc-950
+                transition-all duration-200
+                text-sm
+              "
+            />
+          </div>
 
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            // ✅ Applied subtle glass inner-shading to the selector
-            className="
-            bg-black/[0.02] dark:bg-white/[0.02]
-            border border-black/[0.05] dark:border-white/[0.04]
-            backdrop-blur-sm
-            rounded-2xl
-            px-4 py-3
-            text-black dark:text-white
-            outline-none
-            focus:bg-white dark:focus:bg-zinc-950
-            transition-all duration-200
-            text-sm cursor-pointer
-            "
-          >
-            <option value="EXPENSE">Expense</option>
-            <option value="INCOME">Income</option>
-          </select>
+          {/* Category Type (Using Reusable Dropdown) */}
+          <div className="col-span-12 sm:col-span-4">
+            <Dropdown
+              label="Category Type"
+              options={typeOptions}
+              selectedValue={type}
+              onChange={(val) => setType(val)}
+            />
+          </div>
 
+          {/* Submit Button */}
           <button
             onClick={handleCreate}
-            // ✅ Updated to use the premium Emerald theme
             className="
-            px-6 py-3
-            bg-green-500
-            hover:bg-green-400
-            active:scale-95
-            transition-all duration-200
-            text-black
-            font-bold
-            text-sm
-            rounded-2xl shrink-0 shadow-md shadow-green-500/10
+              col-span-12 sm:col-span-2
+              h-[46px] w-full
+              bg-green-500
+              hover:bg-green-400
+              active:scale-95
+              transition-all duration-200
+              text-black
+              font-bold
+              text-sm
+              rounded-2xl shrink-0 shadow-md shadow-green-500/10
             "
           >
-            Add
+            Add Category
           </button>
         </div>
 
-        {/* =========================
-            CATEGORY TABLE (GLASS PANEL)
-            ========================= */}
-        {/* ✅ Updated to standard translucent glassmorphic panel */}
+        {/* Categories Listing Table */}
         <div
           className="
-          bg-white/45 dark:bg-black/30
-          border border-black/[0.05] dark:border-white/[0.04]
-          backdrop-blur-md
-          rounded-3xl overflow-hidden shadow-sm shadow-black/[0.01]
+            bg-white/45 dark:bg-black/30
+            border border-black/[0.05] dark:border-white/[0.04]
+            backdrop-blur-md
+            rounded-3xl overflow-hidden shadow-sm shadow-black/[0.01]
           "
         >
-          {/* HEADER */}
+          {/* Table Header */}
           <div
             className="
-            grid grid-cols-3
-            px-5 py-4
-            text-xs font-semibold uppercase tracking-wider
-            text-slate-400 dark:text-zinc-500
-            border-b border-black/[0.05] dark:border-white/[0.04]
-            leading-none
+              grid grid-cols-3
+              px-5 py-4
+              text-xs font-semibold uppercase tracking-wider
+              text-slate-400 dark:text-zinc-500
+              border-b border-black/[0.05] dark:border-white/[0.04]
+              leading-none
             "
           >
             <div>Category</div>
@@ -186,28 +176,33 @@ export default function CategoriesPage() {
             <div className="text-right">Total Expense</div>
           </div>
 
-          {/* ROWS */}
+          {/* Table Rows */}
           <div className="divide-y divide-slate-100 dark:divide-zinc-900/60">
             {categoryTotals.map((item, i) => (
               <div
                 key={i}
                 className="
-                grid grid-cols-3
-                px-5 py-4
-                border-b border-black/[0.03] dark:border-white/[0.03]
-                hover:bg-white/35 dark:hover:bg-black/35
-                transition-all duration-200 text-sm
+                  grid grid-cols-3 items-center
+                  px-5 py-4
+                  border-b border-black/[0.03] dark:border-white/[0.03]
+                  hover:bg-white/35 dark:hover:bg-black/35
+                  transition-all duration-200 text-sm
                 "
               >
                 <div className="font-semibold text-black dark:text-white">
                   {item.name}
                 </div>
 
-                <div className="text-xs text-slate-500 dark:text-zinc-500">
-                  {item.type}
+                <div>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${
+                    item.type === "INCOME" 
+                      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" 
+                      : "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                  }`}>
+                    {item.type}
+                  </span>
                 </div>
 
-                {/* ✅ Updated total text to use Rose Crimson instead of neon red */}
                 <div className="text-right text-rose-600 dark:text-rose-400 font-bold">
                   {item.total.toFixed(2)} Tk
                 </div>
@@ -215,7 +210,7 @@ export default function CategoriesPage() {
             ))}
           </div>
 
-          {/* EMPTY */}
+          {/* Empty state indicator */}
           {categoryTotals.length === 0 && (
             <div className="p-12 text-center text-slate-400 dark:text-zinc-500 text-sm">
               No categories configured yet.
