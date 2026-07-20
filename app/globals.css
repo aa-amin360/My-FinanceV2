@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 
+  Global HTML and Body background colors configuration.
+  This ensures that any empty scroll areas or dynamic dynamic navigation bar 
+  overscrolls on mobile match the exact charcoal theme colors.
+*/
+html, body {
+  background-color: #E7EBED; /* Light mode background */
+  color: #000000;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Dark mode overrides connected with ThemeProvider.tsx state classes */
+html.dark, body.dark, .dark body, .dark html {
+  background-color: #131B21 !important; /* Dark mode background */
+  color: #ffffff;
+}
 
 @keyframes modalIn {
   from {

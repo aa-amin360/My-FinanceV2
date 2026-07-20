@@ -250,7 +250,7 @@ export default function TransactionsPage() {
       <div className="bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md rounded-3xl overflow-hidden shadow-sm shadow-black/[0.01]">
 
         {/* Desktop Table Headers */}
-        <div className="grid grid-cols-6 px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-black/[0.05] dark:border-white/[0.04] leading-none">
+        <div className="hidden md:grid grid-cols-6 px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-black/[0.05] dark:border-white/[0.04] leading-none">
           <div>Name</div>
           <div>Date</div>
           <div>Type</div>
@@ -275,7 +275,7 @@ export default function TransactionsPage() {
                 parent.type === "RECEIVABLE_RECEIVED";
         
               const finalAmount = Number(parent.amount);
-        
+            
               return (
                 <div key={parent.id}>
                   <div
@@ -355,7 +355,7 @@ export default function TransactionsPage() {
                       </button>
                     </div>
                   </div>
-        
+            
                   {/* Nested Children Rendering Block */}
                   {isExpanded &&
                     children.map((child) => {
@@ -443,15 +443,16 @@ export default function TransactionsPage() {
                 parent.type === "RECEIVABLE_RECEIVED";
         
               const finalAmount = Number(parent.amount);
-        
+            
               return (
                 <div key={parent.id} className="space-y-2">
         
+                  {/* Parent Card (NESTING OVERLAY SOLVED: we use ultra-light transparency border to blend perfectly) */}
                   <div
                     className="
-                    bg-white/45 dark:bg-black/35
-                    border border-black/[0.05] dark:border-white/[0.04]
-                    backdrop-blur-md p-4 rounded-2xl
+                    bg-white/10 dark:bg-white/[0.01]
+                    border border-black/[0.04] dark:border-white/[0.03]
+                    p-4 rounded-2xl
                     shadow-sm shadow-black/[0.01]
                     "
                   >
@@ -484,7 +485,6 @@ export default function TransactionsPage() {
                           <div className="font-bold text-black dark:text-white truncate">
                             {getDisplayName(parent)}
                           </div>
-                    
                         </div>
                     
                         <div className="flex items-center justify-between gap-3">
@@ -505,7 +505,6 @@ export default function TransactionsPage() {
                             {isPositive ? "+" : "-"}
                             {finalAmount.toLocaleString("en-BD")} Tk
                           </div>
-                    
                         </div>
                     
                         <div className="flex items-center justify-between gap-3">
@@ -542,7 +541,8 @@ export default function TransactionsPage() {
                     
                     </div>
                   </div>
-        
+            
+                  {/* Nested mobile child cards */}
                   {isExpanded &&
                     children.map((child) => {
                       const isPositiveChild =
@@ -554,9 +554,8 @@ export default function TransactionsPage() {
                         <div
                           key={child.id}
                           className="
-                          bg-white/20 dark:bg-black/20
-                          border border-black/[0.03] dark:border-white/[0.03]
-                          backdrop-blur-sm
+                          bg-white/5 dark:bg-white/[0.01]
+                          border border-black/[0.03] dark:border-white/[0.02]
                           p-3 rounded-xl
                           ml-4
                           text-gray-500 dark:text-zinc-400
@@ -654,6 +653,7 @@ export default function TransactionsPage() {
           )}
         </div>
         
+        {/* Empty State */}
         {transactions.length === 0 && (
           <div className="p-6 text-center text-gray-400">
             No transactions yet
@@ -661,7 +661,7 @@ export default function TransactionsPage() {
         )}
       </div>
 
-      {/* 1. Single Delete Confirmation Modal (Replaced with Global ConfirmDialog) */}
+      {/* 1. Single Delete Confirmation Modal */}
       <ConfirmDialog
         isOpen={deleteId !== null}
         onClose={() => setDeleteId(null)}
@@ -673,7 +673,7 @@ export default function TransactionsPage() {
         variant="danger"
       />
 
-      {/* 2. Delete All Confirmation Modal (Replaced with Global ConfirmDialog) */}
+      {/* 2. Delete All Confirmation Modal */}
       <ConfirmDialog
         isOpen={confirmAll}
         onClose={() => setConfirmAll(false)}
