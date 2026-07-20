@@ -6,8 +6,9 @@ import CashflowChart from "@/components/charts/CashflowChart";
 import WeeklyChartCard from "@/components/dashboard/WeeklyChartCard";
 import SavingsMonoliths from "@/components/dashboard/SavingsMonoliths";
 import SavingsVault from "@/components/dashboard/SavingsVault";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Link from "next/link";
-import { Trash2, Wallet, Landmark, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Activity, Bell, ArrowRight } from "lucide-react";
+import { Trash2, ArrowUpRight, ArrowRight, Bell } from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
 
 type Transaction = {
@@ -39,8 +40,9 @@ export default function DashboardPage() {
   const [receivable, setReceivable] = useState(0);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // ================= LOAD DATA =================
+  // Load all dashboard metrics and transactions in parallel
   const loadData = async () => {
     try {
       const [txRes, bRes, dRes, rRes, gRes] = await Promise.all([
@@ -73,7 +75,7 @@ export default function DashboardPage() {
 
   useRefresh(loadData);
 
-  // ================= CALCULATIONS =================
+  // Dynamic calculations for overall flow metrics
   let income = 0;
   let expense = 0;
 
@@ -85,7 +87,7 @@ export default function DashboardPage() {
 
   let runningBalance = 0;
   
-  // Filter out parents with children to prevent double-counting, leaving only active nodes
+  // Exclude duplicate parenting entries to keep balance trajectory accurate
   const parentIdsWithChildren = new Set(
     transactions
       .filter((t) => t.parent_id)
@@ -125,17 +127,22 @@ export default function DashboardPage() {
     });
   
   const handleDelete = async (id: string) => {
+    setLoading(true);
     try {
       const res = await fetch(`/api/transactions/${id}`, { method: "DELETE" });
       if (res.ok) {
         setDeleteId(null);
         window.dispatchEvent(new Event("refreshData"));
+        loadData();
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Identify savings installments due for today
   const dueGoals = goals.filter((goal) => {
     if (!goal.reminder_day) return false;
     const today = new Date();
@@ -151,39 +158,34 @@ export default function DashboardPage() {
     <DashboardLayout>
       <div className="w-full space-y-6 pb-12 animate-fadeIn">
 
-        {/* ✅ ASSISTANT NOTIFICATION WIDGET */}
-      {dueGoals.length > 0 && (
-        <div className="mb-6 bg-indigo-600/10 border border-indigo-500/20 backdrop-blur-md rounded-3xl p-4 sm:p-5 flex items-center justify-between group hover:bg-indigo-600/15 transition-all duration-300">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/20 animate-pulse">
-              <Bell size={24} />
+        {/* Assistant Notification banner */}
+        {dueGoals.length > 0 && (
+          <div className="mb-6 bg-indigo-600/10 border border-indigo-500/20 backdrop-blur-md rounded-3xl p-4 sm:p-5 flex items-center justify-between group hover:bg-indigo-600/15 transition-all duration-300">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/20 animate-pulse">
+                <Bell size={24} />
+              </div>
+              <div>
+                <h4 className="text-sm sm:text-base font-bold text-indigo-600 dark:text-indigo-400">Commitments Due Today</h4>
+                <p className="text-xs text-indigo-500/80 font-medium">
+                  You have {dueGoals.length} savings {dueGoals.length === 1 ? 'installment' : 'installments'} scheduled ({totalDueAmount.toLocaleString()} Tk).
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="text-sm sm:text-base font-bold text-indigo-600 dark:text-indigo-400">Commitments Due Today</h4>
-              <p className="text-xs text-indigo-500/80 font-medium">
-                You have {dueGoals.length} savings {dueGoals.length === 1 ? 'installment' : 'installments'} scheduled ({totalDueAmount.toLocaleString()} Tk).
-              </p>
-            </div>
+            <Link 
+              href="/savings" 
+              className="px-4 py-2 bg-indigo-500 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 hover:bg-indigo-400 transition active:scale-95 shadow-md shadow-indigo-500/10"
+            >
+              Deposit <ArrowRight size={14} />
+            </Link>
           </div>
-          <Link 
-            href="/savings" 
-            className="px-4 py-2 bg-indigo-500 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 hover:bg-indigo-400 transition active:scale-95 shadow-md shadow-indigo-500/10"
-          >
-            Deposit <ArrowRight size={14} />
-          </Link>
-        </div>
-      )}
+        )}
              
-        {/* ==========================================
-            1. HERO BALANCE EMERALD GLASS CARD
-            ========================================== */}
-        {/* ✅ Updated to translucent glassmorphism with emerald gradients */}
+        {/* Hero balance glass card */}
         <div className="relative overflow-hidden rounded-3xl p-4 sm:p-5 border shadow-xl transition-all duration-300 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-emerald-600/10 border-emerald-500/20 shadow-emerald-500/[0.03] dark:from-emerald-950/20 dark:via-emerald-950/15 dark:to-zinc-950/40 dark:border-emerald-500/15 dark:backdrop-blur-md">
-          {/* Subtle Ambient emerald blur inside card */}
           <div className="absolute top-[-30%] right-[-10%] w-60 h-60 rounded-full bg-emerald-500/15 dark:bg-emerald-500/10 blur-[70px] pointer-events-none" />
 
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 relative z-10">
-            {/* Balance Copy */}
             <div className="space-y-0.5">
               <span className="text-[10px] font-bold uppercase tracking-widest leading-none text-emerald-700/85 dark:text-emerald-400/80">
                 Ledger Available Balance
@@ -193,7 +195,6 @@ export default function DashboardPage() {
                 {Number(balance).toLocaleString("en-BD")} <span className="text-emerald-600 dark:text-emerald-400 text-xl font-bold">Tk</span>
               </h1>
 
-              {/* In-Line Account Split */}
               <div className="flex gap-4 pt-1.5 text-xs font-semibold font-mono text-emerald-700/80 dark:text-emerald-400/70 leading-none">
                 <span className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-600/60 dark:bg-emerald-500/40" /> Cash: {cashBalance.toLocaleString("en-BD")} Tk
@@ -204,7 +205,6 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Quick Action Link */}
             <Link 
               href="/add-history" 
               className="self-start sm:self-center px-4 py-2 text-xs font-bold rounded-xl border transition flex items-center gap-1.5 hover:scale-[1.03] border-emerald-500/20 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:border-emerald-500/15 dark:bg-emerald-500/5 dark:text-green-300 dark:hover:bg-emerald-500/10"
@@ -214,9 +214,7 @@ export default function DashboardPage() {
           </div>
         </div>        
       
-        {/* ==========================================
-            2. MINIMALIST METRICS ROW
-            ========================================== */}
+        {/* Quick metrics summaries row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card title="Income" value={income} type="income" />
           <Card title="Expenses" value={expense} type="expense" />
@@ -224,15 +222,10 @@ export default function DashboardPage() {
           <Card title="Receivable" value={receivable} type="receivable" href="/receivables" />
         </div>
       
-        {/* ==========================================
-            3. CHARTS GRID (FROSTED GLASS PANELS)
-            ========================================== */}
-
-        {/* ✅ DYNAMIC SAVINGS VAULT (Unique Semantic Grid) */}
+        {/* Savings Vault Visual Grid */}
         <SavingsVault goals={goals} />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">          
-          {/* Balance Curve */}
           <div className="lg:col-span-8 bg-white/45 dark:bg-black/30 border border-black/[0.05] dark:border-white/[0.05] backdrop-blur-md rounded-3xl p-5 shadow-sm">
             <h3 className="mb-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">
               Balance Trajectory
@@ -242,20 +235,16 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* ✅ UNIQUE SAVINGS MONOLITHS (The new graph) */}
           <div className="lg:col-span-4">
             <SavingsMonoliths goals={goals} />
           </div>
         </div>
 
-        {/* Weekly Chart moved to its own row or below */}
         <div className="grid grid-cols-1 gap-6">
            <WeeklyChartCard />
         </div>
 
-        {/* ==========================================
-            4. RECENT TRANSACTIONS LEDGER LIST (GLASS LIST)
-            ========================================== */}
+        {/* Recent Transactions List */}
         <div className="space-y-4">
           <div className="flex justify-between items-center px-1">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
@@ -278,8 +267,8 @@ export default function DashboardPage() {
                   t.type === "DEBT_TAKEN" ||
                   t.type === "RECEIVABLE_RECEIVED";
 
-                const formatType = (type: string) =>
-                  type
+                const formatType = (typeStr: string) =>
+                  typeStr
                     .toLowerCase()
                     .replace(/_/g, " ")
                     .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -294,7 +283,6 @@ export default function DashboardPage() {
                 };
 
                 return (
-                  // ✅ Refined to a highly defined, deep black glassmorphic style
                   <div
                     key={t.id}
                     className="
@@ -308,7 +296,6 @@ export default function DashboardPage() {
                       transition-all duration-200 shadow-sm
                     "
                   >
-                    {/* LEFT */}
                     <div className="min-w-0 flex-1 pr-4">
                       <div className="font-semibold text-black dark:text-white text-sm truncate">
                         {getDisplayName(t)}
@@ -325,7 +312,6 @@ export default function DashboardPage() {
                       </div>
                     </div>
 
-                    {/* RIGHT */}
                     <div className="flex items-center gap-4 shrink-0">
                       <div className="text-right">
                         <div className={`font-bold text-base ${isPositive ? "text-emerald-500" : "text-rose-500"}`}>
@@ -352,7 +338,6 @@ export default function DashboardPage() {
                         </div>
                       </div>
 
-                      {/* Delete Action Trigger */}
                       <button
                         onClick={() => setDeleteId(t.id)}
                         className="p-1.5 rounded-xl text-red-400 hover:bg-red-500/10 transition"
@@ -368,49 +353,27 @@ export default function DashboardPage() {
 
       </div>
 
-      {/* =========================================================
-          GORGEOUS CUSTOM DELETE CONFIRMATION MODAL (FROSTED GLASS)
-          ========================================================= */}
-      {deleteId && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setDeleteId(null)}>
-          {/* ✅ Updated modal wrapper to heavy frosted glassmorphism */}
-          <div className="bg-white/75 dark:bg-black/60 border border-black/[0.05] dark:border-white/[0.05] text-black dark:text-white backdrop-blur-xl rounded-3xl p-6 w-full max-w-[320px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-black dark:text-white">Delete Transaction?</h3>
-            <p className="text-sm text-slate-500 dark:text-zinc-400 leading-relaxed">
-              Are you sure you want to permanently delete this transaction? This action cannot be undone.
-            </p>
-            <div className="flex gap-3 justify-center mt-2">
-              <button
-                onClick={async () => {
-                  await handleDelete(deleteId);
-                  setDeleteId(null);
-                }}
-                className="px-5 py-2.5 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition active:scale-95 shadow-md"
-              >
-                Delete
-              </button>
-              <button
-                onClick={() => setDeleteId(null)}
-                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-semibold text-sm transition"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Global ConfirmDialog for transactions deletion */}
+      <ConfirmDialog
+        isOpen={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => deleteId && handleDelete(deleteId)}
+        title="Delete Transaction?"
+        description="Are you sure you want to permanently delete this transaction? This action cannot be undone."
+        confirmText="Delete"
+        loading={loading}
+        variant="danger"
+      />
     </DashboardLayout>
   );
 }
 
-// ================= MINIMILIST METRIC CARD COMPONENT =================
-
+// Minimal metrics summaries blocks
 const getCardStyle = (type: string) => {
   switch (type) {
     case "income":
       return {
         text: "text-green-700 dark:text-green-400",
-        // ✅ Updated cards to translucent, deep-saturated glassmorphic backgrounds
         bg: "bg-green-500/20 dark:bg-green-950/30",
         border: "border-green-500/35 dark:border-green-500/25",
       };
