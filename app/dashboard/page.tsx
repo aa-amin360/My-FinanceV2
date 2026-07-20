@@ -7,6 +7,7 @@ import WeeklyChartCard from "@/components/dashboard/WeeklyChartCard";
 import SavingsMonoliths from "@/components/dashboard/SavingsMonoliths";
 import SavingsVault from "@/components/dashboard/SavingsVault";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import MetricCard from "@/components/ui/MetricCard";
 import Link from "next/link";
 import { Trash2, ArrowUpRight, ArrowRight, Bell } from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
@@ -42,6 +43,13 @@ export default function DashboardPage() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const year = currentDate().getFullYear();
+  const month = currentDate().getMonth() + 1;
+
+  function currentDate() {
+    return new Date();
+  }
+
   // Load all dashboard metrics and transactions in parallel
   const loadData = async () => {
     try {
@@ -74,6 +82,10 @@ export default function DashboardPage() {
   };
 
   useRefresh(loadData);
+
+  useEffect(() => {
+    loadData();
+  }, []);
 
   // Dynamic calculations for overall flow metrics
   let income = 0;
@@ -214,12 +226,12 @@ export default function DashboardPage() {
           </div>
         </div>        
       
-        {/* Quick metrics summaries row */}
+        {/* Reusable MetricCard Summaries Row (Completely decoupled and cleaned up) */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card title="Income" value={income} type="income" />
-          <Card title="Expenses" value={expense} type="expense" />
-          <Card title="Debt" value={debt} type="debt" href="/debts" />
-          <Card title="Receivable" value={receivable} type="receivable" href="/receivables" />
+          <MetricCard title="Income" value={income} type="income" />
+          <MetricCard title="Expenses" value={expense} type="expense" />
+          <MetricCard title="Debt" value={debt} type="debt" href="/debts" />
+          <MetricCard title="Receivable" value={receivable} type="receivable" href="/receivables" />
         </div>
       
         {/* Savings Vault Visual Grid */}
@@ -366,69 +378,4 @@ export default function DashboardPage() {
       />
     </DashboardLayout>
   );
-}
-
-// Minimal metrics summaries blocks
-const getCardStyle = (type: string) => {
-  switch (type) {
-    case "income":
-      return {
-        text: "text-green-700 dark:text-green-400",
-        bg: "bg-green-500/20 dark:bg-green-950/30",
-        border: "border-green-500/35 dark:border-green-500/25",
-      };
-    case "expense":
-      return {
-        text: "text-red-700 dark:text-red-400",
-        bg: "bg-red-500/20 dark:bg-red-950/30",
-        border: "border-red-500/35 dark:border-red-500/25",
-      };
-    case "debt":
-      return {
-        text: "text-cyan-700 dark:text-cyan-400",
-        bg: "bg-cyan-500/20 dark:bg-cyan-950/30",
-        border: "border-cyan-500/35 dark:border-cyan-500/25",
-      };
-    case "receivable":
-      return {
-        text: "text-yellow-700 dark:text-yellow-400",
-        bg: "bg-yellow-500/20 dark:bg-yellow-950/30",
-        border: "border-yellow-500/35 dark:border-yellow-500/25",
-      };
-    default:
-      return {
-        text: "text-gray-400",
-        bg: "bg-slate-50 dark:bg-zinc-950/40",
-        border: "border-slate-200 dark:border-zinc-900/60",
-      };
-  }
-};
-
-function Card({ title, value, type, href }: any) {
-  const formatted = Number(value).toLocaleString("en-BD");
-  const { text, bg, border } = getCardStyle(type);
-
-  const content = (
-    <div className={`p-3.5 sm:p-4 rounded-2xl border transition hover:scale-[1.01] duration-200 backdrop-blur-md ${bg} ${border} ${href ? "cursor-pointer" : ""}`}>
-      <div className="min-w-0">
-        <span className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider block leading-none opacity-85 ${text}`}>
-          {title}
-        </span>
-        <div className="mt-1.5 flex items-baseline gap-1">
-          <span className={`font-extrabold leading-none truncate text-sm sm:text-base ${text}`}>
-            {formatted}
-          </span>
-          <span className={`text-[10px] shrink-0 font-bold opacity-80 ${text}`}>
-            Tk
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-
-  if (href) {
-    return <Link href={href} className="block">{content}</Link>;
-  }
-
-  return content;
 }
