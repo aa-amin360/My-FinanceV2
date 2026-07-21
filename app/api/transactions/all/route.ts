@@ -16,7 +16,7 @@ export async function DELETE() {
     );
   }
 
-  const userId = session.user.email;
+  const userId = session.user.id;
 
   const client = await pool.connect();
 

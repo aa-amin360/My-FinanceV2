@@ -42,13 +42,13 @@ export async function POST(req: Request) {
     const passwordHash = hashPassword(password);
 
     // 4. Insert the new user into the database
-    // We generate a UUID-style string or reuse the email as the unique ID
+    // id column is omitted to let Postgres automatically auto-generate its secure UUID
     await pool.query(
       `
-      INSERT INTO users (id, email, name, password_hash)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO users (email, name, password_hash)
+      VALUES ($1, $2, $3)
       `,
-      [cleanEmail, cleanEmail, cleanName, passwordHash]
+      [cleanEmail, cleanName, passwordHash]
     );
 
     return NextResponse.json({

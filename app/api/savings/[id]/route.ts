@@ -15,7 +15,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = session.user.email;
+  const userId = session.user.id;
   const id = params.id;
   const parsedGoalId = parseInt(id); // Cast string ID to integer to prevent SQL type mismatches
 
@@ -130,7 +130,7 @@ export async function PUT(
   const session: any = await getServerSession(authOptions);
   if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const userId = session.user.email;
+  const userId = session.user.id;
   const id = params.id;
   const parsedGoalId = parseInt(id);
 

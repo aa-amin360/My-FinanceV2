@@ -18,7 +18,7 @@ export async function GET() {
     );
   }
 
-  const userId = session.user.email;
+  const userId = session.user.id;
 
   const client = await pool.connect();
 
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const userId = session.user.email;
+  const userId = session.user.id;
 
   const client = await pool.connect();
 

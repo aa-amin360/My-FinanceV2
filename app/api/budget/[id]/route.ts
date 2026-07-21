@@ -21,7 +21,7 @@ export async function PUT(
     );
   }
 
-  const userId = session.user.email;
+  const userId = session.user.id;
   const id = params.id;
   const client = await pool.connect();
 
@@ -118,7 +118,7 @@ export async function DELETE(
     );
   }
 
-  const userId = session.user.email;
+  const userId = session.user.id;
   const id = params.id;
   const client = await pool.connect();
 

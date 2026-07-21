@@ -45,7 +45,7 @@ export const authOptions: AuthOptions = {
         }
 
         const res = await pool.query(
-          "SELECT * FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1",
+          "SELECT id, email, name, image, password_hash FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1",
           [credentials.email.trim()]
         );
 
@@ -65,7 +65,7 @@ export const authOptions: AuthOptions = {
         }
 
         return {
-          id: user.email,
+          id: user.id, // Return the real database UUID ID
           email: user.email,
           name: user.name,
           image: user.image,
@@ -85,17 +85,18 @@ export const authOptions: AuthOptions = {
       if (!user.email) return false;
 
       // Only perform database insert/update for Google logins
+      // Note: id (UUID) is omitted here because Postgres auto-generates gen_random_uuid() on INSERT
       if (account.provider === "google") {
         await pool.query(
           `
-          INSERT INTO users (id, email, name, image)
-          VALUES ($1, $2, $3, $4)
+          INSERT INTO users (email, name, image)
+          VALUES ($1, $2, $3)
           ON CONFLICT (email)
           DO UPDATE SET
             name = EXCLUDED.name,
             image = EXCLUDED.image
           `,
-          [user.email, user.email, user.name, user.image]
+          [user.email, user.name, user.image]
         );
       }
 
@@ -103,20 +104,26 @@ export const authOptions: AuthOptions = {
     },
 
     async redirect({ baseUrl }: any) {
-      // Redirect users to the dashboard home page after logging in successfully
       return `${baseUrl}/dashboard`;
     },
 
     async jwt({ token, user }: any) {
-      if (user) {
-        token.id = user.id;
+      // Safely fetch and bind the user's permanent database UUID to the session token
+      if (user && user.email) {
+        const dbUserRes = await pool.query(
+          "SELECT id FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1",
+          [user.email]
+        );
+        if (dbUserRes.rows.length > 0) {
+          token.id = dbUserRes.rows[0].id; // Binds the Postgres UUID!
+        }
       }
       return token;
     },
 
     async session({ session, token }: any) {
       if (session.user) {
-        session.user.id = token.id;
+        session.user.id = token.id; // Pass the Postgres UUID to the front-end session object
       }
       return session;
     },

@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 // ==========================================
-// GET ALL SAVINGS GOALS (DYNAMICALLY CALCULATED)
+// GET ALL SAVINGS GOALS (DYNAMICALLY CALCULATED WITH UUID)
 // ==========================================
 export async function GET() {
   const session: any = await getServerSession(authOptions);
@@ -12,11 +12,11 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = session.user.email;
+  const userId = session.user.id; // Extract the stable database UUID from the session
   const client = await pool.connect();
 
   try {
-    // This query will calculate the real-time savings balance from the ledger for each goal.
+    // Calculate the dynamic savings balance for each goal directly from ledger records
     const res = await client.query(
       `
       SELECT 
@@ -30,8 +30,8 @@ export async function GET() {
         sg.created_at,
         COALESCE(SUM(
           CASE 
-            WHEN t.to_account = (SELECT id FROM accounts WHERE name = 'Savings' AND user_id = $1 LIMIT 1) THEN t.amount
-            WHEN t.from_account = (SELECT id FROM accounts WHERE name = 'Savings' AND user_id = $1 LIMIT 1) THEN -t.amount
+            WHEN t.to_account = (SELECT id FROM accounts WHERE LOWER(TRIM(name)) = 'savings' AND user_id = $1 LIMIT 1) THEN t.amount
+            WHEN t.from_account = (SELECT id FROM accounts WHERE LOWER(TRIM(name)) = 'savings' AND user_id = $1 LIMIT 1) THEN -t.amount
             ELSE 0
           END
         ), 0) AS current_amount
@@ -64,6 +64,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const userId = session.user.id; // Extract the stable database UUID from the session
+
   try {
     const body = await req.json();
     const { 
@@ -89,7 +91,7 @@ export async function POST(req: Request) {
         frequency || 'MONTHLY',
         reminder_day ? Number(reminder_day) : null,
         target_date, 
-        session.user.email
+        userId // Pass the stable UUID instead of the mutable email string
       ]
     );
     

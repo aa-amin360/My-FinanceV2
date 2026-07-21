@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     );
   }
 
-  const userId = session.user.email;
+  const userId = session.user.id;
   const { searchParams } = new URL(req.url);
   const month = searchParams.get("month");
   const year = searchParams.get("year");
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const userId = session.user.email;
+  const userId = session.user.id;
   const client = await pool.connect();
 
   try {

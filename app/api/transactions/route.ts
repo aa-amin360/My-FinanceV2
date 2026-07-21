@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = session.user.email;
+  const userId = session.user.id;
   const client = await pool.connect();
 
   try {
@@ -182,7 +182,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = session.user.email;
+  const userId = session.user.id;
   const { searchParams } = new URL(req.url);
   
   // 1. Pagination & Filter Params
