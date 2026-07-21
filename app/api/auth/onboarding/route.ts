@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import pool from "@/lib/db";
 
 // ==========================================
-// GET USER ONBOARDING STATUS
+// GET USER ONBOARDING STATUS (INTELLIGENT CHECK)
 // ==========================================
 export async function GET() {
   const session: any = await getServerSession(authOptions);
@@ -16,16 +16,34 @@ export async function GET() {
     );
   }
 
-  const userId = session.user.id;
+  const userId = session.user.id; // Stable database UUID
   const client = await pool.connect();
 
   try {
+    // Check both the static flag and if the user has any existing transaction history
     const res = await client.query(
-      "SELECT history_initialized FROM users WHERE email = $1 LIMIT 1",
+      `
+      SELECT 
+        u.history_initialized,
+        EXISTS (SELECT 1 FROM transactions WHERE user_id = u.id LIMIT 1) AS has_transactions
+      FROM users u 
+      WHERE u.id = $1 
+      LIMIT 1
+      `,
       [userId]
     );
 
-    const history_initialized = res.rows[0]?.history_initialized || false;
+    let history_initialized = res.rows[0]?.history_initialized || false;
+    const has_transactions = res.rows[0]?.has_transactions || false;
+
+    // If they already started using the app (have transactions), dynamically onboard them permanently
+    if (!history_initialized && has_transactions) {
+      await client.query(
+        "UPDATE users SET history_initialized = true WHERE id = $1",
+        [userId]
+      );
+      history_initialized = true;
+    }
 
     return NextResponse.json({
       success: true,
@@ -44,7 +62,7 @@ export async function GET() {
 }
 
 // ==========================================
-// SET ONBOARDING COMPLETED
+// SET ONBOARDING COMPLETED MANUALLY
 // ==========================================
 export async function POST() {
   const session: any = await getServerSession(authOptions);
@@ -56,12 +74,12 @@ export async function POST() {
     );
   }
 
-  const userId = session.user.id;
+  const userId = session.user.id; // Stable database UUID
   const client = await pool.connect();
 
   try {
     await client.query(
-      "UPDATE users SET history_initialized = true WHERE email = $1",
+      "UPDATE users SET history_initialized = true WHERE id = $1",
       [userId]
     );
 
