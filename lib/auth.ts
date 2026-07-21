@@ -131,5 +131,6 @@ export const authOptions: AuthOptions = {
 
   pages: {
     signIn: "/",
+    newUser: "/onboarding", // Redirect brand new social/Google signups directly to the onboarding flow
   },
 };

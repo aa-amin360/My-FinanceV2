@@ -2,7 +2,7 @@
 
 import { useTheme } from "../ThemeProvider";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Space_Grotesk } from "next/font/google";
 import { signOut } from "next-auth/react";
@@ -38,11 +38,29 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
 
   const [cashBalance, setCashBalance] = useState(0);
   const [bankBalance, setBankBalance] = useState(0);
 
   const { toggleTheme, theme, collapsed, toggleCollapse } = useTheme();
+
+  // Active Client-side Route Guard to intercept un-onboarded users
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      try {
+        const res = await fetch("/api/auth/onboarding");
+        const data = await res.json();
+        if (data.success && !data.history_initialized) {
+          router.push("/onboarding");
+        }
+      } catch (err) {
+        console.error("Onboarding gate check failed:", err);
+      }
+    };
+
+    checkOnboardingStatus();
+  }, [pathname, router]);
 
   // Load user balance streams dynamically on mounting
   useEffect(() => {
@@ -66,9 +84,8 @@ export default function DashboardLayout({
 
       {/* Sidebar navigation */}
       <aside
-        className={`relative z-10 hidden md:flex ${
-          collapsed ? "w-16" : "w-60"
-        } h-full bg-[#E7EBED]/45 dark:bg-[#131B21]/30 border-r border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md flex-col transition-all duration-300`}
+        className="relative z-10 hidden md:flex h-full bg-[#E7EBED]/45 dark:bg-[#131B21]/30 border-r border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md flex-col transition-all duration-300"
+        style={{ width: collapsed ? "64px" : "240px" }}
       >
         <div className={`p-4 flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
           {!collapsed && (

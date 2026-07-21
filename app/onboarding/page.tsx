@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
@@ -30,6 +30,23 @@ export default function OnboardingPage() {
   // Step 2 & 3 State Payloads (re-used from dynamic setup grid callbacks)
   const [debtsPayload, setDebtsPayload] = useState<{ name: string; amount: number }[]>([]);
   const [receivablesPayload, setReceivablesPayload] = useState<{ name: string; amount: number }[]>([]);
+
+  // Active Reverse Route Guard to intercept and push already onboarded users to dashboard
+  useEffect(() => {
+    const checkAlreadyOnboarded = async () => {
+      try {
+        const res = await fetch("/api/auth/onboarding");
+        const data = await res.json();
+        if (data.success && data.history_initialized) {
+          router.push("/dashboard");
+        }
+      } catch (err) {
+        console.error("Onboarding exit check failed:", err);
+      }
+    };
+
+    checkAlreadyOnboarded();
+  }, [router]);
 
   // Step 1 Next Validator
   const handleNextStep1 = () => {
@@ -144,7 +161,7 @@ export default function OnboardingPage() {
           <div
             className={`
               absolute top-[1.5px] left-[1px] w-5 h-5 rounded-full bg-white dark:bg-zinc-800
-              shadow-md flex items-center justify-center text-zinc-500 dark:text-yellow-400
+                  shadow-md flex items-center justify-center text-zinc-500 dark:text-yellow-400
               transition-transform duration-300
               ${theme === "dark" ? "translate-x-6" : "translate-x-0"}
             `}
@@ -240,7 +257,7 @@ export default function OnboardingPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setModal("SKIP_DEBTS")}
-                  className="px-5 py-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.04] text-slate-700 dark:text-zinc-300 font-bold text-xs sm:text-sm hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition active:scale-95"
+                  className="px-5 py-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] text-slate-700 dark:text-zinc-300 font-bold text-xs sm:text-sm hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition active:scale-95"
                 >
                   Skip
                 </button>
@@ -279,7 +296,7 @@ export default function OnboardingPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setModal("SKIP_RECEIVABLES")}
-                  className="px-5 py-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.04] text-slate-700 dark:text-zinc-300 font-bold text-xs sm:text-sm hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition active:scale-95"
+                  className="px-5 py-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] text-slate-700 dark:text-zinc-300 font-bold text-xs sm:text-sm hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition active:scale-95"
                 >
                   Skip
                 </button>
@@ -333,9 +350,7 @@ export default function OnboardingPage() {
                     setStep(1);
                     setModal(null);
                   } else if (modal === "BACK_RECEIVABLES") {
-                    setReceivablesPayload([]);
-                    setStep(2);
-                    setModal(null);
+                    setKeepPayloads();
                   }
                 }}
                 className="px-4 py-2.5 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition active:scale-95"
@@ -343,18 +358,24 @@ export default function OnboardingPage() {
                 {modal.startsWith("SKIP") ? "Skip" : "Discard"}
               </button>
 
-                  <button
-                    onClick={() => setModal(null)}
-                    className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-semibold text-sm transition"
-                  >
-                    Cancel
-                  </button>
-                </div>
-
-              </div>
+              <button
+                onClick={() => setModal(null)}
+                className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-semibold text-sm transition"
+              >
+                Cancel
+              </button>
             </div>
-          )}
 
+          </div>
         </div>
-      );
-    }
+      )}
+
+    </div>
+  );
+
+  function setKeepPayloads() {
+    setReceivablesPayload([]);
+    setStep(2);
+    setModal(null);
+  }
+}
