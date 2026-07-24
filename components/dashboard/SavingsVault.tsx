@@ -33,7 +33,7 @@ const getGoalIcon = (name: string) => {
 
   // 3. Transport
   if (match(n, ["bike", "cycle", "motor", "scooter", "yamaha", "r15", "vespa", "helmet"])) return Bike;
-  if (match(n, ["car", "toyota", "civic", "bmw", "tesla", "jeep", "suv", "driving"])) return Car;
+  if (match(n, ["car", "toyota", "civic", "bmw", "honda", "tesla", "jeep", "suv", "driving"])) return Car;
 
   // 4. Travel & Religion
   if (match(n, ["travel", "trip", "tour", "vacation", "flight", "passport", "visa", "hotel"])) return Plane;
