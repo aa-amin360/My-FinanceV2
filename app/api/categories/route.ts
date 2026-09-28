@@ -2,51 +2,37 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { AppError, errorResponse, readJson, requireUserId } from "@/lib/api";
+import { parseEnum, parseRequiredText } from "@/lib/validation";
+
+const CATEGORY_TYPES = ["EXPENSE", "INCOME"] as const;
 
 // =========================
-// GET ALL CATEGORIES (USER-SCOPED)
+// GET ALL CATEGORIES WITH TOTALS (USER-SCOPED)
 // =========================
 export async function GET() {
-  const session = await getServerSession(authOptions);
-
-  if (!session || !session.user?.email) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
-
-  const userId = session.user.id;
-
-  const client = await pool.connect();
-
   try {
-    const result = await client.query(
+    const userId = await requireUserId();
+
+    // `total` is the all-time sum of the user's transactions in each category
+    const result = await pool.query(
       `
-      SELECT id, name, type
-      FROM categories
-      WHERE user_id = $1 OR user_id IS NULL
-      ORDER BY name ASC
+      SELECT c.id, c.name, c.type, COALESCE(SUM(t.amount), 0) AS total
+      FROM categories c
+      LEFT JOIN transactions t
+        ON t.category_id = c.id
+        AND t.user_id = $1
+        AND t.type = c.type
+      WHERE c.user_id = $1 OR c.user_id IS NULL
+      GROUP BY c.id
+      ORDER BY c.name ASC
       `,
       [userId]
     );
 
-    return NextResponse.json({
-      success: true,
-      data: result.rows,
-    });
-
-  } catch (err: any) {
-    console.error("CATEGORY GET ERROR:", err);
-
-    return NextResponse.json(
-      { error: err.message },
-      { status: 500 }
-    );
-  } finally {
-    client.release();
+    return NextResponse.json({ success: true, data: result.rows });
+  } catch (err) {
+    return errorResponse(err, "CATEGORY GET ERROR");
   }
 }
 
@@ -54,49 +40,33 @@ export async function GET() {
 // CREATE CATEGORY (USER-SCOPED)
 // =========================
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-
-  if (!session || !session.user?.email) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
-
-  const userId = session.user.id;
-
-  const client = await pool.connect();
-
   try {
-    const body = await req.json();
-    const { name, type } = body;
+    const userId = await requireUserId();
+    const body = await readJson(req);
+    const name = parseRequiredText(body.name, "Category name", 60);
+    const type = parseEnum(body.type, CATEGORY_TYPES, "Category type");
 
-    if (!name || !type) {
-      throw new Error("Name and type required");
-    }
-
-    const result = await client.query(
+    const result = await pool.query(
       `
       INSERT INTO categories (name, type, user_id)
-      VALUES ($1, $2, $3)
-      RETURNING *
+      SELECT $1::text, $2::text, $3::uuid
+      WHERE NOT EXISTS (
+        SELECT 1 FROM categories
+        WHERE (user_id = $3::uuid OR user_id IS NULL)
+          AND LOWER(name) = LOWER($1::text)
+          AND type = $2::text
+      )
+      RETURNING id, name, type
       `,
       [name, type, userId]
     );
 
-    return NextResponse.json({
-      success: true,
-      data: result.rows[0],
-    });
+    if (result.rows.length === 0) {
+      throw new AppError(`A ${type.toLowerCase()} category named "${name}" already exists.`, 409);
+    }
 
-  } catch (err: any) {
-    console.error("CATEGORY CREATE ERROR:", err);
-
-    return NextResponse.json(
-      { error: err.message },
-      { status: 500 }
-    );
-  } finally {
-    client.release();
+    return NextResponse.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    return errorResponse(err, "CATEGORY CREATE ERROR");
   }
 }

@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import { Save, Loader2 } from "lucide-react";
 import GlassCalendar from "./GlassCalendar";
+import { localDateString } from "@/lib/config";
 import Dropdown from "@/components/ui/Dropdown";
+import { CURRENCY } from "@/lib/config";
 
 type NewGoalFormProps = {
   onSuccess: () => void;
@@ -51,9 +53,10 @@ export default function NewGoalForm({ onSuccess, onClose }: NewGoalFormProps) {
   // Automatic target date sync based on commitment settings
   useEffect(() => {
     if (forecast?.date) {
-      const dateString = forecast.date.toISOString().split("T")[0];
-      setTargetDate(dateString);
+      setTargetDate(localDateString(forecast.date));
     }
+    // Only re-sync when the commitment inputs change, not on every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetAmount, installment, frequency]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,7 +74,7 @@ export default function NewGoalForm({ onSuccess, onClose }: NewGoalFormProps) {
           target_date: targetDate,
           installment_amount: installment || null,
           frequency,
-          reminder_day: reminderDay ? Number(reminderDay) : null
+          reminder_day: frequency !== "DAILY" && reminderDay !== "" ? Number(reminderDay) : null
         }),
       });
 
@@ -114,7 +117,7 @@ export default function NewGoalForm({ onSuccess, onClose }: NewGoalFormProps) {
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest ml-1">
-            Target (Tk)
+            Target ({CURRENCY})
           </label>
           <input 
             required 
@@ -159,16 +162,20 @@ export default function NewGoalForm({ onSuccess, onClose }: NewGoalFormProps) {
             label="Frequency"
             options={frequencyOptions}
             selectedValue={frequency}
-            onChange={(val) => setFrequency(val)}
+            onChange={(val) => {
+              setFrequency(val);
+              if (val === "WEEKLY" && Number(reminderDay) > 6) setReminderDay("0");
+            }}
           />
           <div className="space-y-1">
             <label className="text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest ml-1">
-              {frequency === 'MONTHLY' ? 'Date' : 'Day'}
+              {frequency === 'MONTHLY' ? 'Date' : frequency === 'WEEKLY' ? 'Day (0=Sun)' : 'Day'}
             </label>
             <input 
               type="number" 
-              min="1" 
-              max="31" 
+              min={frequency === "WEEKLY" ? 0 : 1}
+              max={frequency === "WEEKLY" ? 6 : 31}
+              disabled={frequency === "DAILY"}
               value={reminderDay} 
               onChange={(e) => setReminderDay(e.target.value)} 
               className="w-full px-3 py-2.5 rounded-2xl bg-white dark:bg-black border border-indigo-500/20 outline-none text-xs font-bold text-indigo-500 text-center" 

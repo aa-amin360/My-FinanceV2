@@ -14,7 +14,6 @@ import {
   ArrowUpRight,
   ArrowRight,
   Play,
-  Users,
   Calendar,
   Grid,
   Bell,
@@ -229,11 +228,11 @@ export default function LandingPage() {
             <MiniCard icon={Wallet} title="Grow Savings" desc="Track progress and achieve goals" />
           </div>
 
-          {/* Trust Statistics */}
+          {/* Product Highlights */}
           <div className="grid grid-cols-3 gap-2 pt-6 border-t border-zinc-900/80 sm:flex sm:flex-wrap sm:gap-x-8 sm:gap-y-4">
-            <Stat icon={Users} label="Happy Users" value="10K+" />
-            <Stat icon={ShieldCheck} label="Secure & Private" value="100%" />
-            <Stat icon={TrendingUp} label="Transactions" value="50K+" />
+            <Stat icon={Wallet} label="Accounts" value="Cash · Bank" />
+            <Stat icon={ShieldCheck} label="Your Data" value="Private" />
+            <Stat icon={TrendingUp} label="Pricing" value="Free" />
           </div>
         </div>
 
@@ -438,7 +437,8 @@ export default function LandingPage() {
                   <input
                     type={showPassword ? "text" : "password"}
                     required
-                    placeholder="••••••••"
+                    placeholder={tab === "SIGNUP" ? "At least 8 characters" : "••••••••"}
+                    minLength={tab === "SIGNUP" ? 8 : undefined}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 pr-10 transition-all duration-200 text-sm"
@@ -547,21 +547,21 @@ export default function LandingPage() {
             openIdx={openFaq} 
             setOpenIdx={setOpenFaq} 
             q="How does the double-entry accounting engine work?" 
-            a="Every income, expense, transfer, or debt adjustment is stored as a dual-legged transaction. This means every Tk that leaves your cash account is strictly tracked in its destination asset or liability ledger. Balance calculations are performed dynamically using native SQL aggregation indexes, guaranteeing no mathematical drift."
+            a="Every income, expense, transfer, or debt adjustment is stored with a source and a destination account. Money that leaves your cash account is always tracked in the account it moved to, whether that is savings, a debt or a receivable. Balances are recalculated from these records each time, instead of being stored separately, so they cannot drift out of sync."
           />
           <FaqRow 
             idx={2} 
             openIdx={openFaq} 
             setOpenIdx={setOpenFaq} 
             q="Is my financial data secure?" 
-            a="Yes. Your data sits on an isolated PostgreSQL server protected by Neon-serverless firewalls. Local credentials passwords are hashed using Node's robust SHA-512 with PBKDF2 cryptography with custom salt offsets, making them unreadable by any database operator or script."
+            a="Your records are stored in a PostgreSQL database and every request is checked against your signed-in account, so other users cannot see your data. Passwords are never stored in plain text: they are hashed with PBKDF2-SHA512 using a unique random salt per account, and repeated failed sign-in attempts are throttled."
           />
           <FaqRow 
             idx={3} 
             openIdx={openFaq} 
             setOpenIdx={setOpenFaq} 
             q="Can I add history later if I skip onboarding?" 
-            a="Yes. A dedicated 'Add History' portal is continuously available in your sidebar. If your starting Cash or Bank balances were never set, you can configure them exactly once. For active debts and receivables, you can append forgotten historical obligations at any time without alterating your cash balance."
+            a="Yes. A dedicated 'Add History' portal is continuously available in your sidebar. If your starting Cash or Bank balances were never set, you can configure them exactly once. For active debts and receivables, you can append forgotten historical obligations at any time without altering your cash balance."
           />
         </div>
       </section>
@@ -569,7 +569,7 @@ export default function LandingPage() {
       {/* ================= FOOTER ================= */}
       <footer className="relative z-10 h-20 border-t border-zinc-900/50 flex flex-col justify-center items-center gap-1 shrink-0 bg-black/10 px-4">
         <span className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider text-center">
-          Trusted by thousands to manage their money better every day
+          Track income, expenses, debts and savings in one place
         </span>
         <span className="text-[9px] text-slate-600">© 2026 My Finance. All rights reserved.</span>
       </footer>

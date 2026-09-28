@@ -1,26 +1,43 @@
-export async function getAccountId(client: any, name: string, userId: string) {
-  const res = await client.query(
-    `SELECT id FROM accounts WHERE name = $1 AND user_id = $2 LIMIT 1`,
-    [name, userId]
-  );
+import type { DbClient } from "@/lib/db";
 
-  if (res.rows.length > 0) return res.rows[0].id;
+// Internal ledger accounts every user gets alongside their spendable accounts
+const LIABILITY_ACCOUNTS = ["Debt"];
 
-  const insert = await client.query(
+export type AccountIds = {
+  accountId: number;
+  savingsId: number;
+  debtId: number;
+  receivableId: number;
+};
+
+// Find or create an account by name. The insert tolerates a concurrent request
+// creating the same account (unique index on user_id + name, see scripts/migrate.js).
+export async function getAccountId(client: DbClient, name: string, userId: string): Promise<number> {
+  const find = () =>
+    client.query(
+      `SELECT id FROM accounts
+       WHERE user_id = $1 AND LOWER(TRIM(name)) = LOWER(TRIM($2))
+       ORDER BY id
+       LIMIT 1`,
+      [userId, name]
+    );
+
+  const existing = await find();
+  if (existing.rows.length > 0) return existing.rows[0].id;
+
+  const inserted = await client.query(
     `INSERT INTO accounts (name, type, user_id)
      VALUES ($1, $2, $3)
+     ON CONFLICT DO NOTHING
      RETURNING id`,
-    [
-      name,
-      name === "Debt" ? "LIABILITY" : "ASSET",
-      userId,
-    ]
+    [name, LIABILITY_ACCOUNTS.includes(name) ? "LIABILITY" : "ASSET", userId]
   );
+  if (inserted.rows.length > 0) return inserted.rows[0].id;
 
-  return insert.rows[0].id;
+  return (await find()).rows[0].id;
 }
 
-export async function resolveAccounts(client: any, account: string, userId: string) {
+export async function resolveAccounts(client: DbClient, account: string, userId: string): Promise<AccountIds> {
   const accountId = await getAccountId(client, account, userId);
   const savingsId = await getAccountId(client, "Savings", userId);
   const debtId = await getAccountId(client, "Debt", userId);

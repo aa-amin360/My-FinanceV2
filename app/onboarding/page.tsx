@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
-import DebtSetupGrid from "@/components/features/history/DebtSetupGrid";
-import ReceivableSetupGrid from "@/components/features/history/ReceivableSetupGrid";
+import EntrySetupGrid from "@/components/features/history/EntrySetupGrid";
+import { localDateString } from "@/lib/config";
+import { setOnboardingCached } from "@/lib/onboardingCache";
 
 type ModalType = 
   | null 
@@ -38,6 +39,7 @@ export default function OnboardingPage() {
         const res = await fetch("/api/auth/onboarding");
         const data = await res.json();
         if (data.success && data.history_initialized) {
+          setOnboardingCached(true);
           router.push("/dashboard");
         }
       } catch (err) {
@@ -102,6 +104,7 @@ export default function OnboardingPage() {
       bankBalance: bankBalance ? Number(bankBalance) : 0,
       debts: debtsPayload,
       receivables: receivablesPayload,
+      date: localDateString(),
     };
 
     try {
@@ -124,6 +127,7 @@ export default function OnboardingPage() {
         throw new Error("Balances saved, but onboarding completion flag failed to write.");
       }
 
+      setOnboardingCached(true);
       window.dispatchEvent(new Event("refreshData"));
       router.push("/dashboard");
 
@@ -240,11 +244,11 @@ export default function OnboardingPage() {
           <div className="flex flex-col gap-5">
             <div className="space-y-1">
               <h2 className="text-2xl font-bold tracking-tight text-black dark:text-white">People You Owe</h2>
-              <p className="text-sm text-slate-500 dark:text-zinc-400">Enter any outstanding loans or debts you currently owe. Press Next if you don't have any.</p>
+              <p className="text-sm text-slate-500 dark:text-zinc-400">Enter any outstanding loans or debts you currently owe. Press Next if you don&apos;t have any.</p>
             </div>
 
             {/* Consumer setup grid */}
-            <DebtSetupGrid onChange={setDebtsPayload} />
+            <EntrySetupGrid label="Debts" onChange={setDebtsPayload} />
 
             <div className="flex justify-between items-center mt-4">
               <button
@@ -277,11 +281,11 @@ export default function OnboardingPage() {
           <div className="flex flex-col gap-5">
             <div className="space-y-1">
               <h2 className="text-2xl font-bold tracking-tight text-black dark:text-white">People Who Owe You</h2>
-              <p className="text-sm text-slate-500 dark:text-zinc-400">Enter details of money lent out. If you don't have any receivables, press Finish.</p>
+              <p className="text-sm text-slate-500 dark:text-zinc-400">Enter details of money lent out. If you don&apos;t have any receivables, press Finish.</p>
             </div>
 
             {/* Consumer setup grid */}
-            <ReceivableSetupGrid onChange={setReceivablesPayload} />
+            <EntrySetupGrid label="Receivables" onChange={setReceivablesPayload} />
 
             {error && <div className="text-xs text-red-500 font-bold text-center leading-normal">{error}</div>}
 

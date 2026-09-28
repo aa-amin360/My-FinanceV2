@@ -8,24 +8,29 @@ type EntryRow = {
   amount: string;
 };
 
-type ReceivableSetupGridProps = {
-  onChange: (validReceivables: { name: string; amount: number }[]) => void;
+export type SetupEntry = { name: string; amount: number };
+
+type EntrySetupGridProps = {
+  // Plural label used in the bulk paste hint, e.g. "Debts"
+  label: string;
+  onChange: (validEntries: SetupEntry[]) => void;
 };
 
-export default function ReceivableSetupGrid({ onChange }: ReceivableSetupGridProps) {
-  const [receivables, setReceivables] = useState<EntryRow[]>([{ name: "", amount: "" }]);
+// Editable list of "name + amount" rows used for opening debts and receivables
+export default function EntrySetupGrid({ label, onChange }: EntrySetupGridProps) {
+  const [rows, setRows] = useState<EntryRow[]>([{ name: "", amount: "" }]);
   const [bulkText, setBulkText] = useState("");
 
-  // Propagate validated receivable logs back to the parent state whenever inputs change
+  // Propagate validated rows back to the parent state whenever inputs change
   useEffect(() => {
-    const validReceivables = receivables
-      .filter((r) => r.name.trim() && Number(r.amount) > 0)
-      .map((r) => ({
-        name: r.name.trim(),
-        amount: Number(r.amount),
+    const validEntries = rows
+      .filter((d) => d.name.trim() && Number(d.amount) > 0)
+      .map((d) => ({
+        name: d.name.trim(),
+        amount: Number(d.amount),
       }));
-    onChange(validReceivables);
-  }, [receivables, onChange]);
+    onChange(validEntries);
+  }, [rows, onChange]);
 
   // Bulk paste parser logic to break text format (Name Amount) into structured rows
   const parseBulkText = (text: string): EntryRow[] => {
@@ -56,31 +61,29 @@ export default function ReceivableSetupGrid({ onChange }: ReceivableSetupGridPro
       return;
     }
 
-    const currentActive = receivables.filter((r) => r.name || r.amount);
-    setReceivables([...currentActive, ...parsed]);
+    const currentActive = rows.filter((d) => d.name || d.amount);
+    setRows([...currentActive, ...parsed]);
     setBulkText("");
   };
 
   const addRow = () => {
-    setReceivables([...receivables, { name: "", amount: "" }]);
+    setRows([...rows, { name: "", amount: "" }]);
   };
 
   const removeRow = (index: number) => {
-    const updated = receivables.filter((_, i) => i !== index);
-    setReceivables(updated.length === 0 ? [{ name: "", amount: "" }] : updated);
+    const updated = rows.filter((_, i) => i !== index);
+    setRows(updated.length === 0 ? [{ name: "", amount: "" }] : updated);
   };
 
   const updateRow = (index: number, field: "name" | "amount", value: string) => {
-    const updated = [...receivables];
-    updated[index][field] = value;
-    setReceivables(updated);
+    setRows(rows.map((row, i) => (i === index ? { ...row, [field]: value } : row)));
   };
 
   return (
     <div className="space-y-4">
       {/* Manual Rows */}
       <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-        {receivables.map((row, index) => (
+        {rows.map((row, index) => (
           <div key={index} className="flex gap-1.5 sm:gap-2 items-center w-full">
             <input
               type="text"
@@ -119,7 +122,7 @@ export default function ReceivableSetupGrid({ onChange }: ReceivableSetupGridPro
       {/* Bulk Paste Area */}
       <div className="pt-2 border-t border-black/[0.05] dark:border-white/[0.05] space-y-2">
         <label className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block">
-          Paste Multiple Receivables (Format: Name Amount)
+          Paste Multiple {label} (Format: Name Amount)
         </label>
         <textarea
           placeholder={"Rahim 8000\nKarim 3000\nHasan 12000"}

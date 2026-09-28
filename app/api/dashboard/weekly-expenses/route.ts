@@ -1,113 +1,51 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { errorResponse, requireUserId } from "@/lib/api";
+import { dateOrToday } from "@/lib/validation";
 
-export async function GET() {
-  const session: any = await getServerSession(authOptions);
+const WEEK_DAYS = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"];
 
-  if (!session || !session.user?.email) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+function addDays(date: Date, days: number) {
+  const copy = new Date(date);
+  copy.setUTCDate(copy.getUTCDate() + days);
+  return copy;
+}
 
-  const userId = session.user.id;
-  const client = await pool.connect();
-
+// Expenses per day for the current Saturday-to-Friday week.
+// The client passes its local date as ?today=YYYY-MM-DD so the week matches the
+// user's calendar rather than the server's timezone.
+export async function GET(req: Request) {
   try {
-    // ==========================================
-    // CALENDAR WEEK BOUNDS (Saturday to Friday)
-    // ==========================================
-    const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const userId = await requireUserId();
+    const today = new Date(`${dateOrToday(new URL(req.url).searchParams.get("today"))}T00:00:00Z`);
 
-    // Calculate days since the most recent Saturday
-    const diffToSaturday = (dayOfWeek + 1) % 7;
+    const diffToSaturday = (today.getUTCDay() + 1) % 7;
+    const startOfWeek = addDays(today, -diffToSaturday);
+    const endOfWeek = addDays(startOfWeek, 6);
 
-    // Start of the week is Saturday 00:00:00
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - diffToSaturday);
-    startOfWeek.setHours(0, 0, 0, 0);
-
-    // End of the week is Friday 23:59:59
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
-
-    const startDateStr = startOfWeek.toLocaleDateString("en-CA"); // YYYY-MM-DD
-    const endDateStr = endOfWeek.toLocaleDateString("en-CA");     // YYYY-MM-DD
-
-    // Query transactions strictly bounded within Saturday to Friday of the CURRENT week
-    const result = await client.query(
+    const result = await pool.query(
       `
-      SELECT
-        DATE(date) as full_date,
-        type,
-        amount
+      SELECT date, SUM(amount) AS amount
       FROM transactions
       WHERE user_id = $1
-        AND date >= $2
-        AND date <= $3
-      ORDER BY date ASC
+        AND type = 'EXPENSE'
+        AND date BETWEEN $2 AND $3
+      GROUP BY date
       `,
-      [userId, startDateStr, endDateStr]
+      [userId, startOfWeek.toISOString().slice(0, 10), endOfWeek.toISOString().slice(0, 10)]
     );
 
-    // Initialize days in the Saturday-Friday order
-    const daysMap: Record<string, number> = {
-      Sat: 0,
-      Sun: 0,
-      Mon: 0,
-      Tue: 0,
-      Wed: 0,
-      Thu: 0,
-      Fri: 0,
-    };
+    const totals = new Map<string, number>(result.rows.map((row) => [row.date, Number(row.amount)]));
 
-    for (const tx of result.rows) {
-      const day = new Date(tx.full_date).toLocaleDateString("en-US", {
-        weekday: "short",
-        timeZone: "UTC"
-      });
-    
-      const amount = Number(tx.amount);
-    
-      if (tx.type === "EXPENSE") {
-        if (daysMap[day] !== undefined) {
-          daysMap[day] += amount;
-        }
-      }
-    }
-
-    // Map ordered weeks starting from Saturday
-    const ordered = [
-      "Sat",
-      "Sun",
-      "Mon",
-      "Tue",
-      "Wed",
-      "Thu",
-      "Fri",
-    ];
-
-    const data = ordered.map((day) => ({
+    const data = WEEK_DAYS.map((day, index) => ({
       day,
-      amount: Math.abs(daysMap[day] || 0),
+      amount: totals.get(addDays(startOfWeek, index).toISOString().slice(0, 10)) || 0,
     }));
 
-    return NextResponse.json({
-      success: true,
-      data,
-    });
-
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message },
-      { status: 500 }
-    );
-  } finally {
-    client.release();
+    return NextResponse.json({ success: true, data });
+  } catch (err) {
+    return errorResponse(err, "WEEKLY EXPENSES ERROR");
   }
 }

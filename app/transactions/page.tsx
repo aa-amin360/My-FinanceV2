@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import GlassCalendar from "@/components/modal/GlassCalendar";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
@@ -14,31 +15,31 @@ import {
   RotateCcw
 } from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
-
-const formatType = (type: string) =>
-  type
-    .toLowerCase()
-    .replace("_", " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+import { formatMoney } from "@/lib/config";
+import { formatName, formatTypeLabel, isInflowType } from "@/lib/ledger";
+import { setOnboardingCached } from "@/lib/onboardingCache";
 
 type Transaction = {
-  id: string;
+  id: number;
   type: string;
   amount: string;
   date: string;
   note: string | null;
   category_name?: string;
   entity_name?: string;
-  parent_id?: string | null;
-  has_child?: boolean;  
+  parent_id?: number | null;
+  has_child?: boolean;
+  // A repayment the user recorded against an earlier debt/receivable (deletable)
+  is_linked?: boolean;
 };
 
 export default function TransactionsPage() {
+  const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [confirmAll, setConfirmAll] = useState(false);
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(false);
 
   // Pagination States
@@ -49,68 +50,69 @@ export default function TransactionsPage() {
   const [search, setSearch] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  
+
+  // Ignore responses from requests that were superseded while typing
+  const requestId = useRef(0);
+
   // Fetch dynamic transactions list based on pagination and filters
   const loadData = () => {
-    let url = `/api/transactions?page=${page}&limit=20`;
-    
-    if (search) url += `&search=${encodeURIComponent(search)}`;
-    if (startDate) url += `&startDate=${startDate}`;
-    if (endDate) url += `&endDate=${endDate}`;
+    const params = new URLSearchParams({ page: String(page), limit: "20" });
+    if (search) params.set("search", search);
+    if (startDate) params.set("startDate", startDate);
+    if (endDate) params.set("endDate", endDate);
 
-    fetch(url)
+    const current = ++requestId.current;
+    fetch(`/api/transactions?${params.toString()}`, { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
+        if (current !== requestId.current) return;
         setTransactions(data.data || []);
         setTotalPages(data.pagination?.totalPages || 1);
-      });
+      })
+      .catch((err) => console.error("Failed to load transactions:", err));
   };
 
   useEffect(() => {
-    loadData();
-  }, [page, startDate, endDate]);
+    const timer = setTimeout(loadData, search ? 250 : 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, search, startDate, endDate]);
 
-  useEffect(() => {
+  useRefresh(loadData, { runOnMount: false });
+
+  // Any filter change starts again from the first page
+  const updateFilter = (setter: (value: string) => void) => (value: string) => {
+    setter(value);
     setPage(1);
-    loadData();
-  }, [search]);
-
-  useRefresh(loadData);
-  
-  const formatName = (name: string) => {
-    return name
-      .split(" ")
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
   };
 
-  const toggleExpand = (id: string) => {
+  const toggleExpand = (id: number) => {
     setExpanded((prev) => ({
       ...prev,
       [id]: !prev[id],
     }));
   };
-  
+
   const getDisplayName = (t: Transaction) => {
     const isChild = !!t.parent_id;
-  
+
     if (isChild && t.type === "RECEIVABLE_GIVEN") {
       return "Overpaid → now receivable";
     }
-  
+
     if (isChild && t.type === "DEBT_TAKEN") {
       return "Over-collected → now debt";
     }
-  
+
     if (t.entity_name) {
       return formatName(t.entity_name);
     }
-  
+
     if (t.category_name) {
       return formatName(t.category_name);
     }
-  
-    return formatType(t.type);
+
+    return formatTypeLabel(t.type);
   };
 
   const getTypeStyle = (type: string) => {
@@ -131,24 +133,23 @@ export default function TransactionsPage() {
         return "bg-gray-500/20 text-gray-400";
     }
   };
-  
-  const handleDelete = async (id: string) => {
+
+  const handleDelete = async (id: number) => {
     setLoading(true);
     try {
       const res = await fetch(`/api/transactions/${id}`, {
         method: "DELETE",
       });
-    
+
       const data = await res.json();
-    
+      setDeleteId(null);
+
       if (!res.ok) {
-        setDeleteId(null);
         setErrorMessage(data.error || "Cannot delete transaction");
         return;
       }
-    
-      setDeleteId(null);
-      loadData();
+
+      window.dispatchEvent(new Event("refreshData"));
     } catch (err) {
       console.error(err);
       setErrorMessage("Something went wrong during deletion.");
@@ -157,20 +158,21 @@ export default function TransactionsPage() {
     }
   };
 
+  // Resetting the ledger also removes opening balances, so the user goes
+  // through onboarding again to set new ones
   const handleDeleteAll = async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/transactions/all", {
         method: "DELETE",
       });
-  
+
+      setConfirmAll(false);
       if (res.ok) {
-        setConfirmAll(false);
-        window.dispatchEvent(new Event("refreshData"));
-        loadData();
+        setOnboardingCached(false);
+        router.push("/onboarding");
       } else {
         setErrorMessage("Failed to delete transactions");
-        setConfirmAll(false);
       }
     } catch (err) {
       console.error(err);
@@ -181,17 +183,9 @@ export default function TransactionsPage() {
     }
   };
 
-  const sortedTransactions = [...transactions].sort((a, b) => {
-    const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
-    if (dateDiff !== 0) return dateDiff;
-  
-    if (a.id === b.parent_id) return -1;
-    if (b.id === a.parent_id) return 1;
-  
-    return 0;
-  });
-
-  const roots = sortedTransactions.filter((t) => !t.parent_id);
+  // The API returns top-level rows in display order followed by their children
+  const roots = transactions.filter((t) => !t.parent_id);
+  const childrenOf = (id: number) => transactions.filter((c) => c.parent_id === id);
 
   return (
     <DashboardLayout>
@@ -217,13 +211,13 @@ export default function TransactionsPage() {
           <input 
             placeholder="Search transactions..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => updateFilter(setSearch)(e.target.value)}
             className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm transition-all h-[46px] relative z-10"
           />
         </div>
 
         <button 
-          onClick={() => { setSearch(""); setStartDate(""); setEndDate(""); }}
+          onClick={() => { setSearch(""); setStartDate(""); setEndDate(""); setPage(1); }}
           title="Reset Filters"
           className="col-span-2 md:col-span-2 h-[46px] flex items-center justify-center gap-2 rounded-2xl bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-all active:scale-95 order-2 md:order-3"
         >
@@ -234,12 +228,12 @@ export default function TransactionsPage() {
         <div className="col-span-12 md:col-span-5 grid grid-cols-2 gap-2 order-3 md:order-2">
           <GlassCalendar 
             value={startDate} 
-            onChange={setStartDate} 
+            onChange={updateFilter(setStartDate)} 
             placeholder="Start Date" 
           />
           <GlassCalendar 
             value={endDate} 
-            onChange={setEndDate} 
+            onChange={updateFilter(setEndDate)} 
             placeholder="End Date" 
           />
         </div>
@@ -263,16 +257,11 @@ export default function TransactionsPage() {
           {/* Desktop Rows Render Block */}
           <div className="hidden md:block divide-y divide-slate-100 dark:divide-zinc-900/60">
             {roots.map((parent) => {
-              const children = sortedTransactions.filter(
-                (c) => c.parent_id === parent.id
-              );
+              const children = childrenOf(parent.id);
         
               const isExpanded = expanded[parent.id];
         
-              const isPositive =
-                parent.type === "INCOME" ||
-                parent.type === "DEBT_TAKEN" ||
-                parent.type === "RECEIVABLE_RECEIVED";
+              const isPositive = isInflowType(parent.type);
         
               const finalAmount = Number(parent.amount);
             
@@ -325,7 +314,7 @@ export default function TransactionsPage() {
                           parent.type
                         )}`}
                       >
-                        {formatType(parent.type)}
+                        {formatTypeLabel(parent.type)}
                       </span>
                     </div>
 
@@ -338,9 +327,7 @@ export default function TransactionsPage() {
                         isPositive ? "text-emerald-500" : "text-rose-500"
                       }`}
                     >
-                      {(isPositive ? "+" : "-") +
-                        finalAmount.toLocaleString("en-BD")}{" "}
-                      Tk
+                      {(isPositive ? "+" : "-") + formatMoney(finalAmount)}
                     </div>
         
                     <div className="flex justify-center items-center gap-2">
@@ -359,10 +346,7 @@ export default function TransactionsPage() {
                   {/* Nested Children Rendering Block */}
                   {isExpanded &&
                     children.map((child) => {
-                      const isPositiveChild =
-                        child.type === "INCOME" ||
-                        child.type === "DEBT_TAKEN" ||
-                        child.type === "RECEIVABLE_RECEIVED";
+                      const isPositiveChild = isInflowType(child.type);
         
                       return (
                         <div
@@ -401,7 +385,7 @@ export default function TransactionsPage() {
                                 child.type
                               )}`}
                             >
-                              {formatType(child.type)}
+                              {formatTypeLabel(child.type)}
                             </span>
                           </div>
 
@@ -414,12 +398,20 @@ export default function TransactionsPage() {
                               isPositiveChild ? "text-emerald-500" : "text-rose-500"
                             }`}
                           >
-                            {(isPositiveChild ? "+" : "-") +
-                              Number(child.amount).toLocaleString("en-BD")}{" "}
-                            Tk
+                            {(isPositiveChild ? "+" : "-") + formatMoney(child.amount)}
                           </div>
         
-                          <div />
+                          <div className="flex justify-center items-center">
+                            {child.is_linked && (
+                              <button
+                                onClick={() => setDeleteId(child.id)}
+                                title="Delete this repayment"
+                                className="p-1.5 rounded-xl hover:bg-red-500/10 text-red-400 hover:text-red-300 transition"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
@@ -431,16 +423,11 @@ export default function TransactionsPage() {
           {/* Mobile Card Layout list */}
           <div className="md:hidden space-y-3 px-2 py-4">
             {roots.map((parent) => {
-              const children = sortedTransactions.filter(
-                (c) => c.parent_id === parent.id
-              );
+              const children = childrenOf(parent.id);
         
               const isExpanded = expanded[parent.id];
         
-              const isPositive =
-                parent.type === "INCOME" ||
-                parent.type === "DEBT_TAKEN" ||
-                parent.type === "RECEIVABLE_RECEIVED";
+              const isPositive = isInflowType(parent.type);
         
               const finalAmount = Number(parent.amount);
             
@@ -503,7 +490,7 @@ export default function TransactionsPage() {
                             }`}
                           >
                             {isPositive ? "+" : "-"}
-                            {finalAmount.toLocaleString("en-BD")} Tk
+                            {formatMoney(finalAmount)}
                           </div>
                         </div>
                     
@@ -518,7 +505,7 @@ export default function TransactionsPage() {
                               parent.type
                             )}`}
                           >
-                            {formatType(parent.type)}
+                            {formatTypeLabel(parent.type)}
                           </span>
                         </div>
                       </div>
@@ -545,10 +532,7 @@ export default function TransactionsPage() {
                   {/* Nested mobile child cards */}
                   {isExpanded &&
                     children.map((child) => {
-                      const isPositiveChild =
-                        child.type === "INCOME" ||
-                        child.type === "DEBT_TAKEN" ||
-                        child.type === "RECEIVABLE_RECEIVED";
+                      const isPositiveChild = isInflowType(child.type);
         
                       return (
                         <div
@@ -592,7 +576,16 @@ export default function TransactionsPage() {
                                 }`}
                               >
                                 {isPositiveChild ? "+" : "-"}
-                                {Number(child.amount).toLocaleString("en-BD")} Tk
+                                {formatMoney(child.amount)}
+                                {child.is_linked && (
+                                  <button
+                                    onClick={() => setDeleteId(child.id)}
+                                    title="Delete this repayment"
+                                    className="ml-2 align-middle text-red-400"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                )}
                               </span>
                             </div>
                           
@@ -607,7 +600,7 @@ export default function TransactionsPage() {
                                   child.type
                                 )}`}
                               >
-                                {formatType(child.type)}
+                                {formatTypeLabel(child.type)}
                               </span>
                             </div>
                           </div>
@@ -679,7 +672,7 @@ export default function TransactionsPage() {
         onClose={() => setConfirmAll(false)}
         onConfirm={handleDeleteAll}
         title="Delete All Transactions?"
-        description="Are you sure you want to permanently delete all transaction records? This action cannot be undone."
+        description="This permanently deletes every transaction, including opening balances, debts and receivables. Savings goals, budget plans and categories are kept. You will be asked to set your opening balances again. This cannot be undone."
         confirmText="Delete All"
         loading={loading}
         variant="danger"

@@ -1,6 +1,11 @@
 node_modules/
 .next/
+coverage/
+*.tsbuildinfo
+
+# Local environment files (secrets)
 .env
-.env.localrepomix-output.xml
-repomix-output.xml
 .env.local
+.env.*.local
+
+repomix-output.xml

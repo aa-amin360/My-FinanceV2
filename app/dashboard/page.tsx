@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import CashflowChart from "@/components/charts/CashflowChart";
 import WeeklyChartCard from "@/components/dashboard/WeeklyChartCard";
@@ -11,6 +11,9 @@ import MetricCard from "@/components/ui/MetricCard";
 import Link from "next/link";
 import { Trash2, ArrowUpRight, ArrowRight, Bell } from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
+import { CURRENCY, formatMoney, formatNumber, localDateString } from "@/lib/config";
+import { formatName, formatTypeLabel, isInflowType } from "@/lib/ledger";
+import { sumMoney } from "@/lib/money";
 
 type Transaction = {
   id: string;
@@ -20,6 +23,13 @@ type Transaction = {
   note: string | null;
   parent_id?: string | null;
   has_child?: boolean;
+  entity_name?: string | null;
+  category_name?: string | null;
+};
+
+type TrajectoryPoint = {
+  date: string;
+  balance: number;
 };
 
 type Goal = {
@@ -39,34 +49,34 @@ export default function DashboardPage() {
   const [bankBalance, setBankBalance] = useState(0);
   const [debt, setDebt] = useState(0);
   const [receivable, setReceivable] = useState(0);
+  const [income, setIncome] = useState(0);
+  const [expense, setExpense] = useState(0);
+  const [trajectory, setTrajectory] = useState<TrajectoryPoint[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const year = currentDate().getFullYear();
-  const month = currentDate().getMonth() + 1;
-
-  function currentDate() {
-    return new Date();
-  }
-
-  // Load all dashboard metrics and transactions in parallel
+  // Load all dashboard metrics and the latest transactions in parallel
   const loadData = async () => {
     try {
-      const [txRes, bRes, dRes, rRes, gRes] = await Promise.all([
-        fetch("/api/transactions", { cache: "no-store" }),
+      const today = localDateString();
+      const [txRes, bRes, dRes, rRes, gRes, reportRes] = await Promise.all([
+        fetch("/api/transactions?limit=5", { cache: "no-store" }),
         fetch("/api/balance", { cache: "no-store" }),
         fetch("/api/debts", { cache: "no-store" }),
         fetch("/api/receivables", { cache: "no-store" }),
         fetch("/api/savings", { cache: "no-store" }),
+        fetch(`/api/reports?range=ALL&today=${today}`, { cache: "no-store" }),
       ]);
 
-      const [txData, bData, dData, rData, gData] = await Promise.all([
+      const [txData, bData, dData, rData, gData, reportData] = await Promise.all([
         txRes.json(),
         bRes.json(),
         dRes.json(),
         rRes.json(),
         gRes.json(),
+        reportRes.json(),
       ]);
 
       setTransactions(txData.data || []);
@@ -76,6 +86,9 @@ export default function DashboardPage() {
       setDebt(Number(dData.total || 0));
       setReceivable(Number(rData.total || 0));
       setGoals(gData.data || []);
+      setIncome(Number(reportData.income || 0));
+      setExpense(Number(reportData.expense || 0));
+      setTrajectory(reportData.trajectory || []);
     } catch (err) {
       console.error("Failed to load dashboard data in parallel:", err);
     }
@@ -83,72 +96,31 @@ export default function DashboardPage() {
 
   useRefresh(loadData);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  // Cash + Bank balance over time, computed on the server over the full ledger
+  const chartData = trajectory.map((point) => ({
+    date: new Date(point.date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    }),
+    balance: point.balance,
+  }));
 
-  // Dynamic calculations for overall flow metrics
-  let income = 0;
-  let expense = 0;
-
-  transactions.forEach((t) => {
-    const amt = Number(t.amount);
-    if (t.type === "INCOME") income += amt;
-    if (t.type === "EXPENSE") expense += amt;
-  });
-
-  let runningBalance = 0;
-  
-  // Exclude duplicate parenting entries to keep balance trajectory accurate
-  const parentIdsWithChildren = new Set(
-    transactions
-      .filter((t) => t.parent_id)
-      .map((t) => {
-        const parent = transactions.find((p) => p.id === t.parent_id);
-        if (parent && (parent.type === "DEBT_REPAID" || parent.type === "RECEIVABLE_RECEIVED")) {
-          return parent.id;
-        }
-        return null;
-      })
-      .filter(Boolean)
-  );
-
-  const activeTransactions = transactions.filter(
-    (t) => t.parent_id || !parentIdsWithChildren.has(t.id)
-  );
-
-  const chartData = activeTransactions
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .map((t) => {
-      const isPositive =
-        t.type === "INCOME" ||
-        t.type === "DEBT_TAKEN" ||
-        t.type === "RECEIVABLE_RECEIVED";
-  
-      const amount = Number(t.amount);
-      runningBalance = isPositive ? runningBalance + amount : runningBalance - amount;
-  
-      return {
-        date: new Date(t.date).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          timeZone: "UTC",
-        }),
-        balance: runningBalance,
-      };
-    });
-  
   const handleDelete = async (id: string) => {
     setLoading(true);
     try {
       const res = await fetch(`/api/transactions/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        setDeleteId(null);
-        window.dispatchEvent(new Event("refreshData"));
-        loadData();
+      const data = await res.json().catch(() => ({}));
+      setDeleteId(null);
+      if (!res.ok) {
+        setDeleteError(data.error || "Could not delete this transaction.");
+        return;
       }
+      setDeleteError(null);
+      window.dispatchEvent(new Event("refreshData"));
     } catch (err) {
       console.error(err);
+      setDeleteError("Something went wrong during deletion.");
     } finally {
       setLoading(false);
     }
@@ -156,7 +128,7 @@ export default function DashboardPage() {
 
   // Identify savings installments due for today
   const dueGoals = goals.filter((goal) => {
-    if (!goal.reminder_day) return false;
+    if (goal.reminder_day === null || goal.reminder_day === undefined) return false;
     const today = new Date();
     if (goal.frequency === "MONTHLY") return today.getDate() === goal.reminder_day;
     if (goal.frequency === "WEEKLY") return today.getDay() === goal.reminder_day;
@@ -164,7 +136,7 @@ export default function DashboardPage() {
     return false;
   });
 
-  const totalDueAmount = dueGoals.reduce((sum, g) => sum + Number(g.installment_amount || 0), 0);
+  const totalDueAmount = sumMoney(dueGoals.map((g) => g.installment_amount));
 
   return (
     <DashboardLayout>
@@ -180,7 +152,7 @@ export default function DashboardPage() {
               <div>
                 <h4 className="text-sm sm:text-base font-bold text-indigo-600 dark:text-indigo-400">Commitments Due Today</h4>
                 <p className="text-xs text-indigo-500/80 font-medium">
-                  You have {dueGoals.length} savings {dueGoals.length === 1 ? 'installment' : 'installments'} scheduled ({totalDueAmount.toLocaleString()} Tk).
+                  You have {dueGoals.length} savings {dueGoals.length === 1 ? 'installment' : 'installments'} scheduled ({formatMoney(totalDueAmount)}).
                 </p>
               </div>
             </div>
@@ -204,15 +176,15 @@ export default function DashboardPage() {
               </span>
               
               <h1 className="text-3xl font-extrabold tracking-tight pt-0.5 text-emerald-800 dark:text-white">
-                {Number(balance).toLocaleString("en-BD")} <span className="text-emerald-600 dark:text-emerald-400 text-xl font-bold">Tk</span>
+                {formatNumber(balance)} <span className="text-emerald-600 dark:text-emerald-400 text-xl font-bold">{CURRENCY}</span>
               </h1>
 
               <div className="flex gap-4 pt-1.5 text-xs font-semibold font-mono text-emerald-700/80 dark:text-emerald-400/70 leading-none">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600/60 dark:bg-emerald-500/40" /> Cash: {cashBalance.toLocaleString("en-BD")} Tk
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600/60 dark:bg-emerald-500/40" /> Cash: {formatMoney(cashBalance)}
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600/60 dark:bg-emerald-500/40" /> Bank: {bankBalance.toLocaleString("en-BD")} Tk
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600/60 dark:bg-emerald-500/40" /> Bank: {formatMoney(bankBalance)}
                 </span>
               </div>
             </div>
@@ -268,30 +240,20 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-3">
-            {[...transactions]
-              .filter((t: any) => !t.parent_id)
-              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-              .slice(0, 5)
+            {deleteError && (
+              <div className="text-xs font-semibold text-red-500 px-1">{deleteError}</div>
+            )}
+
+            {transactions
+              .filter((t) => !t.parent_id)
               .map((t) => {
                 const amount = Number(t.amount);
-                const isPositive =
-                  t.type === "INCOME" ||
-                  t.type === "DEBT_TAKEN" ||
-                  t.type === "RECEIVABLE_RECEIVED";
+                const isPositive = isInflowType(t.type);
 
-                const formatType = (typeStr: string) =>
-                  typeStr
-                    .toLowerCase()
-                    .replace(/_/g, " ")
-                    .replace(/\b\w/g, (c) => c.toUpperCase());
-
-                const capitalize = (text: string) =>
-                  text ? text.charAt(0).toUpperCase() + text.slice(1) : "";
-
-                const getDisplayName = (tx: any) => {
-                  if (tx.entity_name) return capitalize(tx.entity_name);
-                  if (tx.category_name) return capitalize(tx.category_name);
-                  return formatType(tx.type);
+                const getDisplayName = (tx: Transaction) => {
+                  if (tx.entity_name) return formatName(tx.entity_name);
+                  if (tx.category_name) return formatName(tx.category_name);
+                  return formatTypeLabel(tx.type);
                 };
 
                 return (
@@ -328,7 +290,7 @@ export default function DashboardPage() {
                       <div className="text-right">
                         <div className={`font-bold text-base ${isPositive ? "text-emerald-500" : "text-rose-500"}`}>
                           {isPositive ? "+" : "-"}
-                          {Number(amount).toLocaleString("en-BD")} Tk
+                          {formatMoney(amount)}
                         </div>
 
                         <div className="mt-1">
@@ -345,7 +307,7 @@ export default function DashboardPage() {
                                 : "bg-zinc-800 text-zinc-400"
                             }`}
                           >
-                            {formatType(t.type)}
+                            {formatTypeLabel(t.type)}
                           </span>
                         </div>
                       </div>

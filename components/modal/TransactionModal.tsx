@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import Dropdown from "@/components/ui/Dropdown";
 import NewGoalForm from "./NewGoalForm";
+import { ACCOUNT_OPTIONS, localDateString } from "@/lib/config";
 
 type Category = {
   id: string;
@@ -56,21 +57,25 @@ export default function TransactionModal() {
     window.dispatchEvent(new Event("refreshData"));
   };
 
-  // Load categories and savings goals
-  useEffect(() => {
+  // Load categories and savings goals each time the modal opens so newly
+  // created ones are always available
+  const loadOptions = () => {
     fetch("/api/categories")
       .then((res) => res.json())
-      .then((data) => setCategories(data.data || []));
+      .then((data) => setCategories(data.data || []))
+      .catch(() => {});
 
     fetch("/api/savings")
       .then((res) => res.json())
-      .then((data) => setGoals(data.data || []));
-  }, []);
+      .then((data) => setGoals(data.data || []))
+      .catch(() => {});
+  };
 
   // Event listener for opening the modal from outside actions
   useEffect(() => {
     const handler = (e: any) => {
       setShowModal(true);
+      loadOptions();
 
       if (typeof e.detail === "string") {
         if (e.detail === "DEBT") {
@@ -109,6 +114,7 @@ export default function TransactionModal() {
           setIsDirectFlow(true);
           if (e.detail.goalId) setSelectedGoalId(e.detail.goalId.toString());
           if (e.detail.goalName) setNote(`Funding Goal: ${e.detail.goalName}`);
+          if (e.detail.amount) setAmount(String(Number(e.detail.amount)));
         }
       }
     };
@@ -158,7 +164,7 @@ export default function TransactionModal() {
         type: actionToTypeMap[action],
         amount: amountNumber,
         account,
-        date: new Date().toLocaleDateString("en-CA"),
+        date: localDateString(),
         note: note.trim() || null,
         direction: action === "TRANSFER" ? direction : null,
         savings_goal_id: action === "TRANSFER" && selectedGoalId ? parseInt(selectedGoalId) : null,
@@ -193,11 +199,6 @@ export default function TransactionModal() {
   if (!showModal) return null;
 
   // Format states to exact structured option formats for the global Dropdown component
-  const accountOptions = [
-    { value: "Cash", label: "Cash" },
-    { value: "Bank", label: "Bank" },
-  ];
-
   const categoryOptions = categories
     .filter((c) => c.type === action)
     .map((c) => ({ value: c.id, label: c.name }));
@@ -396,7 +397,7 @@ export default function TransactionModal() {
                 {/* Reusable Dropdown for Primary Account selection */}
                 <Dropdown
                   label="Account"
-                  options={accountOptions}
+                  options={ACCOUNT_OPTIONS}
                   selectedValue={account}
                   onChange={(val) => setAccount(val)}
                 />

@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRefresh } from "@/hooks/useRefresh";
+import { sumMoney } from "@/lib/money";
+import { formatMoney, localDateString } from "@/lib/config";
 
 type DayData = {
   day: string;
@@ -14,7 +16,7 @@ export default function WeeklyChartCard() {
 
   const loadWeeklyData = async () => {
     try {
-      const res = await fetch("/api/dashboard/weekly-expenses");
+      const res = await fetch(`/api/dashboard/weekly-expenses?today=${localDateString()}`, { cache: "no-store" });
       const json = await res.json();
       setData(json.data || []);
     } catch (err) {
@@ -29,7 +31,7 @@ export default function WeeklyChartCard() {
     1
   );
 
-  const total = data.reduce((sum, item) => sum + item.amount, 0);
+  const total = sumMoney(data.map((item) => item.amount));
 
   return (
     // ✅ Updated card to standard translucent glassmorphism with subtle light/dark borders
@@ -39,7 +41,7 @@ export default function WeeklyChartCard() {
       <div className="flex items-start justify-between mb-8">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-black dark:text-white">
-            {total.toLocaleString()} Tk
+            {formatMoney(total)}
           </h2>
     
           <p className="text-xs font-semibold text-gray-400 dark:text-zinc-500 mt-1">
@@ -92,7 +94,7 @@ export default function WeeklyChartCard() {
                   shadow-md z-10 animate-modalIn
                   "
                 >
-                  {amount.toLocaleString()} Tk
+                  {formatMoney(amount)}
                 </div>
               )}
     

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Dropdown from "@/components/ui/Dropdown";
 import GlassCalendar from "./GlassCalendar";
+import { localDateString } from "@/lib/config";
 
 type Category = {
   id: string;
@@ -12,11 +13,12 @@ type Category = {
 
 type AddPlanFormProps = {
   categories: Category[];
+  onCategoryCreated: (category: Category) => void;
   onSuccess: () => void;
   onClose: () => void;
 };
 
-export default function AddPlanForm({ categories, onSuccess, onClose }: AddPlanFormProps) {
+export default function AddPlanForm({ categories, onCategoryCreated, onSuccess, onClose }: AddPlanFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -65,15 +67,15 @@ export default function AddPlanForm({ categories, onSuccess, onClose }: AddPlanF
       const json = await res.json();
       if (json.success) {
         const newCat = json.data;
-        categories.push(newCat); 
+        onCategoryCreated(newCat);
         setSelectedDateTarget({ id: newCat.id, name: newCat.name });
         setTargetSearch(newCat.name);
         setShowTargetDropdown(false);
       } else {
-        alert(json.error || "Failed to create category");
+        setError(json.error || "Failed to create category");
       }
     } catch {
-      alert("Failed to create category");
+      setError("Failed to create category");
     }
   };
 
@@ -98,7 +100,7 @@ export default function AddPlanForm({ categories, onSuccess, onClose }: AddPlanF
       return;
     }
 
-    const todayStr = new Date().toLocaleDateString("en-CA");
+    const todayStr = localDateString();
     if (date < todayStr) {
       setError("Scheduled date cannot be in the past.");
       setLoading(false);
@@ -193,7 +195,7 @@ export default function AddPlanForm({ categories, onSuccess, onClose }: AddPlanF
                 onClick={handleQuickCategorySave}
                 className="px-4 py-3 text-left text-xs font-semibold text-green-500 hover:bg-green-500/10 transition leading-normal border-t border-black/[0.05] dark:border-white/[0.04]"
               >
-                No category found. Create "{targetSearch}"?
+                No category found. Create &ldquo;{targetSearch}&rdquo;?
               </button>
             )}
 

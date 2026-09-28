@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import DebtSetupGrid from "@/components/features/history/DebtSetupGrid";
-import ReceivableSetupGrid from "@/components/features/history/ReceivableSetupGrid";
+import EntrySetupGrid from "@/components/features/history/EntrySetupGrid";
+import { localDateString } from "@/lib/config";
 import { Save, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
 
@@ -25,6 +25,8 @@ export default function AddHistoryPage() {
   // Self-contained grid payloads (managed via callback triggers)
   const [debtsPayload, setDebtsPayload] = useState<{ name: string; amount: number }[]>([]);
   const [receivablesPayload, setReceivablesPayload] = useState<{ name: string; amount: number }[]>([]);
+  // Bumped after a successful save to remount (clear) the entry grids
+  const [formKey, setFormKey] = useState(0);
 
   // Load configuration status of opening balances from API
   const checkBalanceStatus = async () => {
@@ -43,10 +45,6 @@ export default function AddHistoryPage() {
     }
   };
 
-  useEffect(() => {
-    checkBalanceStatus();
-  }, []);
-
   useRefresh(checkBalanceStatus);
 
   const handleSave = async () => {
@@ -54,9 +52,10 @@ export default function AddHistoryPage() {
     setError("");
     setSuccess("");
 
-    const payload: any = {
+    const payload: Record<string, unknown> = {
       debts: debtsPayload,
       receivables: receivablesPayload,
+      date: localDateString(),
     };
 
     if (!isBalancesInitialized) {
@@ -65,7 +64,7 @@ export default function AddHistoryPage() {
     }
 
     const hasBalances = !isBalancesInitialized && (cashBalance || bankBalance);
-    if (!hasBalances && payload.debts.length === 0 && payload.receivables.length === 0) {
+    if (!hasBalances && debtsPayload.length === 0 && receivablesPayload.length === 0) {
       setError("Please enter at least one balance, debt, or receivable before saving.");
       setLoading(false);
       return;
@@ -87,6 +86,7 @@ export default function AddHistoryPage() {
       setSuccess("Historical records added successfully!");
       setCashBalance("");
       setBankBalance("");
+      setFormKey((key) => key + 1);
       
       window.dispatchEvent(new Event("refreshData"));
       await checkBalanceStatus();
@@ -163,13 +163,13 @@ export default function AddHistoryPage() {
             {/* 2. EXISTING DEBTS SECTION */}
             <div className="bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md rounded-3xl p-4 sm:p-6 shadow-sm shadow-black/[0.01] space-y-4">
               <h3 className="text-lg font-bold text-black dark:text-white leading-none">Existing Debts</h3>
-              <DebtSetupGrid onChange={setDebtsPayload} />
+              <EntrySetupGrid key={`debts-${formKey}`} label="Debts" onChange={setDebtsPayload} />
             </div>
 
             {/* 3. EXISTING RECEIVABLES SECTION */}
             <div className="bg-white/45 dark:bg-black/35 border border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md rounded-3xl p-4 sm:p-6 shadow-sm shadow-black/[0.01] space-y-4">
               <h3 className="text-lg font-bold text-black dark:text-white leading-none">Existing Receivables</h3>
-              <ReceivableSetupGrid onChange={setReceivablesPayload} />
+              <EntrySetupGrid key={`receivables-${formKey}`} label="Receivables" onChange={setReceivablesPayload} />
             </div>
 
             {/* Error and Success Indicators */}

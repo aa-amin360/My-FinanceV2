@@ -1,25 +1,12 @@
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import pool from "@/lib/db";
-import crypto from "crypto";
 import { AuthOptions } from "next-auth";
+import pool from "@/lib/db";
+import { hashPassword, verifyPassword } from "@/lib/password";
+import { clientIp, rateLimit, tooManyAttemptsMessage } from "@/lib/rateLimit";
 
-// ===============================
-// SECURE PASSWORD HASHING UTILITIES
-// ===============================
-export function hashPassword(password: string): string {
-  const salt = crypto.randomBytes(16).toString("hex");
-  const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, "sha512").toString("hex");
-  return `${salt}:${hash}`;
-}
-
-export function verifyPassword(password: string, storedValue: string): boolean {
-  const parts = storedValue.split(":");
-  if (parts.length !== 2) return false;
-  const [salt, originalHash] = parts;
-  const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, "sha512").toString("hex");
-  return hash === originalHash;
-}
+const INVALID_CREDENTIALS = "Invalid email or password.";
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
 // ==============================
 // NEXTAUTH CONFIGURATION OPTIONS
@@ -39,33 +26,51 @@ export const authOptions: AuthOptions = {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+      async authorize(credentials, req) {
+        const email = credentials?.email?.trim().toLowerCase();
+        const password = credentials?.password;
+
+        if (!email || !password) {
           throw new Error("Please enter both email and password.");
         }
 
-        const res = await pool.query(
-          "SELECT id, email, name, image, password_hash FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1",
-          [credentials.email.trim()]
-        );
+        // Throttle per account and per client address to slow down guessing
+        const ip = clientIp(req?.headers);
+        const byAccount = rateLimit(`login:email:${email}`, 10, LOGIN_WINDOW_MS);
+        const byIp = rateLimit(`login:ip:${ip}`, 30, LOGIN_WINDOW_MS);
+        if (!byAccount.ok || !byIp.ok) {
+          throw new Error(
+            tooManyAttemptsMessage(Math.max(byAccount.retryAfterSeconds, byIp.retryAfterSeconds))
+          );
+        }
 
+        const res = await pool.query(
+          "SELECT id, email, name, image, password_hash FROM users WHERE LOWER(email) = $1 LIMIT 1",
+          [email]
+        );
         const user = res.rows[0];
 
-        if (!user) {
-          throw new Error("No account found with this email.");
+        // Same message for unknown email, Google-only account and wrong password
+        // so the form cannot be used to discover which emails are registered.
+        if (!user?.password_hash) {
+          throw new Error(INVALID_CREDENTIALS);
         }
 
-        if (!user.password_hash) {
-          throw new Error("This account is registered via Google sign-in.");
+        const { valid, needsRehash } = await verifyPassword(password, user.password_hash);
+        if (!valid) {
+          throw new Error(INVALID_CREDENTIALS);
         }
 
-        const isValid = verifyPassword(credentials.password, user.password_hash);
-        if (!isValid) {
-          throw new Error("Incorrect password. Please try again.");
+        // Transparently upgrade hashes created with the old, weaker settings
+        if (needsRehash) {
+          await pool.query("UPDATE users SET password_hash = $1 WHERE id = $2", [
+            await hashPassword(password),
+            user.id,
+          ]);
         }
 
         return {
-          id: user.id, // Return the real database UUID ID
+          id: user.id,
           email: user.email,
           name: user.name,
           image: user.image,
@@ -81,12 +86,12 @@ export const authOptions: AuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 
   callbacks: {
-    async signIn({ user, account }: any) {
+    async signIn({ user, account }) {
       if (!user.email) return false;
 
       // Only perform database insert/update for Google logins
       // Note: id (UUID) is omitted here because Postgres auto-generates gen_random_uuid() on INSERT
-      if (account.provider === "google") {
+      if (account?.provider === "google") {
         await pool.query(
           `
           INSERT INTO users (email, name, image)
@@ -103,26 +108,33 @@ export const authOptions: AuthOptions = {
       return true;
     },
 
-    async redirect({ baseUrl }: any) {
+    // Honour same-origin callback URLs (e.g. signOut -> "/"), default to the dashboard
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      try {
+        if (new URL(url).origin === baseUrl) return url;
+      } catch {
+        // fall through to the default
+      }
       return `${baseUrl}/dashboard`;
     },
 
-    async jwt({ token, user }: any) {
-      // Safely fetch and bind the user's permanent database UUID to the session token
-      if (user && user.email) {
+    async jwt({ token, user }) {
+      // Bind the user's permanent database UUID to the session token at sign-in
+      if (user?.email) {
         const dbUserRes = await pool.query(
           "SELECT id FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1",
           [user.email]
         );
         if (dbUserRes.rows.length > 0) {
-          token.id = dbUserRes.rows[0].id; // Binds the Postgres UUID!
+          token.id = dbUserRes.rows[0].id;
         }
       }
       return token;
     },
 
-    async session({ session, token }: any) {
-      if (session.user) {
+    async session({ session, token }) {
+      if (session.user && typeof token.id === "string") {
         session.user.id = token.id; // Pass the Postgres UUID to the front-end session object
       }
       return session;

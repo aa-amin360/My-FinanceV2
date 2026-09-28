@@ -8,6 +8,7 @@ import {
   Palmtree, Camera, Pizza, Watch, Gem, Baby, 
   Church, HardHat, Sofa, Dumbbell
 } from "lucide-react";
+import { CURRENCY, formatNumber } from "@/lib/config";
 
 type Goal = {
   id: number;
@@ -121,7 +122,7 @@ export default function SavingsVault({ goals }: { goals: Goal[] }) {
                     {goal.name}
                   </h4>
                   <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 tracking-wide font-mono">
-                    {Math.round(current).toLocaleString()} / {Math.round(target / 1000)}k Tk
+                    {formatNumber(Math.round(current))} / {Math.round(target / 1000)}k {CURRENCY}
                   </p>
                 </div>
               </div>

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { useRefresh } from "@/hooks/useRefresh";
 import { Calendar, Trash2, Award } from "lucide-react";
+import { CURRENCY, formatMoney, formatNumber, localDateString } from "@/lib/config";
+import { subtractMoney, sumMoney } from "@/lib/money";
 
 type Goal = {
   id: number;
@@ -22,35 +24,46 @@ export default function SavingsPage() {
   const [goalToDeleteId, setGoalToDeleteId] = useState<number | null>(null);
   const [goalToAchieveId, setGoalToAchieveId] = useState<number | null>(null);
   const [totalSavings, setTotalSavings] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch initial goals and ledger balance
   const loadData = async () => {
-    const res = await fetch("/api/savings");
-    const json = await res.json();
-    setGoals(json.data || []);
-
-    const balRes = await fetch("/api/balance");
-    const balJson = await balRes.json();
-    setTotalSavings(balJson.savingsTotal || 0);
+    try {
+      const [res, balRes] = await Promise.all([
+        fetch("/api/savings", { cache: "no-store" }),
+        fetch("/api/balance", { cache: "no-store" }),
+      ]);
+      const [json, balJson] = await Promise.all([res.json(), balRes.json()]);
+      setGoals(json.data || []);
+      setTotalSavings(Number(balJson.savingsTotal || 0));
+    } catch (err) {
+      console.error("Failed to load savings:", err);
+    }
   };
 
   useRefresh(loadData);
 
-  const allocatedAmount = goals.reduce((sum, g) => sum + Number(g.current_amount), 0);
-  const unallocated = totalSavings - allocatedAmount;
+  const allocatedAmount = sumMoney(goals.map((g) => g.current_amount));
+  const unallocated = subtractMoney(totalSavings, allocatedAmount);
 
   // Handle goals removal with automatic refund option or converting to Spent expense
   const handleDelete = async (id: number, actionType: "REFUND" | "SPENT") => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/savings/${id}?action=${actionType}`, { method: "DELETE" });
-      if (res.ok) {
-        setGoalToDeleteId(null);
-        setGoalToAchieveId(null);
-        loadData();
+      const params = new URLSearchParams({ action: actionType, date: localDateString() });
+      const res = await fetch(`/api/savings/${id}?${params.toString()}`, { method: "DELETE" });
+      setGoalToDeleteId(null);
+      setGoalToAchieveId(null);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Could not update this goal.");
+        return;
       }
+      setError(null);
+      window.dispatchEvent(new Event("refreshData"));
     } catch (err) {
       console.error("Action failed:", err);
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -71,7 +84,7 @@ export default function SavingsPage() {
 
   // Verify if reminder installment is triggered for today
   const isPaymentDue = (goal: Goal) => {
-    if (!goal.reminder_day) return false;
+    if (goal.reminder_day === null || goal.reminder_day === undefined) return false;
     const today = new Date();
     
     if (goal.frequency === "MONTHLY") {
@@ -98,6 +111,8 @@ export default function SavingsPage() {
           </p>
         </div>
 
+        {error && <div className="text-sm font-semibold text-red-500 px-1">{error}</div>}
+
         {/* Savings Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
@@ -116,7 +131,7 @@ export default function SavingsPage() {
               <div className="pt-4 border-t border-black/[0.04] dark:border-white/[0.04]">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Available Reserve</span>
                 <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
-                  {unallocated.toLocaleString()} <span className="text-xs font-bold text-slate-500">Tk</span>
+                  {formatNumber(unallocated)} <span className="text-xs font-bold text-slate-500">{CURRENCY}</span>
                 </div>
               </div>
             </div>
@@ -164,7 +179,7 @@ export default function SavingsPage() {
                     <div className="pt-2 flex flex-col gap-0.5">
                       <span className="text-[8px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider block leading-none">Remaining Needed</span>
                       <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 tracking-tight">
-                        {remaining === 0 ? "Goal Achieved!" : `${remaining.toLocaleString()} Tk left`}
+                        {remaining === 0 ? "Goal Achieved!" : `${formatMoney(remaining)} left`}
                       </span>
                     </div>
                   </div>
@@ -201,11 +216,11 @@ export default function SavingsPage() {
                 <div className="grid grid-cols-2 gap-3 py-3 border-t border-b border-black/[0.04] dark:border-white/[0.04] text-left">
                   <div>
                     <span className="text-[8px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">Saved Balance</span>
-                    <span className="text-xs font-black text-black dark:text-white">{current.toLocaleString()} Tk</span>
+                    <span className="text-xs font-black text-black dark:text-white">{formatMoney(current)}</span>
                   </div>
                   <div>
                     <span className="text-[8px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">Target Cap</span>
-                    <span className="text-xs font-black text-black dark:text-white">{target.toLocaleString()} Tk</span>
+                    <span className="text-xs font-black text-black dark:text-white">{formatMoney(target)}</span>
                   </div>
                 </div>
 

@@ -5,6 +5,9 @@ import DashboardLayout from "../../components/layout/DashboardLayout";
 import { ArrowLeft, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { useRefresh } from "@/hooks/useRefresh";
 import { useRouter } from "next/navigation";
+import { formatName, formatTypeLabel, isInflowType } from "@/lib/ledger";
+import { sumMoney } from "@/lib/money";
+import { formatMoney, formatNumber } from "@/lib/config";
 
 type Transaction = {
   id: string;
@@ -24,11 +27,24 @@ export default function CalendarPage() {
   const [selectedDateStr, setSelectedDateStr] = useState<string | null>(null);
 
   // =========================
-  // LOAD TRANSACTIONS
+  // CALENDAR CALCULATION HELPERS
+  // =========================
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+
+  // =========================
+  // LOAD TRANSACTIONS FOR THE VISIBLE MONTH
   // =========================
   const loadTransactions = async () => {
     try {
-      const res = await fetch("/api/transactions", { cache: "no-store" });
+      const monthStr = String(month + 1).padStart(2, "0");
+      const lastDay = String(new Date(year, month + 1, 0).getDate()).padStart(2, "0");
+      const params = new URLSearchParams({
+        all: "true",
+        startDate: `${year}-${monthStr}-01`,
+        endDate: `${year}-${monthStr}-${lastDay}`,
+      });
+      const res = await fetch(`/api/transactions?${params.toString()}`, { cache: "no-store" });
       const json = await res.json();
       setTransactions(json.data || []);
     } catch (err) {
@@ -36,13 +52,12 @@ export default function CalendarPage() {
     }
   };
 
-  useRefresh(loadTransactions);
+  useRefresh(loadTransactions, { runOnMount: false });
 
-  // =========================
-  // CALENDAR CALCULATION HELPERS
-  // =========================
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
+  useEffect(() => {
+    loadTransactions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [year, month]);
 
   const monthName = currentDate.toLocaleDateString("en-US", {
     month: "long",
@@ -95,17 +110,8 @@ export default function CalendarPage() {
       return txDatePrefix === dateStr && !t.parent_id;
     });
 
-    let income = 0;
-    let expense = 0;
-
-    dayTxs.forEach((t) => {
-      const amt = Number(t.amount);
-      if (t.type === "INCOME") {
-        income += amt;
-      } else if (t.type === "EXPENSE") {
-        expense += amt;
-      }
-    });
+    const income = sumMoney(dayTxs.filter((t) => t.type === "INCOME").map((t) => t.amount));
+    const expense = sumMoney(dayTxs.filter((t) => t.type === "EXPENSE").map((t) => t.amount));
 
     return { income, expense, count: dayTxs.length };
   };
@@ -118,17 +124,10 @@ export default function CalendarPage() {
     });
   };
 
-  const formatName = (name: string) => {
-    return name
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  };
-
   const getDisplayName = (t: Transaction) => {
     if (t.entity_name) return formatName(t.entity_name);
     if (t.category_name) return formatName(t.category_name);
-    return t.type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    return formatTypeLabel(t.type);
   };
 
   const selectedTxs = getSelectedDayTransactions();
@@ -234,7 +233,7 @@ export default function CalendarPage() {
                             +{formatCompact(income)}
                           </span>
                           <span className="hidden md:block text-[10px] leading-none">
-                            +{income.toLocaleString()}
+                            +{formatNumber(income)}
                           </span>
                         </div>
                       ) : (
@@ -250,7 +249,7 @@ export default function CalendarPage() {
                             -{formatCompact(expense)}
                           </span>
                           <span className="hidden md:block text-[10px] leading-none">
-                            -{expense.toLocaleString()}
+                            -{formatNumber(expense)}
                           </span>
                         </div>
                       ) : (
@@ -297,16 +296,7 @@ export default function CalendarPage() {
           <div className="space-y-3">
             {selectedTxs.map((t) => {
               const amount = Number(t.amount);
-              const isPositive =
-                t.type === "INCOME" ||
-                t.type === "DEBT_TAKEN" ||
-                t.type === "RECEIVABLE_RECEIVED";
-
-              const formatType = (type: string) =>
-                type
-                  .toLowerCase()
-                  .replace(/_/g, " ")
-                  .replace(/\b\w/g, (c) => c.toUpperCase());
+              const isPositive = isInflowType(t.type);
 
               return (
                 <div
@@ -336,7 +326,7 @@ export default function CalendarPage() {
                     <div className="text-right">
                       <div className={`font-bold text-sm sm:text-base ${isPositive ? "text-emerald-500" : "text-rose-500"}`}>
                         {isPositive ? "+" : "-"}
-                        {amount.toLocaleString("en-BD")} Tk
+                        {formatMoney(amount)}
                       </div>
 
                       <div className="mt-1">
@@ -353,7 +343,7 @@ export default function CalendarPage() {
                               : "bg-zinc-800 text-zinc-400"
                           }`}
                         >
-                          {formatType(t.type)}
+                          {formatTypeLabel(t.type)}
                         </span>
                       </div>
                     </div>

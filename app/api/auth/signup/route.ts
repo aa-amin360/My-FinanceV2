@@ -1,66 +1,54 @@
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
-import { hashPassword } from "@/lib/auth";
+import { AppError, errorResponse, readJson } from "@/lib/api";
+import { hashPassword } from "@/lib/password";
+import { clientIp, rateLimit, tooManyAttemptsMessage } from "@/lib/rateLimit";
+import { parseRequiredText } from "@/lib/validation";
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { name, email, password } = body;
-
-    // 1. Basic validation
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        { error: "All fields are required." },
-        { status: 400 }
-      );
+    const limit = rateLimit(`signup:ip:${clientIp(req.headers)}`, 5, 60 * 60 * 1000);
+    if (!limit.ok) {
+      throw new AppError(tooManyAttemptsMessage(limit.retryAfterSeconds), 429);
     }
 
-    const cleanEmail = email.trim().toLowerCase();
-    const cleanName = name.trim();
+    const body = await readJson(req);
+    const name = parseRequiredText(body.name, "Name", 100);
+    const email = parseRequiredText(body.email, "Email", 255).toLowerCase();
+    const password = typeof body.password === "string" ? body.password : "";
 
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: "Password must be at least 6 characters long." },
-        { status: 400 }
-      );
+    if (!EMAIL_PATTERN.test(email)) {
+      throw new AppError("Please enter a valid email address.");
+    }
+    if (password.length < 8) {
+      throw new AppError("Password must be at least 8 characters long.");
+    }
+    if (password.length > 200) {
+      throw new AppError("Password is too long.");
     }
 
-    // 2. Check if user already exists
-    const userCheck = await pool.query(
-      "SELECT id FROM users WHERE LOWER(email) = $1 LIMIT 1",
-      [cleanEmail]
-    );
+    const passwordHash = await hashPassword(password);
 
-    if (userCheck.rows.length > 0) {
-      return NextResponse.json(
-        { error: "An account with this email already exists." },
-        { status: 409 } // Conflict
-      );
-    }
-
-    // 3. Hash the password
-    const passwordHash = hashPassword(password);
-
-    // 4. Insert the new user into the database
-    // id column is omitted to let Postgres automatically auto-generate its secure UUID
-    await pool.query(
+    // The UNIQUE constraint on email makes this safe against concurrent sign-ups
+    const inserted = await pool.query(
       `
       INSERT INTO users (email, name, password_hash)
-      VALUES ($1, $2, $3)
+      SELECT $1::text, $2::text, $3::text
+      WHERE NOT EXISTS (SELECT 1 FROM users WHERE LOWER(email) = $1::text)
+      ON CONFLICT (email) DO NOTHING
+      RETURNING id
       `,
-      [cleanEmail, cleanName, passwordHash]
+      [email, name, passwordHash]
     );
 
-    return NextResponse.json({
-      success: true,
-      message: "Account created successfully.",
-    });
+    if (inserted.rows.length === 0) {
+      throw new AppError("An account with this email already exists.", 409);
+    }
 
-  } catch (err: any) {
-    console.error("SIGNUP API ERROR:", err);
-    return NextResponse.json(
-      { error: "Something went wrong. Please try again." },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, message: "Account created successfully." });
+  } catch (err) {
+    return errorResponse(err, "SIGNUP API ERROR");
   }
 }

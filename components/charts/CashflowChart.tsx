@@ -9,6 +9,7 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
+import { formatMoney } from "@/lib/config";
 
 type Props = {
   data: {
@@ -91,7 +92,7 @@ export default function CashflowChart({ data }: Props) {
               fontSize: "12px",
               color: isDark ? "#ffffff" : "#000000",
             }}
-            formatter={(value: number) => `${value.toFixed(2)} Tk`}
+            formatter={(value: number) => formatMoney(value)}
           />
 
           {/* AREA */}

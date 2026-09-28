@@ -1,57 +1,51 @@
-export function buildFlow(type: string, direction: string, ids: any, entity_id: string | null) {
-  let from_account = null;
-  let to_account = null;
+import { AppError } from "@/lib/errors";
+import type { AccountIds } from "@/lib/transactions/accounts";
+import type { TransferDirection, TxType } from "@/lib/transactions/types";
 
+export type Flow = { from_account: number | null; to_account: number | null };
+
+// Decide which accounts money moves between for a transaction type
+export function buildFlow(
+  type: TxType,
+  direction: TransferDirection | null,
+  ids: AccountIds,
+  entityId: number | null
+): Flow {
   const { accountId, savingsId, debtId, receivableId } = ids;
+  const needsEntity = () => {
+    if (!entityId) throw new AppError("Enter the person or counterparty.");
+  };
 
   switch (type) {
     case "INCOME":
-      to_account = accountId;
-      break;
+      return { from_account: null, to_account: accountId };
 
     case "EXPENSE":
-      from_account = accountId;
-      break;
+      return { from_account: accountId, to_account: null };
 
     case "TRANSFER":
-      if (!direction) throw new Error("Direction required");
-
-      if (direction === "TO_SAVINGS") {
-        from_account = accountId;
-        to_account = savingsId;
-      } else {
-        from_account = savingsId;
-        to_account = accountId;
-      }
-      break;
+      if (!direction) throw new AppError("Transfer direction is required.");
+      return direction === "TO_SAVINGS"
+        ? { from_account: accountId, to_account: savingsId }
+        : { from_account: savingsId, to_account: accountId };
 
     case "DEBT_TAKEN":
-      if (!entity_id) throw new Error("Entity required");
-      from_account = debtId;
-      to_account = accountId;
-      break;
+      needsEntity();
+      return { from_account: debtId, to_account: accountId };
 
     case "DEBT_REPAID":
-      if (!entity_id) throw new Error("Entity required");
-      from_account = accountId;
-      to_account = debtId;
-      break;
+      needsEntity();
+      return { from_account: accountId, to_account: debtId };
 
     case "RECEIVABLE_GIVEN":
-      if (!entity_id) throw new Error("Entity required");
-      from_account = accountId;
-      to_account = receivableId;
-      break;
+      needsEntity();
+      return { from_account: accountId, to_account: receivableId };
 
     case "RECEIVABLE_RECEIVED":
-      if (!entity_id) throw new Error("Entity required");
-      from_account = receivableId;
-      to_account = accountId;
-      break;
+      needsEntity();
+      return { from_account: receivableId, to_account: accountId };
 
     default:
-      throw new Error("Invalid type");
+      throw new AppError("Invalid transaction type.");
   }
-
-  return { from_account, to_account };
 }

@@ -1,64 +1,25 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
-import pool from "@/lib/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { withTransaction } from "@/lib/db";
+import { errorResponse, requireUserId } from "@/lib/api";
 
+// Reset the user's ledger: every transaction plus the debt/receivable totals
+// derived from them. Savings goals, budget plans and categories are kept.
+// Opening balances are removed too, so the user is sent through onboarding again.
 export async function DELETE() {
-  const session = await getServerSession(authOptions);
-
-  // 🔐 AUTH GUARD
-  if (!session || !session.user?.email) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
-
-  const userId = session.user.id;
-
-  const client = await pool.connect();
-
   try {
-    await client.query("BEGIN");
+    const userId = await requireUserId();
 
-    // =========================
-    // USER-SCOPED CLEANUP
-    // =========================
-
-    await client.query(
-      `DELETE FROM transactions WHERE user_id = $1`,
-      [userId]
-    );
-
-    await client.query(
-      `DELETE FROM debts WHERE user_id = $1`,
-      [userId]
-    );
-
-    await client.query(
-      `DELETE FROM receivables WHERE user_id = $1`,
-      [userId]
-    );
-
-    await client.query("COMMIT");
-
-    return NextResponse.json({
-      success: true,
-      message: "User ledger reset successfully",
+    await withTransaction(async (client) => {
+      await client.query(`DELETE FROM transactions WHERE user_id = $1`, [userId]);
+      await client.query(`DELETE FROM debts WHERE user_id = $1`, [userId]);
+      await client.query(`DELETE FROM receivables WHERE user_id = $1`, [userId]);
+      await client.query(`UPDATE users SET history_initialized = false WHERE id = $1`, [userId]);
     });
 
-  } catch (err: any) {
-    await client.query("ROLLBACK");
-
-    console.error("DELETE ERROR:", err);
-
-    return NextResponse.json(
-      { error: err.message || "Delete failed" },
-      { status: 500 }
-    );
-  } finally {
-    client.release();
+    return NextResponse.json({ success: true, message: "User ledger reset successfully" });
+  } catch (err) {
+    return errorResponse(err, "DELETE ALL TRANSACTIONS ERROR");
   }
 }

@@ -3,35 +3,29 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Dropdown from "@/components/ui/Dropdown";
+import { formatMoney } from "@/lib/config";
 
 type Category = {
-  id: string;
+  id: number;
   name: string;
   type: string;
-};
-
-type Transaction = {
-  amount: string;
-  type: string;
-  category_id: string | null;
+  // All-time total of the user's transactions in this category
+  total: string;
 };
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [error, setError] = useState("");
 
   const [name, setName] = useState("");
   const [type, setType] = useState<"EXPENSE" | "INCOME">("EXPENSE");
 
-  // Load active categories and transactions history
+  // Load categories together with their totals
   const load = () => {
-    fetch("/api/categories")
+    fetch("/api/categories", { cache: "no-store" })
       .then((res) => res.json())
-      .then((d) => setCategories(d.data || []));
-
-    fetch("/api/transactions")
-      .then((res) => res.json())
-      .then((d) => setTransactions(d.data || []));
+      .then((d) => setCategories(d.data || []))
+      .catch((err) => console.error("Failed to load categories:", err));
   };
 
   useEffect(() => {
@@ -39,33 +33,34 @@ export default function CategoriesPage() {
   }, []);
 
   const handleCreate = async () => {
-    if (!name.trim()) return alert("Enter category name");
+    if (!name.trim()) {
+      setError("Enter a category name.");
+      return;
+    }
 
-    await fetch("/api/categories", {
+    const res = await fetch("/api/categories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: name.trim(), type }),
     });
 
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || "Failed to create category.");
+      return;
+    }
+
+    setError("");
     setName("");
     load();
   };
 
-  // Calculate dynamic expense totals for each category
-  const categoryTotals = categories.map((c) => {
-    const total = transactions
-      .filter(
-        (t) =>
-          t.type === "EXPENSE" && t.category_id === c.id
-      )
-      .reduce((sum, t) => sum + Number(t.amount), 0);
-
-    return {
-      name: c.name,
-      type: c.type,
-      total,
-    };
-  });
+  const categoryTotals = categories.map((c) => ({
+    id: c.id,
+    name: c.name,
+    type: c.type,
+    total: Number(c.total || 0),
+  }));
 
   const typeOptions = [
     { value: "EXPENSE", label: "Expense" },
@@ -151,6 +146,8 @@ export default function CategoriesPage() {
           </button>
         </div>
 
+        {error && <div className="text-sm font-semibold text-red-500 px-1">{error}</div>}
+
         {/* Categories Listing Table */}
         <div
           className="
@@ -173,14 +170,14 @@ export default function CategoriesPage() {
           >
             <div>Category</div>
             <div>Type</div>
-            <div className="text-right">Total Expense</div>
+            <div className="text-right">Total</div>
           </div>
 
           {/* Table Rows */}
           <div className="divide-y divide-slate-100 dark:divide-zinc-900/60">
-            {categoryTotals.map((item, i) => (
+            {categoryTotals.map((item) => (
               <div
-                key={i}
+                key={item.id}
                 className="
                   grid grid-cols-3 items-center
                   px-5 py-4
@@ -203,8 +200,8 @@ export default function CategoriesPage() {
                   </span>
                 </div>
 
-                <div className="text-right text-rose-600 dark:text-rose-400 font-bold">
-                  {item.total.toFixed(2)} Tk
+                <div className={`text-right font-bold ${item.type === "INCOME" ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                  {formatMoney(item.total)}
                 </div>
               </div>
             ))}

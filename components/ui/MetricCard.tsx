@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { LucideIcon } from "lucide-react";
+import { CURRENCY, formatNumber } from "@/lib/config";
 
 type MetricCardProps = {
   title: string;
@@ -61,7 +62,7 @@ export default function MetricCard({
   const { text, bg, border } = getThemeStyles();
   const formattedValue = isPercentage 
     ? value.toFixed(1) 
-    : Number(value).toLocaleString("en-BD");
+    : formatNumber(value);
 
   const cardBody = (
     <div className={`p-4 sm:p-5 rounded-3xl border transition hover:scale-[1.01] duration-200 backdrop-blur-md flex justify-between items-center w-full ${bg} ${border}`}>
@@ -74,7 +75,7 @@ export default function MetricCard({
             {formattedValue}
           </span>
           <span className={`text-[10px] shrink-0 font-bold opacity-80 ${text}`}>
-            {isPercentage ? "%" : "Tk"}
+            {isPercentage ? "%" : CURRENCY}
           </span>
         </div>
       </div>

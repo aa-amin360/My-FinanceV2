@@ -13,6 +13,8 @@ import {
   ChevronLeft, 
   ChevronRight,
 } from "lucide-react";
+import { formatMoney, localDateString } from "@/lib/config";
+import { sumMoney } from "@/lib/money";
 
 type Plan = {
   id: number;
@@ -66,16 +68,18 @@ export default function BudgetPage() {
     }
   };
 
-  useRefresh(loadData);
+  useRefresh(loadData, { runOnMount: false });
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDate]);
 
   useEffect(() => {
     fetch("/api/categories")
       .then(res => res.json())
-      .then(d => setCategories(d.data || []));
+      .then(d => setCategories(d.data || []))
+      .catch(() => {});
   }, []);
 
   const handlePrevMonth = () => {
@@ -87,17 +91,12 @@ export default function BudgetPage() {
   };
 
   // Forecast summaries calculations
-  let expectedIncome = 0;
-  let expectedExpenses = 0;
+  const pendingPlans = plans.filter((p) => p.status === "PENDING");
+  const expectedIncome = sumMoney(pendingPlans.filter((p) => p.type === "INCOME").map((p) => p.amount));
+  const expectedExpenses = sumMoney(pendingPlans.filter((p) => p.type === "EXPENSE").map((p) => p.amount));
 
-  plans.forEach(p => {
-    if (p.status !== "PENDING") return;
-    const amt = Number(p.amount);
-    if (p.type === "INCOME") expectedIncome += amt;
-    if (p.type === "EXPENSE") expectedExpenses += amt;
-  });
-
-  const projectedPosition = currentBalance + expectedIncome - expectedExpenses;
+  const projectedPosition = sumMoney([currentBalance, expectedIncome, -expectedExpenses]);
+  const today = localDateString();
 
   const handleDeletePlan = async (id: number) => {
     setLoading(true);
@@ -166,7 +165,7 @@ export default function BudgetPage() {
           <div className="flex justify-between items-center pt-4 border-t border-black/[0.04] dark:border-white/[0.04] mt-2">
             <span className="text-xs sm:text-sm font-bold text-slate-500 dark:text-zinc-400">Projected Month-End Position</span>
             <span className="text-base sm:text-xl font-bold text-emerald-500">
-              {projectedPosition.toLocaleString("en-BD")} Tk
+              {formatMoney(projectedPosition)}
             </span>
           </div>
         </div>
@@ -198,7 +197,7 @@ export default function BudgetPage() {
                         timeZone: "UTC",
                       })}
                     </span>
-                    {p.status === "PENDING" && p.date.substring(0, 10) < new Date().toLocaleDateString("en-CA") && (
+                    {p.status === "PENDING" && p.date.substring(0, 10) < today && (
                       <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shrink-0" title="Overdue!" />
                     )}
                   </div>
@@ -215,11 +214,11 @@ export default function BudgetPage() {
 
                   <div className="col-span-2 flex items-center justify-end gap-3 text-right">
                     <span className="font-bold text-black dark:text-white shrink-0">
-                      {amt.toLocaleString("en-BD")} Tk
+                      {formatMoney(amt)}
                     </span>
 
                     {p.status === "PENDING" ? (
-                      p.date.substring(0, 10) < new Date().toLocaleDateString("en-CA") ? (
+                      p.date.substring(0, 10) < today ? (
                         <button
                           type="button"
                           onClick={() => setProcessingPlan(p)}
@@ -282,13 +281,13 @@ export default function BudgetPage() {
                           timeZone: "UTC",
                         })}
                       </span>
-                      {p.status === "PENDING" && p.date.substring(0, 10) < new Date().toLocaleDateString("en-CA") && (
+                      {p.status === "PENDING" && p.date.substring(0, 10) < today && (
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shrink-0" />
                       )}
                     </p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="font-bold text-sm text-black dark:text-white">{amt.toLocaleString("en-BD")} Tk</p>
+                    <p className="font-bold text-sm text-black dark:text-white">{formatMoney(amt)}</p>
                   </div>
                 </div>
 
@@ -306,7 +305,7 @@ export default function BudgetPage() {
 
                   <div className="flex items-center gap-1.5 shrink-0">
                     {p.status === "PENDING" ? (
-                      p.date.substring(0, 10) < new Date().toLocaleDateString("en-CA") ? (
+                      p.date.substring(0, 10) < today ? (
                         <button
                           type="button"
                           onClick={() => setProcessingPlan(p)}
@@ -377,6 +376,7 @@ export default function BudgetPage() {
 
             <AddPlanForm
               categories={categories}
+              onCategoryCreated={(category) => setCategories((prev) => [...prev, category])}
               onSuccess={() => {
                 setShowAddModal(false);
                 loadData();
@@ -405,7 +405,7 @@ export default function BudgetPage() {
               <div>
                 <h3 className="text-base font-bold text-black dark:text-white leading-none">{processingPlan.target_name}</h3>
                 <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider block mt-1">
-                  Due amount: {Number(processingPlan.amount).toLocaleString("en-BD")} Tk
+                  Due amount: {formatMoney(Number(processingPlan.amount))}
                 </span>
               </div>
               <button onClick={() => setProcessingPlan(null)} className="p-1 text-slate-400 hover:text-black dark:hover:text-white transition rounded-full hover:bg-black/[0.03] dark:hover:bg-white/[0.03]">
@@ -445,7 +445,7 @@ function ProjectionBlock({ label, val, color, prefix = "" }: { label: string, va
     <div className="bg-slate-50/50 dark:bg-zinc-950/30 border border-slate-100 dark:border-zinc-900/60 p-3 sm:p-5 rounded-2xl flex flex-col text-left shadow-[inset_0_2px_4px_rgba(0,0,0,0.015)] dark:shadow-[inset_0_1.5px_3px_rgba(255,255,255,0.015)] w-full overflow-hidden">
       <span className="text-[11px] sm:text-xs md:text-sm font-semibold text-slate-400 dark:text-zinc-500 leading-tight truncate">{label}</span>
       <span className={`text-sm sm:text-lg md:text-xl lg:text-2xl font-bold ${color} mt-1.5 whitespace-nowrap`}>
-        {val > 0 ? prefix : ""}{val.toLocaleString("en-BD")} Tk
+        {val > 0 ? prefix : ""}{formatMoney(val)}
       </span>
     </div>
   );

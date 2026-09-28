@@ -2,17 +2,13 @@
 
 import { useTheme } from "../ThemeProvider";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Space_Grotesk } from "next/font/google";
+import { useEffect } from "react";
 import { signOut } from "next-auth/react";
 
 import TransactionModal from "@/components/modal/TransactionModal";
-
-const space = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-});
+import { isOnboardingCached, setOnboardingCached } from "@/lib/onboardingCache";
 
 import {
   LayoutDashboard,
@@ -40,18 +36,21 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
 
-  const [cashBalance, setCashBalance] = useState(0);
-  const [bankBalance, setBankBalance] = useState(0);
-
   const { toggleTheme, theme, collapsed, toggleCollapse } = useTheme();
 
-  // Active Client-side Route Guard to intercept un-onboarded users
+  // Client-side route guard: send users who haven't onboarded yet to /onboarding.
+  // Once confirmed, the result is cached for the tab so navigation stays fast.
   useEffect(() => {
+    if (isOnboardingCached()) return;
+
     const checkOnboardingStatus = async () => {
       try {
         const res = await fetch("/api/auth/onboarding");
         const data = await res.json();
-        if (data.success && !data.history_initialized) {
+        if (!data.success) return;
+        if (data.history_initialized) {
+          setOnboardingCached(true);
+        } else {
           router.push("/onboarding");
         }
       } catch (err) {
@@ -62,19 +61,10 @@ export default function DashboardLayout({
     checkOnboardingStatus();
   }, [pathname, router]);
 
-  // Load user balance streams dynamically on mounting
-  useEffect(() => {
-    const loadBalance = async () => {
-      const res = await fetch("/api/balance");
-      const data = await res.json();
-      setCashBalance(Number(data.cashBalance || 0));
-      setBankBalance(Number(data.bankBalance || 0));
-    };
-
-    loadBalance();
-    window.addEventListener("refreshData", loadBalance);
-    return () => window.removeEventListener("refreshData", loadBalance);
-  }, []);
+  const handleSignOut = () => {
+    setOnboardingCached(false);
+    signOut({ callbackUrl: "/" });
+  };
 
   return (
     <div className="relative flex h-screen overflow-hidden bg-[#E7EBED] text-black dark:bg-[#131B21] dark:text-white transition-colors duration-300">
@@ -123,7 +113,7 @@ export default function DashboardLayout({
         <header className="h-14 shrink-0 flex items-center justify-between px-4 sm:px-6 bg-white/40 dark:bg-black/30 border-b border-black/[0.05] dark:border-white/[0.04] backdrop-blur-md relative z-30">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 p-0.5 shadow-sm shadow-emerald-500/10 flex items-center justify-center overflow-hidden shrink-0">
-              <img src="/logo.png" alt="logo" className="w-full h-full object-cover rounded-[10px]" />
+              <Image src="/logo.png" alt="logo" width={32} height={32} className="w-full h-full object-cover rounded-[10px]" />
             </div>
             <h1 className="text-sm sm:text-base tracking-tight font-black select-none leading-none truncate">
               <span className="text-zinc-900 dark:text-zinc-50 font-bold">My</span>
@@ -138,7 +128,7 @@ export default function DashboardLayout({
             <button onClick={toggleTheme} className="w-9 h-9 flex items-center justify-center rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.05] text-zinc-500 active:scale-95 transition-all">
               {theme === "dark" ? <Moon size={16} className="text-indigo-400" /> : <Sun size={16} className="text-amber-500" />}
             </button>
-            <button onClick={() => signOut({ callbackUrl: "/" })} className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-600 transition-all active:scale-95">
+            <button onClick={handleSignOut} className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-600 transition-all active:scale-95">
               <LogOut size={16} />
             </button>
           </div>

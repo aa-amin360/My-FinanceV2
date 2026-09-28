@@ -1,25 +1,24 @@
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { errorResponse, readJson, requireUserId } from "@/lib/api";
+import { parseGoalInput } from "@/lib/savings";
 
 // ==========================================
-// GET ALL SAVINGS GOALS (DYNAMICALLY CALCULATED WITH UUID)
+// GET ALL SAVINGS GOALS (PROGRESS CALCULATED FROM THE LEDGER)
 // ==========================================
 export async function GET() {
-  const session: any = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const userId = session.user.id; // Extract the stable database UUID from the session
-  const client = await pool.connect();
-
   try {
-    // Calculate the dynamic savings balance for each goal directly from ledger records
-    const res = await client.query(
+    const userId = await requireUserId();
+
+    const res = await pool.query(
       `
-      SELECT 
+      WITH savings_account AS (
+        SELECT id FROM accounts
+        WHERE LOWER(TRIM(name)) = 'savings' AND user_id = $1
+        ORDER BY id
+        LIMIT 1
+      )
+      SELECT
         sg.id,
         sg.name,
         sg.target_amount,
@@ -29,15 +28,15 @@ export async function GET() {
         sg.reminder_day,
         sg.created_at,
         COALESCE(SUM(
-          CASE 
-            WHEN t.to_account = (SELECT id FROM accounts WHERE LOWER(TRIM(name)) = 'savings' AND user_id = $1 LIMIT 1) THEN t.amount
-            WHEN t.from_account = (SELECT id FROM accounts WHERE LOWER(TRIM(name)) = 'savings' AND user_id = $1 LIMIT 1) THEN -t.amount
+          CASE
+            WHEN t.to_account = (SELECT id FROM savings_account) THEN t.amount
+            WHEN t.from_account = (SELECT id FROM savings_account) THEN -t.amount
             ELSE 0
           END
         ), 0) AS current_amount
       FROM savings_goals sg
-      LEFT JOIN transactions t 
-        ON t.savings_goal_id = sg.id 
+      LEFT JOIN transactions t
+        ON t.savings_goal_id = sg.id
         AND t.user_id = $1
       WHERE sg.user_id = $1
       GROUP BY sg.id
@@ -47,11 +46,8 @@ export async function GET() {
     );
 
     return NextResponse.json({ success: true, data: res.rows });
-  } catch (err: any) {
-    console.error("GET SAVINGS DYNAMIC ERROR:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
-  } finally {
-    client.release();
+  } catch (err) {
+    return errorResponse(err, "GET SAVINGS ERROR");
   }
 }
 
@@ -59,46 +55,20 @@ export async function GET() {
 // CREATE A NEW GOAL WITH ASSISTANT SETTINGS
 // ==========================================
 export async function POST(req: Request) {
-  const session: any = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const userId = session.user.id; // Extract the stable database UUID from the session
-
   try {
-    const body = await req.json();
-    const { 
-      name, 
-      target_amount, 
-      target_date,
-      installment_amount,
-      frequency,
-      reminder_day
-    } = body;
+    const userId = await requireUserId();
+    const goal = parseGoalInput(await readJson(req));
 
-    const client = await pool.connect();
-    
-    const res = await client.query(
-      `INSERT INTO savings_goals 
-        (name, target_amount, installment_amount, frequency, reminder_day, target_date, user_id) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7) 
+    const res = await pool.query(
+      `INSERT INTO savings_goals
+        (name, target_amount, installment_amount, frequency, reminder_day, target_date, user_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [
-        name, 
-        Number(target_amount), 
-        installment_amount ? Number(installment_amount) : null,
-        frequency || 'MONTHLY',
-        reminder_day ? Number(reminder_day) : null,
-        target_date, 
-        userId // Pass the stable UUID instead of the mutable email string
-      ]
+      [goal.name, goal.targetAmount, goal.installmentAmount, goal.frequency, goal.reminderDay, goal.targetDate, userId]
     );
-    
-    client.release();
+
     return NextResponse.json({ success: true, data: res.rows[0] });
-  } catch (err: any) {
-    console.error("SAVINGS POST ERROR:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    return errorResponse(err, "SAVINGS POST ERROR");
   }
 }

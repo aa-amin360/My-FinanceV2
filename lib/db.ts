@@ -1,21 +1,47 @@
-import { Pool } from "pg";
+import { Pool, PoolClient, types } from "pg";
 
-let pool: Pool;
+// Return Postgres DATE columns as plain "YYYY-MM-DD" strings instead of JS Dates.
+// The default parser builds a Date at local midnight of the server, which shifts
+// the day when the server runs in a non-UTC timezone (e.g. local development).
+types.setTypeParser(1082, (value: string) => value);
 
-if (process.env.NODE_ENV === "production") {
-  pool = new Pool({
+declare global {
+  // eslint-disable-next-line no-var
+  var pgPool: Pool | undefined;
+}
+
+function createPool() {
+  return new Pool({
     connectionString: process.env.DATABASE_URL,
     max: 10,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
+    connectionTimeoutMillis: 10000,
   });
-} else {
-  if (!(global as any).pgPool) {
-    (global as any).pgPool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-    });
+}
+
+// Reuse a single pool across hot reloads in development
+const pool: Pool = globalThis.pgPool ?? createPool();
+if (process.env.NODE_ENV !== "production") {
+  globalThis.pgPool = pool;
+}
+
+export type DbClient = PoolClient;
+
+// Run `fn` inside a BEGIN/COMMIT block, rolling back on any error and always
+// releasing the client back to the pool.
+export async function withTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await fn(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
   }
-  pool = (global as any).pgPool;
 }
 
 export default pool;

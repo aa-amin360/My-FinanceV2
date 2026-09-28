@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Dropdown from "@/components/ui/Dropdown";
+import { ACCOUNT_OPTIONS, localDateString } from "@/lib/config";
 
 type Plan = {
   id: number;
@@ -67,101 +68,50 @@ export default function ProcessPlanForm({ plan, onSuccess, onClose }: ProcessPla
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleConfirm = async () => {
+  // Confirm and partial both create a real transaction and update the plan in a
+  // single server-side database transaction (see /api/budget/[id]/process)
+  const processPlan = async (action: "CONFIRM" | "PARTIAL", amount?: number) => {
     setLoading(true);
     setError("");
 
     try {
-      const txPayload = {
-        type: plan.type,
-        amount: Number(plan.amount),
-        account: processAccount,
-        date: new Date().toLocaleDateString("en-CA"),
-        note: plan.note ? `${plan.note} (Planned)` : "Planned event confirmed",
-        category_id: plan.target_id,
-      };
-
-      const txRes = await fetch("/api/transactions", {
+      const res = await fetch(`/api/budget/${plan.id}/process`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(txPayload),
+        body: JSON.stringify({
+          action,
+          amount,
+          account: processAccount,
+          date: localDateString(),
+        }),
       });
 
-      if (!txRes.ok) {
-        const errData = await txRes.json();
-        throw new Error(errData.error || "Failed to create transaction.");
-      }
-
-      const statusRes = await fetch(`/api/budget/${plan.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "CONFIRMED" }),
-      });
-
-      if (!statusRes.ok) {
-        throw new Error("Transaction created, but plan status failed to update.");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to process this plan.");
       }
 
       window.dispatchEvent(new Event("refreshData"));
       onSuccess();
     } catch (err: any) {
-      setError(err.message || "Failed to process confirmation.");
+      setError(err.message || "Failed to process this plan.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePartial = async () => {
+  const handleConfirm = () => processPlan("CONFIRM");
+
+  const handlePartial = () => {
     const partialAmt = Number(partialAmount);
     const planAmt = Number(plan.amount);
 
     if (isNaN(partialAmt) || partialAmt <= 0 || partialAmt >= planAmt) {
-      alert("Enter a valid partial amount less than the total planned amount.");
+      setError("Enter a valid partial amount less than the total planned amount.");
       return;
     }
 
-    setLoading(true);
-    setError("");
-
-    try {
-      const txPayload = {
-        type: plan.type,
-        amount: partialAmt,
-        account: processAccount,
-        date: new Date().toLocaleDateString("en-CA"),
-        note: plan.note ? `${plan.note} (Partial planned)` : "Partial planned event",
-        category_id: plan.target_id,
-      };
-
-      const txRes = await fetch("/api/transactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(txPayload),
-      });
-
-      if (!txRes.ok) {
-        const errData = await txRes.json();
-        throw new Error(errData.error || "Failed to create transaction.");
-      }
-
-      const remainingAmount = planAmt - partialAmt;
-      const statusRes = await fetch(`/api/budget/${plan.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: remainingAmount }),
-      });
-
-      if (!statusRes.ok) {
-        throw new Error("Partial transaction created, but plan balance failed to update.");
-      }
-
-      window.dispatchEvent(new Event("refreshData"));
-      onSuccess();
-    } catch (err: any) {
-      setError(err.message || "Failed to process partial transaction.");
-    } finally {
-      setLoading(false);
-    }
+    processPlan("PARTIAL", partialAmt);
   };
 
   const handleSkip = async () => {
@@ -207,11 +157,6 @@ export default function ProcessPlanForm({ plan, onSuccess, onClose }: ProcessPla
     }
   };
 
-  const accountOptions = [
-    { value: "Cash", label: "Cash" },
-    { value: "Bank", label: "Bank" },
-  ];
-
   return (
     <div className="flex flex-col gap-4 text-left">
       {error && <div className="text-xs text-red-500 font-bold leading-normal">{error}</div>}
@@ -224,7 +169,7 @@ export default function ProcessPlanForm({ plan, onSuccess, onClose }: ProcessPla
           
           <Dropdown
             label="Account"
-            options={accountOptions}
+            options={ACCOUNT_OPTIONS}
             selectedValue={processAccount}
             onChange={(val) => setAccount(val)}
           />
