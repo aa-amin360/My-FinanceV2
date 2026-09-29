@@ -5,10 +5,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "next lint --dir app --dir frontend --dir backend --dir shared --dir tests",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "db:migrate": "node --env-file=.env.local scripts/migrate.js"
+    "db:migrate": "node --env-file=.env.local backend/db/migrate.js"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

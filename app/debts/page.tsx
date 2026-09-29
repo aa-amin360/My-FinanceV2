@@ -1,7 +1,5 @@
-"use client";
-
-import ObligationListPage from "@/components/obligations/ObligationListPage";
+import ObligationListScreen from "@/frontend/screens/ObligationListScreen";
 
 export default function Page() {
-  return <ObligationListPage kind="debt" />;
+  return <ObligationListScreen kind="debt" />;
 }

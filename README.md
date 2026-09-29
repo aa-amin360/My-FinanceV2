@@ -43,12 +43,57 @@ Built with Next.js 14 (App Router), NextAuth (Google + email/password), PostgreS
 | --- | --- |
 | `npm run dev` | Start the development server |
 | `npm run build` / `npm start` | Production build / serve |
-| `npm run lint` | ESLint (`next/core-web-vitals`) |
+| `npm run lint` | ESLint, including the frontend/backend import boundaries |
 | `npm run typecheck` | TypeScript in strict mode |
 | `npm test` | Unit tests (Vitest) |
 | `npm run db:migrate` | Apply the schema migration using `.env.local` |
 
-`scripts/reset-db.js` drops **every table**. It refuses to run unless you pass `--confirm-wipe-all-data`, and it is only meant for throwaway development databases.
+`backend/db/reset.js` drops **every table**. It refuses to run unless you pass `--confirm-wipe-all-data`, and it is only meant for throwaway development databases.
+
+## Project structure
+
+It is one Next.js app deployed as a single unit (e.g. on Vercel), with the code split by responsibility:
+
+```
+app/                 Next.js routing only
+  */page.tsx         one line each: render a screen from frontend/screens
+  api/**/route.ts    one line each: export handlers from backend/routes
+
+frontend/            everything that runs in the browser
+  screens/           one component per page; owns the page's state and composes components
+  components/        atomic design
+    atoms/           smallest pieces: Heading, TextInput, FieldLabel, BackButton, SignedAmount, badges...
+    molecules/       small groups of atoms: PageHeader, Dropdown, ModalOverlay, TransactionRow, PlanCard...
+    organisms/       self-contained sections: TransactionList, Sidebar, TransactionModal, BudgetProjection...
+      landing/       sections of the public landing page
+      onboarding/    steps of the onboarding wizard
+    templates/       page shells (DashboardLayout)
+  api/               typed API client, one module per resource (transactionsApi, budgetApi...)
+  hooks/             useRefresh, useClickOutside, useOnboardingGate
+  lib/               UI helpers: formatting, navigation, calendar, app events
+  providers/         React context providers (theme)
+
+backend/             everything that runs on the server
+  routes/            HTTP handlers: authenticate -> validate -> call a service -> respond
+  validators/        request parsing and validation, one file per resource
+  services/          business rules (ledger, settlements, budget processing, savings...)
+  repositories/      all SQL, one file per table or resource
+  auth/              NextAuth options, password hashing, rate limiting
+  http/              AppError, JSON responses, request parsing, session
+  db/                connection pool, withTransaction, migrate/reset scripts
+
+shared/              used by both sides: API types, ledger rules, money math, config
+
+tests/               unit tests mirroring backend/, frontend/ and shared/
+```
+
+Dependency rules, enforced by `npm run lint`:
+
+- `frontend/` never imports `backend/`. It talks to the server only through `frontend/api`.
+- `backend/` never imports `frontend/`.
+- `shared/` imports from neither.
+
+A backend request flows like this: `app/api/.../route.ts` → `backend/routes` → `backend/validators` → `backend/services` → `backend/repositories`. Services and repositories take a `Db` (the pool or a transaction client), so the same functions work inside `withTransaction`.
 
 ## How the ledger works
 
@@ -56,18 +101,5 @@ Built with Next.js 14 (App Router), NextAuth (Google + email/password), PostgreS
 - Users pick **Cash** or **Bank**. **Savings**, **Debt** and **Receivable** are internal accounts.
 - `debts` and `receivables` hold the running outstanding amount per counterparty and are rebuilt from history whenever a related transaction is deleted.
 - A repayment is stored as a child of the transaction that created the obligation. These can be deleted individually.
-- An overpayment is stored as a split: a parent with the full amount, plus automatic children for the settled part and for the remainder converted into the opposite obligation. The split parent is excluded from balances (`lib/ledger.ts`).
+- An overpayment is stored as a split: a parent with the full amount, plus automatic children for the settled part and for the remainder converted into the opposite obligation. The split parent is excluded from balances (`shared/ledger.ts`).
 - `transactions.source` marks system-generated rows such as opening balances and automatic conversions.
-
-## Project layout
-
-```
-app/            pages and API routes (app/api/**)
-components/     UI components
-lib/            server and shared logic
-  transactions/ create, settle and delete transactions
-  ledger.ts     ledger rules shared by API and UI
-  validation.ts request validation helpers
-scripts/        database migration and reset scripts
-tests/          unit tests
-```

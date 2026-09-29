@@ -1,6 +1,4 @@
-import NextAuth from "next-auth";
-import { authOptions } from "@/lib/auth";
+// Route wiring only: handlers live in backend/routes
+export const runtime = "nodejs";
 
-const handler = NextAuth(authOptions);
-
-export { handler as GET, handler as POST };
+export { nextAuthHandler as GET, nextAuthHandler as POST } from "@/backend/routes/auth";

@@ -1,5 +1,5 @@
 import "@/app/globals.css";
-import { ThemeProvider } from "../components/ThemeProvider";
+import { ThemeProvider } from "@/frontend/providers/ThemeProvider";
 import { Inter } from "next/font/google";
 
 const inter = Inter({

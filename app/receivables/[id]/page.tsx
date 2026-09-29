@@ -1,7 +1,5 @@
-"use client";
-
-import ObligationDetailPage from "@/components/obligations/ObligationDetailPage";
+import ObligationDetailScreen from "@/frontend/screens/ObligationDetailScreen";
 
 export default function Page() {
-  return <ObligationDetailPage kind="receivable" />;
+  return <ObligationDetailScreen kind="receivable" />;
 }

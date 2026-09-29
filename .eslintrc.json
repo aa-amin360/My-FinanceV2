@@ -1,3 +1,53 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": "next/core-web-vitals",
+  "overrides": [
+    {
+      "files": ["frontend/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/backend/*", "@/backend/**"],
+                "message": "Frontend code must not import backend code. Call the API through frontend/api instead."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["backend/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/frontend/*", "@/frontend/**"],
+                "message": "Backend code must not import frontend code."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["shared/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/frontend/*", "@/frontend/**", "@/backend/*", "@/backend/**"],
+                "message": "Shared code must stay independent of frontend and backend."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

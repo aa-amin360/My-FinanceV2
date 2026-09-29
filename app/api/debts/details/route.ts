@@ -1,6 +1,7 @@
+// Route wiring only: handlers live in backend/routes
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-import { detailsHandler } from "@/lib/obligationRoutes";
+import { getObligationDetails } from "@/backend/routes/obligations";
 
-export const GET = detailsHandler("debts");
+export const GET = getObligationDetails("debts");
