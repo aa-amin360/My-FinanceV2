@@ -1,4 +1,5 @@
 import ModalOverlay from "@/frontend/components/molecules/ModalOverlay";
+import Presence from "@/frontend/components/atoms/Presence";
 
 type AlertDialogProps = {
   title: string;
@@ -8,9 +9,8 @@ type AlertDialogProps = {
 
 // Single-button dialog explaining why an action was refused
 export default function AlertDialog({ title, message, onClose }: AlertDialogProps) {
-  if (!message) return null;
-
   return (
+    <Presence show={!!message}>
     <ModalOverlay onClose={onClose}>
       <div className="bg-white/75 dark:bg-black/60 border border-black/[0.05] dark:border-white/[0.05] text-black dark:text-white backdrop-blur-xl rounded-3xl p-6 w-full max-w-[320px] text-center shadow-2xl flex flex-col gap-4 animate-modalIn">
         <h3 className="text-lg font-bold mb-3 text-red-400">{title}</h3>
@@ -23,5 +23,6 @@ export default function AlertDialog({ title, message, onClose }: AlertDialogProp
         </button>
       </div>
     </ModalOverlay>
+    </Presence>
   );
 }

@@ -10,10 +10,12 @@ type PlanListProps = {
   monthName: string;
   onProcess: (plan: BudgetPlan) => void;
   onDelete: (id: number) => void;
+  // False until the first response arrives, so the empty message doesn't flash
+  loaded?: boolean;
 };
 
 // Budget plans as a table on desktop and cards on mobile
-export default function PlanList({ plans, monthName, onProcess, onDelete }: PlanListProps) {
+export default function PlanList({ plans, monthName, onProcess, onDelete, loaded = true }: PlanListProps) {
   const today = localDateString();
   const empty = <EmptyState>No planned items scheduled for {monthName}.</EmptyState>;
 
@@ -29,20 +31,20 @@ export default function PlanList({ plans, monthName, onProcess, onDelete }: Plan
           <div className="col-span-2 text-right">Amount</div>
         </div>
 
-        <div className="divide-y divide-black/[0.04] dark:divide-white/[0.04]">
+        <div className="divide-y divide-black/[0.04] dark:divide-white/[0.04] stagger">
           {plans.map((p) => (
             <PlanRow key={p.id} plan={p} overdue={isOverdue(p, today)} onProcess={onProcess} onDelete={onDelete} />
           ))}
-          {plans.length === 0 && empty}
+          {loaded && plans.length === 0 && empty}
         </div>
       </div>
 
       {/* Mobile */}
-      <div className="md:hidden space-y-3">
+      <div className="md:hidden space-y-3 stagger">
         {plans.map((p) => (
           <PlanCard key={p.id} plan={p} overdue={isOverdue(p, today)} onProcess={onProcess} onDelete={onDelete} />
         ))}
-        {plans.length === 0 && empty}
+        {loaded && plans.length === 0 && empty}
       </div>
     </>
   );

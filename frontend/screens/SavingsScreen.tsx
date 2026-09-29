@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import DashboardLayout from "@/frontend/components/templates/DashboardLayout";
 import GeneralSavingsCard from "@/frontend/components/molecules/GeneralSavingsCard";
 import AchieveGoalDialog from "@/frontend/components/organisms/AchieveGoalDialog";
 import GoalCard from "@/frontend/components/organisms/GoalCard";
@@ -14,6 +13,7 @@ import { openTransactionModal, requestRefresh } from "@/frontend/lib/events";
 import { localDateString } from "@/shared/config";
 import { subtractMoney, sumMoney } from "@/shared/money";
 import type { SavingsGoal } from "@/shared/apiTypes";
+import Presence from "@/frontend/components/atoms/Presence";
 
 export default function SavingsScreen() {
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
@@ -22,6 +22,7 @@ export default function SavingsScreen() {
   const [goalToAchieveId, setGoalToAchieveId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   const loadData = async () => {
     try {
@@ -30,6 +31,8 @@ export default function SavingsScreen() {
       setTotalSavings(balances.savingsTotal);
     } catch (err) {
       console.error("Failed to load savings:", err);
+    } finally {
+      setLoaded(true);
     }
   };
 
@@ -64,8 +67,8 @@ export default function SavingsScreen() {
     });
 
   return (
-    <DashboardLayout>
-      <div className="w-full space-y-6 animate-fadeIn pb-16">
+    <>
+      <div className="w-full space-y-6 pb-16">
         <div className="px-1">
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-black dark:text-white truncate">Savings Goals</h1>
           <p className="text-[11px] sm:text-sm text-slate-500 dark:text-zinc-500 truncate mt-1">Assistant & virtual buckets.</p>
@@ -73,7 +76,7 @@ export default function SavingsScreen() {
 
         {error && <div className="text-sm font-semibold text-red-500 px-1">{error}</div>}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger">
           {unallocated > 0 && <GeneralSavingsCard amount={unallocated} />}
 
           {goals.map((goal) => (
@@ -87,28 +90,32 @@ export default function SavingsScreen() {
           ))}
         </div>
 
-        {goals.length === 0 && (
-          <div className="p-16 text-center border border-dashed border-black/10 dark:border-white/10 rounded-[40px]">
+        {loaded && goals.length === 0 && (
+          <div className="animate-fadeIn p-16 text-center border border-dashed border-black/10 dark:border-white/10 rounded-[40px]">
             <p className="text-slate-400 text-sm">No goals created yet. Set a commitment to start.</p>
           </div>
         )}
 
-        {goalToDeleteId && (
-          <RefundGoalDialog
-            loading={loading}
-            onConfirm={() => removeGoal(goalToDeleteId, "REFUND")}
-            onClose={() => setGoalToDeleteId(null)}
-          />
-        )}
+        <Presence show={!!goalToDeleteId}>
+          {goalToDeleteId && (
+            <RefundGoalDialog
+              loading={loading}
+              onConfirm={() => removeGoal(goalToDeleteId, "REFUND")}
+              onClose={() => setGoalToDeleteId(null)}
+            />
+          )}
+        </Presence>
 
-        {goalToAchieveId && (
-          <AchieveGoalDialog
-            loading={loading}
-            onConfirm={() => removeGoal(goalToAchieveId, "SPENT")}
-            onClose={() => setGoalToAchieveId(null)}
-          />
-        )}
+        <Presence show={!!goalToAchieveId}>
+          {goalToAchieveId && (
+            <AchieveGoalDialog
+              loading={loading}
+              onConfirm={() => removeGoal(goalToAchieveId, "SPENT")}
+              onClose={() => setGoalToAchieveId(null)}
+            />
+          )}
+        </Presence>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

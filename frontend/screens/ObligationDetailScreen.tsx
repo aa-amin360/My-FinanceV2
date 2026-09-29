@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import DashboardLayout from "@/frontend/components/templates/DashboardLayout";
 import BackButton from "@/frontend/components/atoms/BackButton";
 import Heading from "@/frontend/components/atoms/Heading";
 import LedgerEntryItem from "@/frontend/components/molecules/LedgerEntryItem";
@@ -24,6 +23,7 @@ export default function ObligationDetailScreen({ kind }: { kind: ObligationKind 
   const [name, setName] = useState("");
   const [outstanding, setOutstanding] = useState<ObligationRow | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   const loadData = async () => {
     try {
@@ -43,6 +43,8 @@ export default function ObligationDetailScreen({ kind }: { kind: ObligationKind 
       setName(row?.name || rows.find((t) => t.entity_name)?.entity_name || "");
     } catch (err) {
       console.error(`Failed to load ${config.detailTitle.toLowerCase()}:`, err);
+    } finally {
+      setLoaded(true);
     }
   };
 
@@ -58,8 +60,8 @@ export default function ObligationDetailScreen({ kind }: { kind: ObligationKind 
   );
 
   return (
-    <DashboardLayout>
-      <div className="w-full space-y-6 animate-fadeIn pb-16">
+    <>
+      <div className="w-full space-y-6 pb-16">
         <div className="flex items-center gap-3">
           <BackButton onClick={() => router.push(config.basePath)} label={`Back to ${config.title.toLowerCase()}`} />
           <Heading>{config.detailTitle}</Heading>
@@ -74,14 +76,14 @@ export default function ObligationDetailScreen({ kind }: { kind: ObligationKind 
           onSettle={() => openSettleModal(config, name)}
         />
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 stagger">
           {newestFirst.map((t) => (
             <LedgerEntryItem key={t.id} transaction={t} />
           ))}
         </div>
 
-        {transactions.length === 0 && <div className="text-center text-slate-400 dark:text-zinc-500 py-12 text-sm">No transactions found</div>}
+        {loaded && transactions.length === 0 && <div className="animate-fadeIn text-center text-slate-400 dark:text-zinc-500 py-12 text-sm">No transactions found</div>}
       </div>
-    </DashboardLayout>
+    </>
   );
 }

@@ -15,6 +15,7 @@ import {
 } from "@/frontend/lib/events";
 import { ACTION_TITLES, ModalAction } from "@/frontend/lib/transactionActions";
 import type { Category, SavingsGoal } from "@/shared/apiTypes";
+import Presence from "@/frontend/components/atoms/Presence";
 
 // Shortcuts that jump straight to a form
 const SHORTCUT_ACTIONS: Partial<Record<TransactionModalShortcut, ModalAction>> = {
@@ -77,9 +78,8 @@ export default function TransactionModal() {
     return () => window.removeEventListener(OPEN_TRANSACTION_MODAL_EVENT, handler);
   }, []);
 
-  if (!open) return null;
-
   return (
+    <Presence show={open}>
     <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn" onClick={close}>
       <div
         onClick={(e) => e.stopPropagation()}
@@ -112,5 +112,6 @@ export default function TransactionModal() {
         )}
       </div>
     </div>
+    </Presence>
   );
 }

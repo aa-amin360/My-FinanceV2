@@ -16,6 +16,8 @@ type TransactionListProps = {
   loading: boolean;
   onPageChange: (page: number) => void;
   onDelete: (id: number) => void;
+  // False until the first response arrives, so the empty message doesn't flash
+  loaded?: boolean;
 };
 
 // Transactions as a table on desktop and cards on mobile, with expandable
@@ -27,6 +29,7 @@ export default function TransactionList({
   loading,
   onPageChange,
   onDelete,
+  loaded = true,
 }: TransactionListProps) {
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
 
@@ -48,7 +51,7 @@ export default function TransactionList({
 
       <div className="pb-24 md:pb-0">
         {/* Desktop rows */}
-        <div className="hidden md:block divide-y divide-slate-100 dark:divide-zinc-900/60">
+        <div className="hidden md:block divide-y divide-slate-100 dark:divide-zinc-900/60 stagger">
           {roots.map((parent) => (
             <div key={parent.id}>
               <TransactionRow
@@ -66,7 +69,7 @@ export default function TransactionList({
         </div>
 
         {/* Mobile cards */}
-        <div className="md:hidden space-y-3 px-2 py-4">
+        <div className="md:hidden space-y-3 px-2 py-4 stagger">
           {roots.map((parent) => (
             <div key={parent.id} className="space-y-2">
               <TransactionCard
@@ -86,7 +89,7 @@ export default function TransactionList({
         <Pagination page={page} totalPages={totalPages} disabled={loading} onChange={onPageChange} />
       </div>
 
-      {transactions.length === 0 && <div className="p-6 text-center text-gray-400">No transactions yet</div>}
+      {loaded && transactions.length === 0 && <div className="p-6 text-center text-gray-400 animate-fadeIn">No transactions yet</div>}
     </div>
   );
 }

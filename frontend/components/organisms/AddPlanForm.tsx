@@ -9,6 +9,7 @@ import { categoriesApi } from "@/frontend/api/categories";
 import { errorMessage } from "@/frontend/api/client";
 import type { Category } from "@/shared/apiTypes";
 import { useClickOutside } from "@/frontend/hooks/useClickOutside";
+import Presence from "@/frontend/components/atoms/Presence";
 
 
 type AddPlanFormProps = {
@@ -145,8 +146,8 @@ export default function AddPlanForm({ categories, onCategoryCreated, onSuccess, 
           className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.04] backdrop-sm text-xs sm:text-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500 outline-none focus:bg-white dark:focus:bg-zinc-950 transition-all duration-200"
         />
 
-        {showTargetDropdown && (
-          <div className="absolute top-full left-0 w-full mt-1.5 p-1 max-h-40 overflow-y-auto bg-white/95 dark:bg-black/95 border border-black/[0.05] dark:border-white/[0.05] rounded-2xl shadow-xl z-50 flex flex-col divide-y divide-slate-100 dark:divide-zinc-900 animate-modalIn">
+        <Presence show={showTargetDropdown} exitMs={140}>
+          <div className="absolute top-full left-0 w-full mt-1.5 p-1 max-h-40 overflow-y-auto bg-white/95 dark:bg-black/95 border border-black/[0.05] dark:border-white/[0.05] rounded-2xl shadow-xl z-50 flex flex-col divide-y divide-slate-100 dark:divide-zinc-900 animate-popIn">
             {suggestions.map((s) => (
               <button
                 key={s.id}
@@ -178,7 +179,7 @@ export default function AddPlanForm({ categories, onCategoryCreated, onSuccess, 
               </div>
             )}
           </div>
-        )}
+        </Presence>
       </div>
 
       {/* Amount input */}

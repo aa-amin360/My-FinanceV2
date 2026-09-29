@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, X } from "lucide-react";
 import { authApi } from "@/frontend/api/auth";
 import { errorMessage } from "@/frontend/api/client";
+import Presence from "@/frontend/components/atoms/Presence";
 
 export type AuthTab = "LOGIN" | "SIGNUP";
 
@@ -110,9 +111,8 @@ export default function AuthModal({ open, tab, onTabChange, onClose }: AuthModal
     signIn("google", { callbackUrl: "/dashboard" });
   };
 
-  if (!open) return null;
-
   return (
+    <Presence show={open}>
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn" onClick={onClose}>
           {/* Complete, compile-safe dark Gunmetal and light silver gradient container */}
           <div 
@@ -246,5 +246,6 @@ export default function AuthModal({ open, tab, onTabChange, onClose }: AuthModal
             </button>
           </div>
         </div>
+    </Presence>
   );
 }

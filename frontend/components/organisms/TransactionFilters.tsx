@@ -22,7 +22,7 @@ export default function TransactionFilters({
   onReset,
 }: TransactionFiltersProps) {
   return (
-    <div className="grid grid-cols-12 gap-2 sm:gap-3 mb-6 animate-fadeIn items-center">
+    <div className="grid grid-cols-12 gap-2 sm:gap-3 mb-6 items-center">
       <div className="relative col-span-10 md:col-span-5 group order-1">
         <Search
           size={18}

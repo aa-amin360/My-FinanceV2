@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
-import DashboardLayout from "@/frontend/components/templates/DashboardLayout";
 import ConfirmDialog from "@/frontend/components/molecules/ConfirmDialog";
 import MonthNavigator from "@/frontend/components/molecules/MonthNavigator";
 import PageHeader from "@/frontend/components/molecules/PageHeader";
@@ -17,6 +16,7 @@ import { categoriesApi } from "@/frontend/api/categories";
 import { formatMonthYear } from "@/frontend/lib/format";
 import { sumMoney } from "@/shared/money";
 import type { BudgetPlan, Category } from "@/shared/apiTypes";
+import Presence from "@/frontend/components/atoms/Presence";
 
 export default function BudgetScreen() {
   const [plans, setPlans] = useState<BudgetPlan[]>([]);
@@ -28,6 +28,7 @@ export default function BudgetScreen() {
   const [processingPlan, setProcessingPlan] = useState<BudgetPlan | null>(null);
   const [planToDeleteId, setPlanToDeleteId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
@@ -41,6 +42,8 @@ export default function BudgetScreen() {
       setPlans(monthPlans);
     } catch (err) {
       console.error("Failed to load budget planning data:", err);
+    } finally {
+      setLoaded(true);
     }
   };
 
@@ -77,8 +80,8 @@ export default function BudgetScreen() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="w-full space-y-6 px-1 sm:px-4 pb-16 animate-fadeIn">
+    <>
+      <div className="w-full space-y-6 px-1 sm:px-4 pb-16">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <PageHeader
             title="Budget Planning"
@@ -105,10 +108,10 @@ export default function BudgetScreen() {
           projectedPosition={projectedPosition}
         />
 
-        <PlanList plans={plans} monthName={monthName} onProcess={setProcessingPlan} onDelete={setPlanToDeleteId} />
+        <PlanList plans={plans} monthName={monthName} onProcess={setProcessingPlan} onDelete={setPlanToDeleteId} loaded={loaded} />
       </div>
 
-      {showAddModal && (
+      <Presence show={showAddModal}>
         <AddPlanModal
           categories={categories}
           onCategoryCreated={(category) => setCategories((prev) => [...prev, category])}
@@ -118,9 +121,10 @@ export default function BudgetScreen() {
           }}
           onClose={() => setShowAddModal(false)}
         />
-      )}
+      </Presence>
 
-      {processingPlan && (
+      <Presence show={!!processingPlan}>
+        {processingPlan && (
         <ProcessPlanModal
           plan={processingPlan}
           onSuccess={() => {
@@ -129,7 +133,8 @@ export default function BudgetScreen() {
           }}
           onClose={() => setProcessingPlan(null)}
         />
-      )}
+        )}
+      </Presence>
 
       <ConfirmDialog
         isOpen={planToDeleteId !== null}
@@ -141,6 +146,6 @@ export default function BudgetScreen() {
         loading={loading}
         variant="danger"
       />
-    </DashboardLayout>
+    </>
   );
 }

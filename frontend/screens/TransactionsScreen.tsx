@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import DashboardLayout from "@/frontend/components/templates/DashboardLayout";
 import AlertDialog from "@/frontend/components/molecules/AlertDialog";
 import ConfirmDialog from "@/frontend/components/molecules/ConfirmDialog";
 import TransactionFilters from "@/frontend/components/organisms/TransactionFilters";
@@ -21,6 +20,7 @@ export default function TransactionsScreen() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [confirmAll, setConfirmAll] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -43,7 +43,10 @@ export default function TransactionsScreen() {
         setTransactions(result.data);
         setTotalPages(result.pagination.totalPages);
       })
-      .catch((err) => console.error("Failed to load transactions:", err));
+      .catch((err) => console.error("Failed to load transactions:", err))
+      .finally(() => {
+        if (current === requestId.current) setLoaded(true);
+      });
   };
 
   useEffect(() => {
@@ -97,8 +100,8 @@ export default function TransactionsScreen() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="flex justify-between items-center mb-6 px-1 animate-fadeIn">
+    <>
+      <div className="flex justify-between items-center mb-6 px-1">
         <h1 className="text-2xl font-bold">Transactions</h1>
 
         <button
@@ -126,6 +129,7 @@ export default function TransactionsScreen() {
         loading={loading}
         onPageChange={setPage}
         onDelete={setDeleteId}
+        loaded={loaded}
       />
 
       <ConfirmDialog
@@ -151,6 +155,6 @@ export default function TransactionsScreen() {
       />
 
       <AlertDialog title="Action Not Allowed" message={errorMessage} onClose={() => setErrorMessage(null)} />
-    </DashboardLayout>
+    </>
   );
 }

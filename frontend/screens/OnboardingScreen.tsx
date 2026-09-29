@@ -15,6 +15,7 @@ import { requestRefresh } from "@/frontend/lib/events";
 import { setOnboardingCached } from "@/frontend/lib/onboardingCache";
 import { useTheme } from "@/frontend/providers/ThemeProvider";
 import { localDateString } from "@/shared/config";
+import Presence from "@/frontend/components/atoms/Presence";
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -149,7 +150,9 @@ export default function OnboardingScreen() {
         <span className="text-[10px] sm:text-xs text-slate-400">© 2026 My Finance. All rights reserved.</span>
       </footer>
 
-      {prompt && <OnboardingConfirmDialog prompt={prompt} onConfirm={confirmPrompt} onCancel={() => setPrompt(null)} />}
+      <Presence show={!!prompt}>
+        {prompt && <OnboardingConfirmDialog prompt={prompt} onConfirm={confirmPrompt} onCancel={() => setPrompt(null)} />}
+      </Presence>
     </div>
   );
 }

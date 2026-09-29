@@ -56,6 +56,9 @@ It is one Next.js app deployed as a single unit (e.g. on Vercel), with the code 
 
 ```
 app/                 Next.js routing only
+  (app)/             signed-in pages; the group name is not part of the URL
+    layout.tsx       shared shell (sidebar, header) that stays mounted while navigating
+    template.tsx     replays the page entrance animation on every navigation
   */page.tsx         one line each: render a screen from frontend/screens
   api/**/route.ts    one line each: export handlers from backend/routes
 
@@ -94,6 +97,14 @@ Dependency rules, enforced by `npm run lint`:
 - `shared/` imports from neither.
 
 A backend request flows like this: `app/api/.../route.ts` → `backend/routes` → `backend/validators` → `backend/services` → `backend/repositories`. Services and repositories take a `Db` (the pool or a transaction client), so the same functions work inside `withTransaction`.
+
+## Animations
+
+- Keyframes and `animate-*` utilities are defined in `tailwind.config.js`: `pageIn`, `fadeIn`, `rise`, `modalIn`/`modalOut`, `popIn`/`popOut`, `slideDown`, `progress`.
+- Add the `stagger` class to a list container to make its items rise in one after another.
+- Wrap anything that opens and closes (dialogs, dropdowns) in `<Presence show={...}>` so it animates out as well as in.
+- `useCountUp` animates numbers to new values, and `TopProgressBar` shows while API requests are running.
+- Everything respects the OS "reduce motion" setting (see `app/globals.css`).
 
 ## How the ledger works
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Presence from "@/frontend/components/atoms/Presence";
 
 type ConfirmDialogProps = {
   isOpen: boolean;
@@ -25,8 +26,6 @@ export default function ConfirmDialog({
   loading = false,
   variant = "danger",
 }: ConfirmDialogProps) {
-  if (!isOpen) return null;
-
   // Determine confirm button style based on semantic variant
   const getConfirmBtnStyle = () => {
     switch (variant) {
@@ -41,8 +40,9 @@ export default function ConfirmDialog({
   };
 
   return (
-    <div 
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[120] p-4 animate-fadeIn" 
+    <Presence show={isOpen}>
+    <div
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[120] p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div 
@@ -75,5 +75,6 @@ export default function ConfirmDialog({
         </div>
       </div>
     </div>
+    </Presence>
   );
 }

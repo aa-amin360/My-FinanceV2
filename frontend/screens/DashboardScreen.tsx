@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import DashboardLayout from "@/frontend/components/templates/DashboardLayout";
 import ConfirmDialog from "@/frontend/components/molecules/ConfirmDialog";
 import MetricCard from "@/frontend/components/molecules/MetricCard";
 import BalanceHero from "@/frontend/components/organisms/BalanceHero";
@@ -79,8 +78,8 @@ export default function DashboardScreen() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="w-full space-y-6 pb-12 animate-fadeIn">
+    <>
+      <div className="w-full space-y-6 pb-12">
         <DueCommitmentsBanner goals={goals} />
 
         <BalanceHero
@@ -122,6 +121,6 @@ export default function DashboardScreen() {
         loading={loading}
         variant="danger"
       />
-    </DashboardLayout>
+    </>
   );
 }

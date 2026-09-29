@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import DashboardLayout from "@/frontend/components/templates/DashboardLayout";
 import PageHeader from "@/frontend/components/molecules/PageHeader";
 import CategoryForm from "@/frontend/components/organisms/CategoryForm";
 import CategoryTable from "@/frontend/components/organisms/CategoryTable";
@@ -12,6 +11,7 @@ import type { Category } from "@/shared/apiTypes";
 export default function CategoriesScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState("");
+  const [loaded, setLoaded] = useState(false);
   const [name, setName] = useState("");
   const [type, setType] = useState<"EXPENSE" | "INCOME">("EXPENSE");
 
@@ -20,7 +20,8 @@ export default function CategoriesScreen() {
     categoriesApi
       .list()
       .then(setCategories)
-      .catch((err) => console.error("Failed to load categories:", err));
+      .catch((err) => console.error("Failed to load categories:", err))
+      .finally(() => setLoaded(true));
   };
 
   useEffect(() => {
@@ -46,16 +47,16 @@ export default function CategoriesScreen() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="w-full space-y-6 animate-fadeIn pb-16">
+    <>
+      <div className="w-full space-y-6 pb-16">
         <PageHeader title="Categories" subtitle="Configure your personal expense and income categories." />
 
         <CategoryForm name={name} type={type} onNameChange={setName} onTypeChange={setType} onSubmit={handleCreate} />
 
         {error && <div className="text-sm font-semibold text-red-500 px-1">{error}</div>}
 
-        <CategoryTable categories={categories} />
+        <CategoryTable categories={categories} loaded={loaded} />
       </div>
-    </DashboardLayout>
+    </>
   );
 }

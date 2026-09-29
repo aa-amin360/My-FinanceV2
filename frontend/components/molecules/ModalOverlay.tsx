@@ -11,7 +11,7 @@ type ModalOverlayProps = {
 export default function ModalOverlay({ onClose, children }: ModalOverlayProps) {
   return (
     <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn"
       onClick={(e) => {
         if (onClose && e.target === e.currentTarget) onClose();
       }}

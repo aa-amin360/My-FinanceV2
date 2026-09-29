@@ -10,6 +10,7 @@ import type { BudgetPlan as Plan } from "@/shared/apiTypes";
 import { requestRefresh } from "@/frontend/lib/events";
 import { useClickOutside } from "@/frontend/hooks/useClickOutside";
 import ErrorText from "@/frontend/components/atoms/ErrorText";
+import Presence from "@/frontend/components/atoms/Presence";
 
 type ProcessPlanFormProps = {
   plan: Plan;
@@ -234,8 +235,8 @@ export default function ProcessPlanForm({ plan, onSuccess, onClose }: ProcessPla
               <span className="text-zinc-400">📅</span>
             </div>
 
-            {showReschedulePicker && (
-              <div className="absolute bottom-full left-0 w-full mb-1.5 p-3 bg-white dark:bg-zinc-950 border border-black/[0.04] dark:border-white/[0.04] rounded-2xl shadow-xl z-50 flex flex-col gap-2 animate-modalIn" onClick={(e) => e.stopPropagation()}>
+            <Presence show={showReschedulePicker} exitMs={140}>
+              <div className="absolute bottom-full left-0 w-full mb-1.5 p-3 bg-white dark:bg-zinc-950 border border-black/[0.04] dark:border-white/[0.04] rounded-2xl shadow-xl z-50 flex flex-col gap-2 animate-popIn" onClick={(e) => e.stopPropagation()}>
                 <div className="flex justify-between items-center text-[11px] font-bold text-black dark:text-white leading-none">
                   <button type="button" onClick={() => setReschedulePickerDate(new Date(reschedulePickerDate.getFullYear(), reschedulePickerDate.getMonth() - 1, 1))} className="p-1 rounded hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition">
                     <ChevronLeft size={12} />
@@ -287,7 +288,7 @@ export default function ProcessPlanForm({ plan, onSuccess, onClose }: ProcessPla
                   })}
                 </div>
               </div>
-            )}
+            </Presence>
           </div>
 
           <div className="grid grid-cols-2 gap-2 mt-2">

@@ -2,10 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 
-  Global HTML and Body background colors configuration.
-  This ensures that any empty scroll areas or dynamic dynamic navigation bar 
-  overscrolls on mobile match the exact charcoal theme colors.
+/*
+  Global background colors so overscroll areas (e.g. on mobile) match the theme.
 */
 html, body {
   background-color: #E7EBED; /* Light mode background */
@@ -19,21 +17,6 @@ html.dark, body.dark, .dark body, .dark html {
   color: #ffffff;
 }
 
-@keyframes modalIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-.animate-modalIn {
-  animation: modalIn 0.25s ease-out;
-}
-
 .shadow-green-500\/30 {
   box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
 }
@@ -41,3 +24,55 @@ html.dark, body.dark, .dark body, .dark html {
 * {
   transition: background-color 0.25s ease, color 0.25s ease;
 }
+
+/* ------------------------------------------------------------------
+   Exit animations
+   <Presence> wraps content that is about to unmount in .presence-exit
+   for a moment so it can animate out instead of disappearing.
+   ------------------------------------------------------------------ */
+.presence-exit .animate-modalIn {
+  @apply animate-modalOut;
+}
+.presence-exit .animate-popIn {
+  @apply animate-popOut;
+}
+/* Full-screen backdrops fade out with their dialog */
+.presence-exit > .fixed {
+  @apply animate-fadeOut;
+}
+/* Nothing inside a closing element should react to the pointer */
+.presence-exit * {
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------
+   Respect the OS "reduce motion" setting
+   ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Staggered list entrance
+   Add .stagger to a list container: each child rises in slightly after
+   the previous one. Items added later animate in on their own.
+   ------------------------------------------------------------------ */
+.stagger > * {
+  @apply animate-rise;
+}
+.stagger > *:nth-child(2) { animation-delay: 35ms; }
+.stagger > *:nth-child(3) { animation-delay: 70ms; }
+.stagger > *:nth-child(4) { animation-delay: 105ms; }
+.stagger > *:nth-child(5) { animation-delay: 140ms; }
+.stagger > *:nth-child(6) { animation-delay: 175ms; }
+.stagger > *:nth-child(7) { animation-delay: 210ms; }
+.stagger > *:nth-child(8) { animation-delay: 245ms; }
+.stagger > *:nth-child(n + 9) { animation-delay: 280ms; }

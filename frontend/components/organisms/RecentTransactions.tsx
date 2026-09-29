@@ -19,7 +19,7 @@ export default function RecentTransactions({ transactions, error, onDelete }: Re
         </Link>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 stagger">
         {error && <div className="text-xs font-semibold text-red-500 px-1">{error}</div>}
 
         {transactions

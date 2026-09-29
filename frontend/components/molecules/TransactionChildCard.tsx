@@ -15,7 +15,7 @@ export default function TransactionChildCard({ transaction: t, onDelete }: CardP
   const inflow = isInflowType(t.type);
 
   return (
-    <div className="bg-white/5 dark:bg-white/[0.01] border border-black/[0.03] dark:border-white/[0.02] p-3 rounded-xl ml-4 text-gray-500 dark:text-zinc-400">
+    <div className="bg-white/5 dark:bg-white/[0.01] border border-black/[0.03] dark:border-white/[0.02] p-3 rounded-xl ml-4 text-gray-500 dark:text-zinc-400 animate-slideDown">
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <CornerDownRight size={14} className="text-gray-400 dark:text-zinc-500 shrink-0" />

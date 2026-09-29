@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import DashboardLayout from "@/frontend/components/templates/DashboardLayout";
 import CalendarDayView from "@/frontend/components/organisms/CalendarDayView";
 import CalendarMonthView from "@/frontend/components/organisms/CalendarMonthView";
 import { useRefresh } from "@/frontend/hooks/useRefresh";
@@ -50,7 +49,7 @@ export default function CalendarScreen() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       {!selectedDateStr ? (
         <CalendarMonthView
           year={year}
@@ -68,6 +67,6 @@ export default function CalendarScreen() {
           onBack={() => setSelectedDateStr(null)}
         />
       )}
-    </DashboardLayout>
+    </>
   );
 }

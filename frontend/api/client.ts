@@ -1,3 +1,5 @@
+import { requestFinished, requestStarted } from "@/frontend/lib/activity";
+
 // Minimal typed wrapper around fetch for the app's own /api routes.
 // Every endpoint answers { success: true, ...data } or { error: "message" }.
 
@@ -25,18 +27,24 @@ function withQuery(path: string, query?: Query) {
 
 async function request<T>(method: string, path: string, { query, body }: { query?: Query; body?: unknown } = {}) {
   let res: Response;
+  let data: any;
+  requestStarted();
   try {
-    res = await fetch(withQuery(path, query), {
-      method,
-      cache: "no-store",
-      headers: body === undefined ? undefined : { "Content-Type": "application/json" },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
-  } catch {
-    throw new ApiError("Network error. Please check your connection.", 0);
+    try {
+      res = await fetch(withQuery(path, query), {
+        method,
+        cache: "no-store",
+        headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+    } catch {
+      throw new ApiError("Network error. Please check your connection.", 0);
+    }
+    data = await res.json().catch(() => ({}));
+  } finally {
+    requestFinished();
   }
 
-  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new ApiError(data.error || "Something went wrong. Please try again.", res.status);
   }

@@ -3,6 +3,7 @@
 import React, { useState, useRef } from "react";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, X } from "lucide-react";
 import { useClickOutside } from "@/frontend/hooks/useClickOutside";
+import Presence from "@/frontend/components/atoms/Presence";
 
 type Props = {
   value: string;
@@ -78,15 +79,15 @@ export default function GlassCalendar({ value, onChange, placeholder, blockPastD
         )}
       </div>
 
-      {isOpen && (
+      <Presence show={isOpen} exitMs={140}>
         <div className="
           absolute top-full mt-2 
-          left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0
+          left-1/2 [translate:-50%_0] sm:left-0 sm:[translate:none]
           w-[280px] sm:w-[300px] 
           bg-white/95 dark:bg-[#0d1318]/95 
           backdrop-blur-xl border border-black/10 dark:border-white/10 
           rounded-3xl shadow-2xl z-[120] p-4 sm:p-5 
-          animate-modalIn
+          animate-popIn
         ">
           <div className="flex items-center justify-between mb-4">
             <button 
@@ -141,7 +142,7 @@ export default function GlassCalendar({ value, onChange, placeholder, blockPastD
             })}
           </div>
         </div>
-      )}
+      </Presence>
     </div>
   );
 }

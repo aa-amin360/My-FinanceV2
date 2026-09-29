@@ -11,6 +11,7 @@ import TransactionModal from "@/frontend/components/organisms/TransactionModal";
 import { useOnboardingGate } from "@/frontend/hooks/useOnboardingGate";
 import { setOnboardingCached } from "@/frontend/lib/onboardingCache";
 import { useTheme } from "@/frontend/providers/ThemeProvider";
+import TopProgressBar from "@/frontend/components/atoms/TopProgressBar";
 
 // Shell for every signed-in page: sidebar, header, mobile nav, quick-add and the transaction modal
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -39,6 +40,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </main>
       </div>
 
+      <TopProgressBar />
       <MobileNav pathname={pathname} />
       <QuickAddButton pathname={pathname} />
       <TransactionModal />

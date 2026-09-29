@@ -4,6 +4,7 @@ import React, { useState, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import { useClickOutside } from "@/frontend/hooks/useClickOutside";
 import FieldLabel from "@/frontend/components/atoms/FieldLabel";
+import Presence from "@/frontend/components/atoms/Presence";
 
 type Option = {
   value: string | number;
@@ -51,11 +52,11 @@ export default function Dropdown({
         <span className="font-semibold text-slate-700 dark:text-zinc-300">
           {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <ChevronDown size={14} className="text-slate-400 dark:text-zinc-500 shrink-0" />
+        <ChevronDown size={14} className={`text-slate-400 dark:text-zinc-500 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
       </div>
 
-      {isOpen && (
-        <div className="absolute top-full left-0 w-full mt-1.5 p-1 bg-white/95 dark:bg-black/95 border border-black/[0.05] dark:border-white/[0.05] rounded-2xl shadow-xl z-50 flex flex-col animate-modalIn max-h-48 overflow-y-auto">
+      <Presence show={isOpen} exitMs={140}>
+        <div className="absolute top-full left-0 w-full mt-1.5 p-1 bg-white/95 dark:bg-black/95 border border-black/[0.05] dark:border-white/[0.05] rounded-2xl shadow-xl z-50 flex flex-col animate-popIn max-h-48 overflow-y-auto">
           {options.map((opt) => (
             <button
               key={opt.value}
@@ -70,7 +71,7 @@ export default function Dropdown({
             </button>
           ))}
         </div>
-      )}
+      </Presence>
     </div>
   );
 }

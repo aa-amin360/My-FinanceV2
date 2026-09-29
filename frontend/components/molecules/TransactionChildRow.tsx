@@ -13,7 +13,7 @@ type RowProps = {
 // Desktop table row for an entry nested under another transaction
 export default function TransactionChildRow({ transaction: t, onDelete }: RowProps) {
   return (
-    <div className="grid grid-cols-6 items-center px-5 py-3 pl-10 border-b border-black/[0.03] dark:border-white/[0.03] text-sm text-gray-500 dark:text-zinc-400 bg-white/20 dark:bg-black/20 backdrop-blur-sm">
+    <div className="grid grid-cols-6 items-center px-5 py-3 pl-10 border-b border-black/[0.03] dark:border-white/[0.03] text-sm text-gray-500 dark:text-zinc-400 bg-white/20 dark:bg-black/20 backdrop-blur-sm animate-slideDown">
       <div className="flex items-center gap-2">
         <CornerDownRight size={14} className="text-gray-400 dark:text-zinc-500" />
         <span>{transactionDisplayName(t)}</span>

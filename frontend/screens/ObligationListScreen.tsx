@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import DashboardLayout from "@/frontend/components/templates/DashboardLayout";
 import ObligationCard from "@/frontend/components/molecules/ObligationCard";
 import PageHeader from "@/frontend/components/molecules/PageHeader";
 import { useRefresh } from "@/frontend/hooks/useRefresh";
@@ -14,23 +13,25 @@ import type { ObligationRow } from "@/shared/apiTypes";
 export default function ObligationListScreen({ kind }: { kind: ObligationKind }) {
   const config = OBLIGATION_CONFIG[kind];
   const [rows, setRows] = useState<ObligationRow[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const router = useRouter();
 
   const loadData = () => {
     obligationsApi
       .details(config.resource)
       .then(setRows)
-      .catch((err) => console.error(`Failed to load ${config.title.toLowerCase()}:`, err));
+      .catch((err) => console.error(`Failed to load ${config.title.toLowerCase()}:`, err))
+      .finally(() => setLoaded(true));
   };
 
   useRefresh(loadData);
 
   return (
-    <DashboardLayout>
-      <div className="w-full space-y-6 animate-fadeIn pb-16">
+    <>
+      <div className="w-full space-y-6 pb-16">
         <PageHeader title={config.title} subtitle={config.subtitle} />
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 stagger">
           {rows.map((row) => (
             <ObligationCard
               key={row.entity_id}
@@ -42,8 +43,8 @@ export default function ObligationListScreen({ kind }: { kind: ObligationKind })
           ))}
         </div>
 
-        {rows.length === 0 && <div className="text-center text-slate-400 dark:text-zinc-500 py-12 text-sm">{config.emptyText}</div>}
+        {loaded && rows.length === 0 && <div className="animate-fadeIn text-center text-slate-400 dark:text-zinc-500 py-12 text-sm">{config.emptyText}</div>}
       </div>
-    </DashboardLayout>
+    </>
   );
 }

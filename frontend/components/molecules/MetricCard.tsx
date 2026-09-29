@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { LucideIcon } from "lucide-react";
 import { CURRENCY, formatNumber } from "@/shared/config";
+import { useCountUp } from "@/frontend/hooks/useCountUp";
 
 type MetricCardProps = {
   title: string;
@@ -60,9 +61,8 @@ export default function MetricCard({
   };
 
   const { text, bg, border } = getThemeStyles();
-  const formattedValue = isPercentage 
-    ? value.toFixed(1) 
-    : formatNumber(value);
+  const shownValue = useCountUp(value);
+  const formattedValue = isPercentage ? shownValue.toFixed(1) : formatNumber(shownValue);
 
   const cardBody = (
     <div className={`p-4 sm:p-5 rounded-3xl border transition hover:scale-[1.01] duration-200 backdrop-blur-md flex justify-between items-center w-full ${bg} ${border}`}>

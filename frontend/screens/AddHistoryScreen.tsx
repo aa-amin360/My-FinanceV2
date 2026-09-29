@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Save } from "lucide-react";
-import DashboardLayout from "@/frontend/components/templates/DashboardLayout";
 import Heading from "@/frontend/components/atoms/Heading";
 import Subtitle from "@/frontend/components/atoms/Subtitle";
 import SectionCard from "@/frontend/components/molecules/SectionCard";
@@ -79,8 +78,8 @@ export default function AddHistoryScreen() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="w-full space-y-6 animate-fadeIn pb-16 px-1 sm:px-4">
+    <>
+      <div className="w-full space-y-6 pb-16 px-1 sm:px-4">
         <div className="space-y-1">
           <Heading>Add History</Heading>
           <Subtitle>Log forgotten starting balances, active debts, or receivables to keep your ledger starting position accurate.</Subtitle>
@@ -119,6 +118,6 @@ export default function AddHistoryScreen() {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { ArrowDownRight, ArrowUpRight, Percent } from "lucide-react";
-import DashboardLayout from "@/frontend/components/templates/DashboardLayout";
 import MetricCard from "@/frontend/components/molecules/MetricCard";
 import PageHeader from "@/frontend/components/molecules/PageHeader";
 import SegmentedControl from "@/frontend/components/molecules/SegmentedControl";
@@ -36,8 +35,8 @@ export default function ReportsScreen() {
   const savingsRate = income > 0 ? ((income - expense) / income) * 100 : 0;
 
   return (
-    <DashboardLayout>
-      <div className="w-full space-y-6 animate-fadeIn pb-16">
+    <>
+      <div className="w-full space-y-6 pb-16">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <PageHeader title="Reports" subtitle="Analyze your historical performance and savings efficiency." />
 
@@ -57,6 +56,6 @@ export default function ReportsScreen() {
           <ExpenseBreakdownCard categories={report.categories} totalExpense={expense} />
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

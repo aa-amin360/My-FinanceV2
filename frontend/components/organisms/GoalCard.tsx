@@ -28,7 +28,7 @@ export default function GoalCard({ goal, onDelete, onAchieve, onAddFunds }: Goal
 
   return (
     <div
-      className={`relative overflow-hidden bg-white/60 dark:bg-[#11161d]/50 border ${border} backdrop-blur-xl p-6 rounded-[28px] flex flex-col justify-between h-[250px] transition-all duration-300 hover:scale-[1.01] hover:border-black/10 dark:hover:border-white/10 animate-modalIn`}
+      className={`relative overflow-hidden bg-white/60 dark:bg-[#11161d]/50 border ${border} backdrop-blur-xl p-6 rounded-[28px] flex flex-col justify-between h-[250px] transition-all duration-300 hover:scale-[1.01] hover:border-black/10 dark:hover:border-white/10`}
     >
       {dueToday && <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-indigo-500/5 blur-xl pointer-events-none" />}
 

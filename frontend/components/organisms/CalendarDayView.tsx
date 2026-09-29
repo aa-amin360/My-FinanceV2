@@ -24,7 +24,7 @@ export default function CalendarDayView({ dateKey, transactions, onBack }: Calen
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-black dark:text-white">{title}</h1>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 stagger">
         {transactions.map((t) => (
           <DayTransactionItem key={t.id} transaction={t} />
         ))}
